@@ -99,7 +99,8 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
 </p>
 
 * **Multi-turn Text2Image Generation**
-https://github.com/Tencent/HunyuanDiT/assets/27557933/ada0245a-f9ae-49e9-a340-75fa009caddf
+[https://github.com/Tencent/HunyuanDiT/assets/27557933/ada0245a-f9ae-49e9-a340-75fa009caddf](https://github.com/Tencent/HunyuanDiT/assets/27557933/f1c0b7df-7b3e-4888-9254-ff3dda14cd47
+)
 
 # **Dependencies and Installation**
 Ensure your machine is equipped with a GPU having over 20GB of memory.
