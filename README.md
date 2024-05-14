@@ -134,6 +134,7 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
 </p>
 
 * **Multi-turn Text2Image Generation**
+* 
 You can also create your favorite images in an easy way through our [website](https://hunyuan-image.woa.com/).
 https://github.com/Tencent/tencent.github.io/assets/27557933/94b4dcc3-104d-44e1-8bb2-dc55108763d1
 
