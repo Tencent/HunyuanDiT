@@ -94,13 +94,13 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
 </thead> 
 <tbody> 
 <tr> 
-    <td>SDXL</td> <td>&#10004</td> <td>64.3</td> <td>60.6</td> <td>91.1</td> <td>76.3</td> <td>42.7</td> 
+    <td>SDXL</td> <td> ✔ </td> <td>64.3</td> <td>60.6</td> <td>91.1</td> <td>76.3</td> <td>42.7</td> 
 </tr> 
 <tr> 
-    <td>PixArt-α</td> <td>&#10004</td> <td>68.3</td> <td>60.9</td> <td>93.2</td> <td>77.5</td> <td>45.5</td> 
+    <td>PixArt-α</td> <td> ✔</td> <td>68.3</td> <td>60.9</td> <td>93.2</td> <td>77.5</td> <td>45.5</td> 
 </tr> 
 <tr> 
-    <td>Playground 2.5</td> <td>&#10004</td> <td>71.9</td> <td>70.8</td> <td>94.9</td> <td>83.3</td> <td>54.3</td> 
+    <td>Playground 2.5</td> <td>✔</td> <td>71.9</td> <td>70.8</td> <td>94.9</td> <td>83.3</td> <td>54.3</td> 
 </tr> 
 
 <tr> 
@@ -108,7 +108,7 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
     
 </tr> 
 <tr style="font-weight: bold; background-color: #f2f2f2;"> 
-    <td>Hunyuan-DiT</td><td>&#10004</td> <td>74.2</td> <td>74.3</td> <td>95.4</td> <td>86.6</td> <td>59.0</td> 
+    <td>Hunyuan-DiT</td><td>✔</td> <td>74.2</td> <td>74.3</td> <td>95.4</td> <td>86.6</td> <td>59.0</td> 
 </tr>
 <tr> 
     <td>MidJourney v6</td><td>&#10008</td> <td>73.5</td> <td>80.2</td> <td>93.5</td> <td>87.2</td> <td>63.3</td> 
