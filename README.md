@@ -123,22 +123,19 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
 
 * **Chinese Elements**
 <p align="center">
-  <img src="./asset/chinese elements understanding.png"  height=240>
+  <img src="./asset/chinese elements understanding.png"  height=220>
 </p>
 
 * **Long Text Input**
 
 
 <p align="center">
-  <img src="./asset/long text understanding.png"  height=330>
+  <img src="./asset/long text understanding.png"  height=310>
 </p>
 
 * **Multi-turn Text2Image Generation**
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=4AaHrYnuIcE">
-      <img src="./asset/cover.png" alt="Watch the video" height="800">
-  </a>
-</p>
+
+https://github.com/yestinl/MDINO/assets/27557933/084ac599-73ce-4be9-9ba9-1b69354f64f8
 
 ---
 
@@ -203,7 +200,9 @@ mkdir ckpts
 # The download time may vary from 10 minutes to 1 hour depending on network conditions.
 huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
 ```
-<!-- For more information about the model, visit the Hugging Face repository [here](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT). -->
+Note：If an `No such file or directory: 'ckpts/.huggingface/.gitignore.lock'` like error occurs during the download process, you can ignore the error and retry the command by executing `huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts`
+
+For more information about the model, visit the Hugging Face repository [here](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT).
 
 
 All models will be automatically downloaded. For more information about the model, visit the Hugging Face repository [here](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT).
