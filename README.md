@@ -43,7 +43,7 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 - [X] Cli Demo 
 
 ## Contents
-- [Hunyuan-DiT](#hunyuan-dit-a-powerful-multi-resolution-diffusion-transformer-with-fine-grained-chinese-understanding)
+- [Hunyuan-DiT](#hunyuan-dit--a-powerful-multi-resolution-diffusion-transformer-with-fine-grained-chinese-understanding)
   - [Abstract](#abstract)
   - [🎉 Hunyuan-DiT Key Features](#-hunyuan-dit-key-features)
     - [Chinese-English Bilingual DiT Architecture](#chinese-english-bilingual-dit-architecture)
@@ -51,7 +51,7 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
   - [📈 Comparisons](#comparisons)
   - [🎥 Visualization](#visualization)
   - [📜 Requirements](#requirements)
-  - [🛠 Dependencies and Installation](#dependencies-and-installation)
+  - [🛠 Dependencies and Installation](#%EF%B8%8Fdependencies-and-installation)
   - [🧱 Download Pretrained Models](#download-pretrained-models)
   - [🔑 Inference](#-inference)
     - [Using Gradio](#using-gradio)
