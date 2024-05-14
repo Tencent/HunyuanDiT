@@ -32,15 +32,15 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 ## 📑 Open-source Plan
 
 - Hunyuan-DiT (Text-to-Image Model)
-  - [x] Inference ✅
-  - [x] Checkpoints ✅
+  - [x] Inference 
+  - [x] Checkpoints 
   - [ ] Distillation Version (Coming soon ⏩️)
   - [ ] TensorRT Version (Coming soon ⏩️)
   - [ ] Training (Coming later ⏩️)
 - DialogGen (Prompt Enhancement Model)
-  - [x] Inference ✅
-- [X] Web Demo (Gradio) ✅
-- [X] Cli Demo ✅
+  - [x] Inference 
+- [X] Web Demo (Gradio) 
+- [X] Cli Demo 
 
 ## Contents
 - [Hunyuan-DiT](#hunyuan-dit-a-powerful-multi-resolution-diffusion-transformer-with-fine-grained-chinese-understanding)
