@@ -53,7 +53,7 @@ def load_images(image_files):
 def init_dialoggen_model(model_path, model_base=None):
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, context_len = load_pretrained_model(
-        model_path, model_base, model_name, llava_type_model=True)
+        model_path, model_base, model_name, llava_type_model=True, load_4bit=True)
     return {"tokenizer": tokenizer,
             "model": model,
             "image_processor": image_processor}
