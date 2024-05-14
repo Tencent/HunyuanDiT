@@ -13,14 +13,13 @@ def get_args(default_args=None):
     parser.add_argument("--image-size", type=int, nargs='+', default=[1024, 1024],
                         help='Image size (h, w). If a single value is provided, the image will be treated to '
                              '(value, value).')
-    parser.add_argument("--infer-mode", type=str, choices=["fa", "torch", "trt"], default="fa",
+    parser.add_argument("--infer-mode", type=str, choices=["fa", "torch", "trt"], default="torch",
                         help="Inference mode")
-
 
     # HunYuan-DiT
     parser.add_argument("--model", type=str, choices=list(HUNYUAN_DIT_CONFIG.keys()), default='DiT-g/2')
     parser.add_argument("--norm", type=str, default="layer", help="Normalization layer type")
-    parser.add_argument("--load-key", type=str, default="ema", help="Load model key for HunYuanDiT checkpoint.")
+    parser.add_argument("--load-key", type=str, choices=["ema", "module"], default="ema", help="Load model key for HunYuanDiT checkpoint.")
     parser.add_argument('--size-cond', type=int, nargs='+', default=[1024, 1024],
                         help="Size condition used in sampling. 2 values are required for height and width. "
                              "If a single value is provided, the image will be treated to (value, value).")

@@ -707,7 +707,6 @@ class StableDiffusionPipeline(
                                negative_prompt_embeds=negative_prompt_embeds,
                                lora_scale=text_encoder_lora_scale,
                                )
-        # import pdb; pdb.set_trace()
         prompt_embeds_t5, negative_prompt_embeds_t5, attention_mask_t5, uncond_attention_mask_t5 = \
             self.encode_prompt(prompt,
                                device,

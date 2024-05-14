@@ -4,6 +4,11 @@ from pathlib import Path
 
 import numpy as np
 import torch
+
+# For reproducibility
+# torch.backends.cudnn.benchmark = False
+# torch.backends.cudnn.deterministic = True
+
 from diffusers import schedulers
 from diffusers.models import AutoencoderKL
 from loguru import logger
@@ -16,9 +21,6 @@ from .modules.models import HunYuanDiT, HUNYUAN_DIT_CONFIG
 from .modules.posemb_layers import get_2d_rotary_pos_embed, get_fill_resize_and_crop
 from .modules.text_encoder import MT5Embedder
 from .utils.tools import set_seeds
-
-torch.backends.cuda.matmul.allow_tf32 = True
-torch.backends.cudnn.allow_tf32 = True
 
 
 class Resolution:

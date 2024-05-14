@@ -143,8 +143,6 @@ class FlashSelfMHAModified(nn.Module):
         freqs_cis_img: torch.Tensor
             (batch, hidden_dim // 2), RoPE for image
         """
-        # import pdb; pdb.set_trace()
-
         b, s, d = x.shape
 
         qkv = self.Wqkv(x)
