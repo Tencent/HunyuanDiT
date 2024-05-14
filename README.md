@@ -32,7 +32,7 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 
 ## 🔥🔥🔥 Hunyuan Assistant
 
-Welcome to [Hunyuan Assistant](https://hunyuan.tencent.com/bot/chat) to experience our products! You can enter the following prompts or other **prompts with the drawing intention words to activate** the hunyuan text2image generation function.
+Welcome to [Hunyuan Assistant](https://hunyuan.tencent.com/bot/chat) to experience our products! Simply enter the suggested prompts or any other **creative prompts with the drawing intention words** to activate the hunyuan text2image generation function.
 > 画一只穿着西装的猪
 >
 > draw a pig in a suit
