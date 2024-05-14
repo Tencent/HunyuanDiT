@@ -9,7 +9,7 @@
 <div align="center">
   <a href="https://github.com/Tencent/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT Code&message=Github&color=blue&logo=github-pages"></a> &ensp;
   <a href="https://dit.hunyuan.tencent.com"><img src="https://img.shields.io/static/v1?label=Project%20Page&message=Github&color=blue&logo=github-pages"></a> &ensp;
-  <a href="https://github.com/Tencent/HunyuanDiT/report/technique_report.pdf"><img src="https://img.shields.io/static/v1?label=Report&message=HunYuan-DiT&color=red&"></a> &ensp;
+  <a href="https://tencent.github.io/HunyuanDiT/asset/Hunyuan_DiT_Tech_Report_05140553.pdf"><img src="https://img.shields.io/static/v1?label=Report&message=HunYuan-DiT&color=red&"></a> &ensp;
   <a href="https://arxiv.org/abs/2403.08857"><img src="https://img.shields.io/static/v1?label=Paper&message=Arxiv:DialogGen&color=red&logo=arxiv"></a> &ensp;
   <a href="https://huggingface.co/Tencent-Hunyuan/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT&message=HuggingFace&color=yellow"></a> &ensp;
 
@@ -19,11 +19,11 @@
 
 This repo contains PyTorch model definitions, pre-trained weights and inference/sampling code for our paper exploring Hunyuan-DiT. You can find more visualizations on our [project page](https://dit.hunyuan.tencent.com/).
 
-> [**Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding**](https://github.com/Tencent/HunyuanDiT/) <br>
+> [**Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding**](https://github.com/Tencent/HunyuanDiT/blob/main/asset/Hunyuan_DiT_Tech_Report_05140553.pdf) <br>
 > Zhimin Li*, Jianwei Zhang*, Qin Lin, Jiangfeng Xiong, Yanxin Long, Xinchi Deng, Yingfang Zhang, Xingchao Liu, Minbin Huang, Zedong Xiao, Dayou Chen, Jiajun He, Jiahao Li, Wenyue Li, Chen Zhang, Rongwei Quan, Jianxiang Lu, Jiabin Huang, Xiaoyan Yuan, Xiaoxiao Zheng, Yixuan Li, Jihong Zhang, Chao Zhang, Meng Chen, Jie Liu, Zheng Fang, Weiyan Wang, Jinbao Xue, Yangyu Tao, JianChen Zhu, Kai Liu, Sihuan Lin, Yifu Sun, Yun Li, Dongdong Wang, Zhichao Hu, Xiao Xiao, Yan Chen, Yuhong Liu, Wei Liu, Di Wang, Yong Yang, Jie Jiang, Qinglin Lu‡
 > <br>Tencent Hunyuan<br>
 
-> [**DialogGen:Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://hunyuan-dialoggen.github.io/)<br>
+> [**DialogGen:Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857)<br>
 > Minbin Huang*, Yanxin Long*, Xinchi Deng,  Ruihang Chu, Jiangfeng Xiong, Xiaodan Liang, Hong Cheng, Qinglin Lu&#8224;, Wei Liu
 > <br>Chinese University of Hong Kong, Tencent Hunyuan, Shenzhen Campus of Sun Yat-sen University<br>
 
@@ -135,7 +135,7 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
 
 * **Multi-turn Text2Image Generation**
 
-https://github.com/yestinl/MDINO/assets/27557933/084ac599-73ce-4be9-9ba9-1b69354f64f8
+https://github.com/Tencent/tencent.github.io/assets/27557933/94b4dcc3-104d-44e1-8bb2-dc55108763d1
 
 ---
 
@@ -201,9 +201,6 @@ mkdir ckpts
 huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
 ```
 Note：If an `No such file or directory: 'ckpts/.huggingface/.gitignore.lock'` like error occurs during the download process, you can ignore the error and retry the command by executing `huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts`
-
-For more information about the model, visit the Hugging Face repository [here](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT).
-
 
 All models will be automatically downloaded. For more information about the model, visit the Hugging Face repository [here](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT).
 
