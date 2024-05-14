@@ -6,8 +6,9 @@
   <img src="./asset/logo.png"  height=100>
 </p>
 
-<div align="center" style="font-size: 30px;font-weight: bold;">Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding</div>
+<div align="center" style="font-size: 90 px;font-weight: bold;"></div>
 
+# **Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding**
 <div align="center">
   <a href="https://github.com/Tencent/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT Code&message=Github&color=blue&logo=github-pages"></a> &ensp;
   <a href="https://dit.hunyuan.tencent.com"><img src="https://img.shields.io/static/v1?label=Project%20Page&message=Github&color=blue&logo=github-pages"></a> &ensp;
@@ -98,11 +99,7 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
 </p>
 
 * **Multi-turn Text2Image Generation**
-<p align="center">
-  <a href="https://prc-videoframe-pub-1258344703.cos.ap-guangzhou.myqcloud.com/ad_creative_engine/projectpage/1deab38689342431e63606e01e16961c.mov">
-      <img src="./asset/cover.png" alt="Watch the video" height="800">
-  </a>
-</p>
+https://github.com/Tencent/HunyuanDiT/assets/27557933/f1c0b7df-7b3e-4888-9254-ff3dda14cd47
 
 # **Dependencies and Installation**
 Ensure your machine is equipped with a GPU having over 20GB of memory.
