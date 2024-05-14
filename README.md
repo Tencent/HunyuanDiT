@@ -107,15 +107,15 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
     <td>SD 3</td> <td>&#10008</td> <td>77.1</td> <td>69.3</td> <td>94.6</td> <td>82.5</td> <td>56.7</td> 
     
 </tr> 
-<tr style="font-weight: bold; background-color: #f2f2f2;"> 
-    <td>Hunyuan-DiT</td><td>✔</td> <td>74.2</td> <td>74.3</td> <td>95.4</td> <td>86.6</td> <td>59.0</td> 
-</tr>
 <tr> 
     <td>MidJourney v6</td><td>&#10008</td> <td>73.5</td> <td>80.2</td> <td>93.5</td> <td>87.2</td> <td>63.3</td> 
 </tr> 
 <tr> 
     <td>DALL-E 3</td><td>&#10008</td> <td>83.9</td> <td>80.3</td> <td>96.5</td> <td>89.4</td> <td>71.0</td> 
 </tr> 
+<tr style="font-weight: bold; background-color: #f2f2f2;"> 
+    <td>Hunyuan-DiT</td><td>✔</td> <td>74.2</td> <td>74.3</td> <td>95.4</td> <td>86.6</td> <td>59.0</td> 
+</tr>
 </table> 
 </p>
 
