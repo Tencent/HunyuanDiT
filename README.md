@@ -1,7 +1,7 @@
 <!-- ## **HunyuanDiT** -->
 
 <p align="center">
-  <img src="./asset/logo.png"  height=100>
+  <img src="https://raw.githubusercontent.com/Tencent/HunyuanDiT/main/asset/logo.png"  height=100>
 </p>
 
 # Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding
@@ -19,7 +19,7 @@
 
 This repo contains PyTorch model definitions, pre-trained weights and inference/sampling code for our paper exploring Hunyuan-DiT. You can find more visualizations on our [project page](https://dit.hunyuan.tencent.com/).
 
-> [**Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding**](https://github.com/Tencent/HunyuanDiT/blob/main/asset/Hunyuan_DiT_Tech_Report_05140553.pdf) <br>
+> [**Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding**](https://tencent.github.io/HunyuanDiT/asset/Hunyuan_DiT_Tech_Report_05140553.pdf) <br>
 > Zhimin Li*, Jianwei Zhang*, Qin Lin, Jiangfeng Xiong, Yanxin Long, Xinchi Deng, Yingfang Zhang, Xingchao Liu, Minbin Huang, Zedong Xiao, Dayou Chen, Jiajun He, Jiahao Li, Wenyue Li, Chen Zhang, Rongwei Quan, Jianxiang Lu, Jiabin Huang, Xiaoyan Yuan, Xiaoxiao Zheng, Yixuan Li, Jihong Zhang, Chao Zhang, Meng Chen, Jie Liu, Zheng Fang, Weiyan Wang, Jinbao Xue, Yangyu Tao, JianChen Zhu, Kai Liu, Sihuan Lin, Yifu Sun, Yun Li, Dongdong Wang, Zhichao Hu, Xiao Xiao, Yan Chen, Yuhong Liu, Wei Liu, Di Wang, Yong Yang, Jie Jiang, Qinglin Lu‡
 > <br>Tencent Hunyuan<br>
 
@@ -69,7 +69,7 @@ Through our carefully designed holistic human evaluation protocol with more than
 ### **Chinese-English Bilingual DiT Architecture**
 Hunyuan-DiT is a diffusion model in the latent space, as depicted in figure below. Following the Latent Diffusion Model, we use a pre-trained Variational Autoencoder (VAE) to compress the images into low-dimensional latent spaces and train a diffusion model to learn the data distribution with diffusion models. Our diffusion model is parameterized with a transformer. To encode the text prompts, we leverage a combination of pre-trained bilingual (English and Chinese) CLIP and multilingual T5 encoder.
 <p align="center">
-  <img src="./asset/framework.png"  height=500>
+  <img src="https://raw.githubusercontent.com/Tencent/HunyuanDiT/main/asset/framework.png"  height=500>
 </p>
 
 ### Multi-turn Text2Image Generation
@@ -79,7 +79,7 @@ step by step. In this section, we will detail how we empower Hunyuan-DiT with th
 conversations and image generation. We train MLLM to understand the multi-round user dialogue
 and output the new text prompt for image generation.
 <p align="center">
-  <img src="./asset/mllm.png"  height=300>
+  <img src="https://raw.githubusercontent.com/Tencent/HunyuanDiT/main/asset/mllm.png"  height=300>
 </p>
 
 ## Comparisons
@@ -123,14 +123,14 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
 
 * **Chinese Elements**
 <p align="center">
-  <img src="./asset/chinese elements understanding.png"  height=220>
+  <img src="https://raw.githubusercontent.com/Tencent/HunyuanDiT/main/asset/chinese elements understanding.png"  height=220>
 </p>
 
 * **Long Text Input**
 
 
 <p align="center">
-  <img src="./asset/long text understanding.png"  height=310>
+  <img src="https://raw.githubusercontent.com/Tencent/HunyuanDiT/main/asset/long text understanding.png"  height=310>
 </p>
 
 * **Multi-turn Text2Image Generation**
