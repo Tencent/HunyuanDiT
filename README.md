@@ -12,7 +12,8 @@
   <a href="https://tencent.github.io/HunyuanDiT/asset/Hunyuan_DiT_Tech_Report_05140553.pdf"><img src="https://img.shields.io/static/v1?label=Report&message=HunYuan-DiT&color=red&"></a> &ensp;
   <a href="https://arxiv.org/abs/2403.08857"><img src="https://img.shields.io/static/v1?label=Paper&message=Arxiv:DialogGen&color=red&logo=arxiv"></a> &ensp;
   <a href="https://huggingface.co/Tencent-Hunyuan/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT&message=HuggingFace&color=yellow"></a> &ensp;
-
+  <a href="https://hunyuan.tencent.com/bot/chat"><img src="https://img.shields.io/static/v1?label=Hunyuan Assistant&message=Web&color=green"></a> &ensp;
+  
 </div>
 
 -----
@@ -28,6 +29,17 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 > <br>Chinese University of Hong Kong, Tencent Hunyuan, Shenzhen Campus of Sun Yat-sen University<br>
 
 ---
+
+## 🔥🔥🔥 Hunyuan Assistant
+
+Welcome to [Hunyuan Assistant](https://hunyuan.tencent.com/bot/chat) to experience our products! You can enter the following prompts or other **prompts with the drawing intention words to activate** the hunyuan text2image generation function.
+> 画一只穿着西装的猪
+>
+> draw a pig in a suit
+>
+> 生成一幅画，赛博朋克风，跑车
+> 
+> generate a painting, cyberpunk style, sports car
 
 ## 📑 Open-source Plan
 
@@ -136,6 +148,8 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
 * **Multi-turn Text2Image Generation**
 
 https://github.com/Tencent/tencent.github.io/assets/27557933/94b4dcc3-104d-44e1-8bb2-dc55108763d1
+
+
 
 ---
 
