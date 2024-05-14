@@ -119,7 +119,7 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
 </table> 
 </p>
 
-## 🎥Visualization
+## 🎥 Visualization
 
 * **Chinese Elements**
 <p align="center">
@@ -139,7 +139,7 @@ https://github.com/Tencent/tencent.github.io/assets/27557933/94b4dcc3-104d-44e1-
 
 ---
 
-## 📜Requirements
+## 📜 Requirements
 
 This repo consists of DialogGen (a prompt enhancement model) and Hunyuan-DiT (a text-to-image model).
 
@@ -159,7 +159,7 @@ The following table shows the requirements for running the models (The TensorRT 
   * **Recommended**: We recommend using a GPU with 32GB of memory for better generation quality.
 * Tested operating system: Linux
 
-## 🛠️Dependencies and Installation
+## 🛠️ Dependencies and Installation
 
 Begin by cloning the repository:
 ```bash
@@ -184,7 +184,7 @@ python -m pip install -r requirements.txt
 python -m pip install git+https://github.com/Dao-AILab/flash-attention.git@v2.1.2.post3
 ```
 
-## 🧱Download Pretrained Models
+## 🧱 Download Pretrained Models
 To download the model, first install the huggingface-cli. (Detailed instructions are available [here](https://huggingface.co/docs/huggingface_hub/guides/cli).)
 
 ```bash
