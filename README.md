@@ -9,7 +9,7 @@
 <div align="center">
   <a href="https://github.com/Tencent/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT Code&message=Github&color=blue&logo=github-pages"></a> &ensp;
   <a href="https://dit.hunyuan.tencent.com"><img src="https://img.shields.io/static/v1?label=Project%20Page&message=Github&color=blue&logo=github-pages"></a> &ensp;
-  <a href="https://arxiv.org/abs/2405.08748"><img src="https://img.shields.io/static/v1?label=Report&message=Arxiv:HunYuan-DiT&color=red&logo=arxiv"></a> &ensp;
+  <a href="https://arxiv.org/abs/2405.08748"><img src="https://img.shields.io/static/v1?label=Technical Report&message=Arxiv:HunYuan-DiT&color=red&logo=arxiv"></a> &ensp;
   <a href="https://arxiv.org/abs/2403.08857"><img src="https://img.shields.io/static/v1?label=Paper&message=Arxiv:DialogGen&color=red&logo=arxiv"></a> &ensp;
   <a href="https://huggingface.co/Tencent-Hunyuan/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT&message=HuggingFace&color=yellow"></a> &ensp;
   <a href="https://hunyuan.tencent.com/bot/chat"><img src="https://img.shields.io/static/v1?label=Hunyuan Assistant&message=Web&color=green"></a> &ensp;
@@ -30,9 +30,9 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 
 
 
-## 🔥🔥🔥 Hunyuan Assistant
+## 🔥🔥🔥 Tencent Hunyuan Bot
 
-Welcome to [Hunyuan Assistant](https://hunyuan.tencent.com/bot/chat), where you can explore our innovative products! Just input the suggested prompts below or any other **imaginative prompts containing drawing-related keywords** to activate the Hunyuan text-to-image generation feature.  We accommodate **simple prompts** as well as **multi-turn language interactions** to help you create the perfect picture. Unleash your creativity and create any picture you desire, **all for free!**
+Welcome to [Tencent Hunyuan Bot](https://hunyuan.tencent.com/bot/chat), where you can explore our innovative products! Just input the suggested prompts below or any other **imaginative prompts containing drawing-related keywords** to activate the Hunyuan text-to-image generation feature.  We accommodate **simple prompts** as well as **multi-turn language interactions** to help you create the perfect picture. Unleash your creativity and create any picture you desire, **all for free!**
 > 画一只穿着西装的猪
 >
 > draw a pig in a suit
