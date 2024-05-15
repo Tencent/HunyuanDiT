@@ -9,7 +9,7 @@
 <div align="center">
   <a href="https://github.com/Tencent/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT Code&message=Github&color=blue&logo=github-pages"></a> &ensp;
   <a href="https://dit.hunyuan.tencent.com"><img src="https://img.shields.io/static/v1?label=Project%20Page&message=Github&color=blue&logo=github-pages"></a> &ensp;
-  <a href="https://tencent.github.io/HunyuanDiT/asset/Hunyuan_DiT_Tech_Report_05140553.pdf"><img src="https://img.shields.io/static/v1?label=Report&message=HunYuan-DiT&color=red&"></a> &ensp;
+  <a href="https://arxiv.org/abs/2405.08748"><img src="https://img.shields.io/static/v1?label=Report&message=Arxiv:HunYuan-DiT&color=red&logo=arxiv"></a> &ensp;
   <a href="https://arxiv.org/abs/2403.08857"><img src="https://img.shields.io/static/v1?label=Paper&message=Arxiv:DialogGen&color=red&logo=arxiv"></a> &ensp;
   <a href="https://huggingface.co/Tencent-Hunyuan/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT&message=HuggingFace&color=yellow"></a> &ensp;
   <a href="https://hunyuan.tencent.com/bot/chat"><img src="https://img.shields.io/static/v1?label=Hunyuan Assistant&message=Web&color=green"></a> &ensp;
@@ -20,7 +20,7 @@
 
 This repo contains PyTorch model definitions, pre-trained weights and inference/sampling code for our paper exploring Hunyuan-DiT. You can find more visualizations on our [project page](https://dit.hunyuan.tencent.com/).
 
-> [**Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding**](https://tencent.github.io/HunyuanDiT/asset/Hunyuan_DiT_Tech_Report_05140553.pdf) <br>
+> [**Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding**](https://arxiv.org/abs/2405.08748) <br>
 > Zhimin Li*, Jianwei Zhang*, Qin Lin, Jiangfeng Xiong, Yanxin Long, Xinchi Deng, Yingfang Zhang, Xingchao Liu, Minbin Huang, Zedong Xiao, Dayou Chen, Jiajun He, Jiahao Li, Wenyue Li, Chen Zhang, Rongwei Quan, Jianxiang Lu, Jiabin Huang, Xiaoyan Yuan, Xiaoxiao Zheng, Yixuan Li, Jihong Zhang, Chao Zhang, Meng Chen, Jie Liu, Zheng Fang, Weiyan Wang, Jinbao Xue, Yangyu Tao, JianChen Zhu, Kai Liu, Sihuan Lin, Yifu Sun, Yun Li, Dongdong Wang, Zhichao Hu, Xiao Xiao, Yan Chen, Yuhong Liu, Wei Liu, Di Wang, Yong Yang, Jie Jiang, Qinglin Lu‡
 > <br>Tencent Hunyuan<br>
 
@@ -28,11 +28,11 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 > Minbin Huang*, Yanxin Long*, Xinchi Deng,  Ruihang Chu, Jiangfeng Xiong, Xiaodan Liang, Hong Cheng, Qinglin Lu&#8224;, Wei Liu
 > <br>Chinese University of Hong Kong, Tencent Hunyuan, Shenzhen Campus of Sun Yat-sen University<br>
 
----
+
 
 ## 🔥🔥🔥 Hunyuan Assistant
 
-Welcome to [Hunyuan Assistant](https://hunyuan.tencent.com/bot/chat) to experience our products! Simply enter the suggested prompts or any other **creative prompts with the drawing intention words** to activate the hunyuan text2image generation function.
+Welcome to [Hunyuan Assistant](https://hunyuan.tencent.com/bot/chat), where you can explore our innovative products! Just input the suggested prompts below or any other **imaginative prompts containing drawing-related keywords** to activate the Hunyuan text-to-image generation feature.  We accommodate **simple prompts** as well as **multi-turn language interactions** to help you create the perfect picture. Unleash your creativity and create any picture you desire, **all for free!**
 > 画一只穿着西装的猪
 >
 > draw a pig in a suit
@@ -49,7 +49,7 @@ Welcome to [Hunyuan Assistant](https://hunyuan.tencent.com/bot/chat) to experien
   - [ ] Distillation Version (Coming soon ⏩️)
   - [ ] TensorRT Version (Coming soon ⏩️)
   - [ ] Training (Coming later ⏩️)
-- DialogGen (Prompt Enhancement Model)
+- [DialogGen](https://github.com/Centaurusalpha/DialogGen) (Prompt Enhancement Model)
   - [x] Inference 
 - [X] Web Demo (Gradio) 
 - [X] Cli Demo 
@@ -287,12 +287,22 @@ We list some more useful configurations for easy usage:
 
 
 # 🔗 BibTeX
-If you find Hunyuan-DiT useful for your research and applications, please cite using this BibTeX:
+If you find [Hunyuan-DiT](https://arxiv.org/abs/2405.08748) or [DialogGen](https://arxiv.org/abs/2403.08857) useful for your research and applications, please cite using this BibTeX:
 
 ```BibTeX
-@misc{hunyuandit,
-      title={Hunyuan-DiT: A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding},
-      author={Zhimin Li, Jianwei Zhang, Qin Lin, Jiangfeng Xiong, Yanxin Long, Xinchi Deng, Yingfang Zhang, Xingchao Liu, Minbin Huang, Zedong Xiao, Dayou Chen, Jiajun He, Jiahao Li, Wenyue Li, Chen Zhang, Rongwei Quan, Jianxiang Lu, Jiabin Huang, Xiaoyan Yuan, Xiaoxiao Zheng, Yixuan Li, Jihong Zhang, Chao Zhang, Meng Chen, Jie Liu, Zheng Fang, Weiyan Wang, Jinbao Xue, Yangyu Tao, JianChen Zhu, Kai Liu, Sihuan Lin, Yifu Sun, Yun Li, Dongdong Wang, Zhichao Hu, Xiao Xiao, Yan Chen, Yuhong Liu, Wei Liu, Di Wang, Yong Yang, Jie Jiang, Qinglin Lu},
+@misc{li2024hunyuandit,
+      title={Hunyuan-DiT: A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding}, 
+      author={Zhimin Li and Jianwei Zhang and Qin Lin and Jiangfeng Xiong and Yanxin Long and Xinchi Deng and Yingfang Zhang and Xingchao Liu and Minbin Huang and Zedong Xiao and Dayou Chen and Jiajun He and Jiahao Li and Wenyue Li and Chen Zhang and Rongwei Quan and Jianxiang Lu and Jiabin Huang and Xiaoyan Yuan and Xiaoxiao Zheng and Yixuan Li and Jihong Zhang and Chao Zhang and Meng Chen and Jie Liu and Zheng Fang and Weiyan Wang and Jinbao Xue and Yangyu Tao and Jianchen Zhu and Kai Liu and Sihuan Lin and Yifu Sun and Yun Li and Dongdong Wang and Mingtao Chen and Zhichao Hu and Xiao Xiao and Yan Chen and Yuhong Liu and Wei Liu and Di Wang and Yong Yang and Jie Jiang and Qinglin Lu},
       year={2024},
+      eprint={2405.08748},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+
+@article{huang2024dialoggen,
+  title={DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation},
+  author={Huang, Minbin and Long, Yanxin and Deng, Xinchi and Chu, Ruihang and Xiong, Jiangfeng and Liang, Xiaodan and Cheng, Hong and Lu, Qinglin and Liu, Wei},
+  journal={arXiv preprint arXiv:2403.08857},
+  year={2024}
 }
 ```
