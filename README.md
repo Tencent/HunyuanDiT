@@ -60,11 +60,11 @@ Welcome to [Tencent Hunyuan Bot](https://hunyuan.tencent.com/bot/chat), where yo
   - [🎉 Hunyuan-DiT Key Features](#-hunyuan-dit-key-features)
     - [Chinese-English Bilingual DiT Architecture](#chinese-english-bilingual-dit-architecture)
     - [Multi-turn Text2Image Generation](#multi-turn-text2image-generation)
-  - [📈 Comparisons](#comparisons)
-  - [🎥 Visualization](#visualization)
-  - [📜 Requirements](#requirements)
-  - [🛠 Dependencies and Installation](#%EF%B8%8Fdependencies-and-installation)
-  - [🧱 Download Pretrained Models](#download-pretrained-models)
+  - [📈 Comparisons](#-comparisons)
+  - [🎥 Visualization](#-visualization)
+  - [📜 Requirements](#-requirements)
+  - [🛠 Dependencies and Installation](#-dependencies-and-installation)
+  - [🧱 Download Pretrained Models](#-download-pretrained-models)
   - [🔑 Inference](#-inference)
     - [Using Gradio](#using-gradio)
     - [Using Command Line](#using-command-line)
@@ -94,7 +94,7 @@ and output the new text prompt for image generation.
   <img src="https://raw.githubusercontent.com/Tencent/HunyuanDiT/main/asset/mllm.png"  height=300>
 </p>
 
-## Comparisons
+## 📈 Comparisons
 In order to comprehensively compare the generation capabilities of HunyuanDiT and other models, we constructed a 4-dimensional test set, including Text-Image Consistency, Excluding AI Artifacts, Subject Clarity, Aesthetic. More than 50 professional evaluators performs the evaluation.
 
 <p align="center">
@@ -128,7 +128,8 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
 <tr style="font-weight: bold; background-color: #f2f2f2;"> 
     <td>Hunyuan-DiT</td><td>✔</td> <td>74.2</td> <td>74.3</td> <td>95.4</td> <td>86.6</td> <td>59.0</td> 
 </tr>
-</table> 
+</tbody>
+</table>
 </p>
 
 ## 🎥 Visualization
