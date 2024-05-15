@@ -63,7 +63,7 @@ Welcome to [Tencent Hunyuan Bot](https://hunyuan.tencent.com/bot/chat), where yo
   - [📈 Comparisons](#-comparisons)
   - [🎥 Visualization](#-visualization)
   - [📜 Requirements](#-requirements)
-  - [🛠 Dependencies and Installation](%EF%B8%8F-dependencies-and-installation)
+  - [🛠 Dependencies and Installation](#%EF%B8%8F-dependencies-and-installation)
   - [🧱 Download Pretrained Models](#-download-pretrained-models)
   - [🔑 Inference](#-inference)
     - [Using Gradio](#using-gradio)
