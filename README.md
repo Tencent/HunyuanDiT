@@ -203,7 +203,7 @@ python -m pip install git+https://github.com/Dao-AILab/flash-attention.git@v2.1.
 To download the model, first install the huggingface-cli. (Detailed instructions are available [here](https://huggingface.co/docs/huggingface_hub/guides/cli).)
 
 ```bash
-python -m pip install "huggingface_hub[cli]"
+pip install huggingface_hub[hf_transfer]
 ```
 
 Then download the model using the following commands:
@@ -213,7 +213,7 @@ Then download the model using the following commands:
 mkdir ckpts
 # Use the huggingface-cli tool to download the model.
 # The download time may vary from 10 minutes to 1 hour depending on network conditions.
-huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
+HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
 ```
 Note：If an `No such file or directory: 'ckpts/.huggingface/.gitignore.lock'` like error occurs during the download process, you can ignore the error and retry the command by executing `huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts`
 
