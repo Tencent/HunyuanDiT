@@ -32,7 +32,10 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 
 ## 🔥🔥🔥 Tencent Hunyuan Bot
 
-Welcome to [Tencent Hunyuan Bot](https://hunyuan.tencent.com/bot/chat), where you can explore our innovative products! Just input the suggested prompts below or any other **imaginative prompts containing drawing-related keywords** to activate the Hunyuan text-to-image generation feature.  You can use **simple prompts** as well as **multi-turn language interactions** to create the picture. Unleash your creativity and create any picture you desire, **all for free!**
+Welcome to [Tencent Hunyuan Bot](https://hunyuan.tencent.com/bot/chat), where you can explore our innovative products! Just input the suggested prompts below or any other **imaginative prompts containing drawing-related keywords** to activate the Hunyuan text-to-image generation feature.  Unleash your creativity and create any picture you desire, **all for free!**
+
+You can use simple prompts similar to natural language text
+
 > 画一只穿着西装的猪
 >
 > draw a pig in a suit
@@ -40,6 +43,16 @@ Welcome to [Tencent Hunyuan Bot](https://hunyuan.tencent.com/bot/chat), where yo
 > 生成一幅画，赛博朋克风，跑车
 > 
 > generate a painting, cyberpunk style, sports car
+
+or multi-turn language interactions to create the picture. 
+
+> 画一个木制的鸟
+>
+> draw a wooden bird
+>
+> 变成玻璃的
+>
+> turn into glass
 
 ## 📑 Open-source Plan
 
