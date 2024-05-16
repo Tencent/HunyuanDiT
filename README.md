@@ -295,7 +295,7 @@ We list some more useful configurations for easy usage:
 |  `--load-key`   |    ema    | Load the student model or EMA model (ema or module) |
 
 
-# 🔗 BibTeX
+## 🔗 BibTeX
 If you find [Hunyuan-DiT](https://arxiv.org/abs/2405.08748) or [DialogGen](https://arxiv.org/abs/2403.08857) useful for your research and applications, please cite using this BibTeX:
 
 ```BibTeX
@@ -315,3 +315,13 @@ If you find [Hunyuan-DiT](https://arxiv.org/abs/2405.08748) or [DialogGen](https
   year={2024}
 }
 ```
+
+## Start History
+
+<a href="https://star-history.com/#Tencent/HunyuanDiT&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Tencent/HunyuanDiT&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Tencent/HunyuanDiT&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Tencent/HunyuanDiT&type=Date" />
+ </picture>
+</a>
