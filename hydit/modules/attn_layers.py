@@ -148,8 +148,8 @@ class FlashSelfMHAModified(nn.Module):
         qkv = self.Wqkv(x)
         qkv = qkv.view(b, s, 3, self.num_heads, self.head_dim)  # [b, s, 3, h, d]
         q, k, v = qkv.unbind(dim=2) # [b, s, h, d]
-        q = self.q_norm(q).half()   # [b, s, h, d]
-        k = self.k_norm(k).half()
+        q = self.q_norm(q).to(q)   # [b, s, h, d]
+        k = self.k_norm(k).to(k)
 
         # Apply RoPE if needed
         if freqs_cis_img is not None:
@@ -222,8 +222,8 @@ class FlashCrossMHAModified(nn.Module):
         q = self.q_proj(x).view(b, s1, self.num_heads, self.head_dim)       # [b, s1, h, d]
         kv = self.kv_proj(y).view(b, s2, 2, self.num_heads, self.head_dim)  # [b, s2, 2, h, d]
         k, v = kv.unbind(dim=2)                 # [b, s2, h, d]
-        q = self.q_norm(q).half()               # [b, s1, h, d]
-        k = self.k_norm(k).half()               # [b, s2, h, d]
+        q = self.q_norm(q).to(q)              # [b, s1, h, d]
+        k = self.k_norm(k).to(k)               # [b, s2, h, d]
 
         # Apply RoPE if needed
         if freqs_cis_img is not None:
