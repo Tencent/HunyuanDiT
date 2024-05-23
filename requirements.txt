@@ -1,0 +1,19 @@
+--extra-index-url https://pypi.ngc.nvidia.com
+timm==0.9.5
+diffusers==0.21.2
+peft==0.10.0
+protobuf==3.19.0
+torchvision==0.14.1
+transformers==4.37.2
+accelerate==0.29.3
+loguru==0.7.2
+einops==0.7.0
+sentencepiece==0.1.99
+cuda-python==11.7.1
+onnxruntime==1.12.1
+onnx==1.12.0
+nvidia-pyindex==1.0.9
+onnx-graphsurgeon==0.3.27
+polygraphy==0.47.1
+pandas==2.0.3
+gradio==3.50.2

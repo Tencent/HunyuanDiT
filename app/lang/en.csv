@@ -1,0 +1,22 @@
+key,value
+size,Size
+sampler,Sampler
+prompt,Prompt
+default prompt,"A cute cat"
+negative_prompt,Negative Prompt
+seed,Seed
+cfg,CFG Scale
+infer steps,Sampling Steps
+batch size,Batch Size
+width cond,Width Cond
+height cond,Height Cond
+enhance,Prompt Enhancement
+run,Submit
+square,Square(1024x1024)
+landscape,Landscape(1280x768)
+portrait,Portrait(768x1280)
+accordion,Advanced Options
+generated image,HunYuanDiT Generated Image
+examples,More Examples
+title,Hunyuan-DiT
+desc,A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding

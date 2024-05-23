@@ -1,0 +1,22 @@
+key,value
+size,尺寸
+sampler,采样器
+prompt,文本描述
+default prompt,"一只可爱的猫"
+negative_prompt,负向词
+seed,种子
+cfg,CFG系数
+infer steps,采样步数
+batch size,批大小
+width cond,宽度条件
+height cond,高度条件
+enhance,文本增强
+run,提交生成
+square,方形(1024x1024)
+portrait,竖屏(1280x768)
+landscape,横屏(768x1280)
+accordion,高级设置
+generated image,HunYuanDiT 生成
+examples,更多示例
+title,混元-DiT
+desc,具有细粒度中文理解的高性能多分辨率 Diffusion Transformer 模型

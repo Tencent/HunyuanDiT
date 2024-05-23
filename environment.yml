@@ -1,0 +1,8 @@
+name: HunyuanDiT
+channels:
+  - pytorch
+  - nvidia
+dependencies:
+  - python=3.8.12
+  - pytorch=1.13.1
+  - pip
