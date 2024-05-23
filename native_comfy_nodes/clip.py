@@ -3,7 +3,7 @@ import comfy.latent_formats
 import comfy.model_patcher
 import comfy.model_base
 import comfy.utils
-from .hydit.modules.text_encoder import MT5Embedder
+from ..hydit.modules.text_encoder import MT5Embedder
 from transformers import BertModel, BertTokenizer
 import torch
 import os
