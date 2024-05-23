@@ -4,7 +4,7 @@ import comfy.model_patcher
 import comfy.model_base
 import comfy.utils
 from comfy import model_management
-from .supported_dit_models import HunYuan_DiT, HYDiT_Model
+from .supported_dit_models import HunYuan_DiT, HYDiT_Model, ModifiedHunYuanDiT
 from .clip import CLIP
 import os
 import folder_paths
@@ -59,9 +59,7 @@ def load_dit(model_path, output_clip=True, output_model=True, output_vae=True):
 			device=model_management.get_torch_device()
 		)
 
-		from ..hydit.modules.models import HunYuanDiT as HYDiT
-
-		model.diffusion_model = HYDiT(model_conf.dit_conf, **model_conf.unet_config).half().to(load_device)
+		model.diffusion_model = ModifiedHunYuanDiT(model_conf.dit_conf, **model_conf.unet_config).half().to(load_device)
 
 		model.diffusion_model.load_state_dict(state_dict)
 		#model.diffusion_model.dtype = unet_dtype

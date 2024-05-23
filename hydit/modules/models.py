@@ -249,7 +249,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
 
         self.initialize_weights()
 
-    def forward_core(self,
+    def forward(self,
                 x,
                 t,
                 encoder_hidden_states=None,
@@ -348,32 +348,6 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         if return_dict:
             return {'x': x}
         return x
-    
-    def forward(self, x, timesteps, context, t5_embeds=None, attention_mask=None, t5_attention_mask=None, image_meta_size=None, **kwargs):
-        batch_size, _, height, width = x.shape
-        
-        style = torch.as_tensor([0, 0] * (batch_size//2), device=x.device)
-        src_size_cond = (width//2*16, height//2*16)
-        size_cond = list(src_size_cond) + [width*8, height*8, 0, 0]
-        image_meta_size = torch.as_tensor([size_cond] * batch_size, device=x.device)
-        rope = self.calc_rope(*src_size_cond)
-
-        noise_pred = self.forward_core(
-            x = x.to(self.dtype),
-            t = timesteps.to(self.dtype),
-            encoder_hidden_states = context.to(self.dtype),
-            text_embedding_mask   = attention_mask.to(self.dtype),
-            encoder_hidden_states_t5 = t5_embeds.to(self.dtype),
-            text_embedding_mask_t5   = t5_attention_mask.to(self.dtype),
-            image_meta_size = image_meta_size.to(self.dtype),
-            style = style,
-            cos_cis_img = rope[0],
-            sin_cis_img = rope[1],
-            return_dict=False
-        )
-        noise_pred = noise_pred.to(torch.float)
-        eps, _ = noise_pred[:, :self.in_channels], noise_pred[:, self.in_channels:]
-        return eps
     
     def calc_rope(self, height, width):
         """

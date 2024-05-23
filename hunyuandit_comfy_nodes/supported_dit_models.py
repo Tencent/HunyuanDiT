@@ -5,6 +5,7 @@ import comfy.model_base
 import comfy.utils
 import torch
 from collections import namedtuple
+from ..hydit.modules.models import HunYuanDiT as HYDiT
 
 def batch_embeddings(embeds, batch_size):
 	bs_embed, seq_len, _ = embeds.shape
@@ -53,4 +54,34 @@ class HYDiT_Model(comfy.model_base.BaseModel):
             out[name] = comfy.conds.CONDRegular(addit_embeds[name])
 
         return out
+    
+class ModifiedHunYuanDiT(HYDiT):
+    def forward_core(self, *args, **kwargs):
+        return super().forward(*args, **kwargs)
+
+    def forward(self, x, timesteps, context, t5_embeds=None, attention_mask=None, t5_attention_mask=None, image_meta_size=None, **kwargs):
+        batch_size, _, height, width = x.shape
+        
+        style = torch.as_tensor([0, 0] * (batch_size//2), device=x.device)
+        src_size_cond = (width//2*16, height//2*16)
+        size_cond = list(src_size_cond) + [width*8, height*8, 0, 0]
+        image_meta_size = torch.as_tensor([size_cond] * batch_size, device=x.device)
+        rope = self.calc_rope(*src_size_cond)
+
+        noise_pred = self.forward_core(
+            x = x.to(self.dtype),
+            t = timesteps.to(self.dtype),
+            encoder_hidden_states = context.to(self.dtype),
+            text_embedding_mask   = attention_mask.to(self.dtype),
+            encoder_hidden_states_t5 = t5_embeds.to(self.dtype),
+            text_embedding_mask_t5   = t5_attention_mask.to(self.dtype),
+            image_meta_size = image_meta_size.to(self.dtype),
+            style = style,
+            cos_cis_img = rope[0],
+            sin_cis_img = rope[1],
+            return_dict=False
+        )
+        noise_pred = noise_pred.to(torch.float)
+        eps, _ = noise_pred[:, :self.in_channels], noise_pred[:, self.in_channels:]
+        return eps
 
