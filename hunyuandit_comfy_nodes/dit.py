@@ -59,7 +59,7 @@ def load_dit(model_path, output_clip=True, output_model=True, output_vae=True):
 			device=model_management.get_torch_device()
 		)
 
-		from .hydit.modules.models import HunYuanDiT as HYDiT
+		from ..hydit.modules.models import HunYuanDiT as HYDiT
 
 		model.diffusion_model = HYDiT(model_conf.dit_conf, **model_conf.unet_config).half().to(load_device)
 

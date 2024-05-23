@@ -11,7 +11,6 @@ from .norm_layers import RMSNorm
 from .poolers import AttentionPool
 from .posemb_layers import get_2d_rotary_pos_embed, get_fill_resize_and_crop
 
-
 def modulate(x, shift, scale):
     return x * (1 + scale.unsqueeze(1)) + shift.unsqueeze(1)
 
@@ -167,6 +166,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
     @register_to_config
     def __init__(
             self, args,
+            input_size=(32, 32),
             patch_size=2,
             in_channels=4,
             hidden_size=1152,
@@ -186,7 +186,6 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         self.patch_size = patch_size
         self.num_heads = num_heads
         self.hidden_size = hidden_size
-        self.head_size = hidden_size // num_heads
         self.text_states_dim = args.text_states_dim
         self.text_states_dim_t5 = args.text_states_dim_t5
         self.text_len = args.text_len
@@ -217,7 +216,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         self.extra_in_dim = 256 * 6 + hidden_size
 
         # Text embedding for `add`
-        self.x_embedder = PatchEmbed(patch_size, in_channels, hidden_size)
+        self.x_embedder = PatchEmbed(input_size, patch_size, in_channels, hidden_size)
         self.t_embedder = TimestepEmbedder(hidden_size)
         self.extra_in_dim += 1024
         self.extra_embedder = nn.Sequential(
@@ -261,7 +260,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
                 style=None,
                 cos_cis_img=None,
                 sin_cis_img=None,
-                return_dict=False,
+                return_dict=True,
                 ):
         """
         Forward pass of the encoder.
@@ -318,8 +317,8 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
 
         # Build image meta size tokens
         image_meta_size = timestep_embedding(image_meta_size.view(-1), 256)   # [B * 6, 256]
-        # if self.args.use_fp16:
-            # image_meta_size = image_meta_size.half()
+        if self.args.use_fp16:
+            image_meta_size = image_meta_size.half()
         image_meta_size = image_meta_size.view(-1, 6 * 256)
         extra_vec = torch.cat([extra_vec, image_meta_size], dim=1)  # [B, D + 6 * 256]
 
@@ -328,7 +327,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         extra_vec = torch.cat([extra_vec, style_embedding], dim=1)
 
         # Concatenate all extra vectors
-        c = t + self.extra_embedder(extra_vec.to(self.dtype))  # [B, D]
+        c = t + self.extra_embedder(extra_vec)  # [B, D]
 
         # ========================= Forward pass through HunYuanDiT blocks =========================
         skips = []
@@ -370,11 +369,12 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
             style = style,
             cos_cis_img = rope[0],
             sin_cis_img = rope[1],
+            return_dict=False
         )
         noise_pred = noise_pred.to(torch.float)
         eps, _ = noise_pred[:, :self.in_channels], noise_pred[:, self.in_channels:]
         return eps
-        
+    
     def calc_rope(self, height, width):
         """
         Probably not the best in terms of perf to have this here
@@ -384,7 +384,8 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         base_size = 512 // 8 // self.patch_size
         start, stop = get_fill_resize_and_crop((th, tw), base_size)
         sub_args = [start, stop, (th, tw)]
-        rope = get_2d_rotary_pos_embed(self.head_size, *sub_args)
+        head_size = self.hidden_size // self.num_heads
+        rope = get_2d_rotary_pos_embed(head_size, *sub_args)
         return rope
 
     def initialize_weights(self):
