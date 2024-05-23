@@ -9,6 +9,7 @@ from .attn_layers import Attention, FlashCrossMHAModified, FlashSelfMHAModified,
 from .embedders import TimestepEmbedder, PatchEmbed, timestep_embedding
 from .norm_layers import RMSNorm
 from .poolers import AttentionPool
+from .posemb_layers import get_2d_rotary_pos_embed, get_fill_resize_and_crop
 
 
 def modulate(x, shift, scale):
@@ -166,7 +167,6 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
     @register_to_config
     def __init__(
             self, args,
-            input_size=(32, 32),
             patch_size=2,
             in_channels=4,
             hidden_size=1152,
@@ -174,6 +174,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
             num_heads=16,
             mlp_ratio=4.0,
             log_fn=print,
+		    **kwargs,
     ):
         super().__init__()
         self.args = args
@@ -185,6 +186,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         self.patch_size = patch_size
         self.num_heads = num_heads
         self.hidden_size = hidden_size
+        self.head_size = hidden_size // num_heads
         self.text_states_dim = args.text_states_dim
         self.text_states_dim_t5 = args.text_states_dim_t5
         self.text_len = args.text_len
@@ -215,7 +217,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         self.extra_in_dim = 256 * 6 + hidden_size
 
         # Text embedding for `add`
-        self.x_embedder = PatchEmbed(input_size, patch_size, in_channels, hidden_size)
+        self.x_embedder = PatchEmbed(patch_size, in_channels, hidden_size)
         self.t_embedder = TimestepEmbedder(hidden_size)
         self.extra_in_dim += 1024
         self.extra_embedder = nn.Sequential(
@@ -248,7 +250,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
 
         self.initialize_weights()
 
-    def forward(self,
+    def forward_core(self,
                 x,
                 t,
                 encoder_hidden_states=None,
@@ -259,7 +261,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
                 style=None,
                 cos_cis_img=None,
                 sin_cis_img=None,
-                return_dict=True,
+                return_dict=False,
                 ):
         """
         Forward pass of the encoder.
@@ -316,8 +318,8 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
 
         # Build image meta size tokens
         image_meta_size = timestep_embedding(image_meta_size.view(-1), 256)   # [B * 6, 256]
-        if self.args.use_fp16:
-            image_meta_size = image_meta_size.half()
+        # if self.args.use_fp16:
+            # image_meta_size = image_meta_size.half()
         image_meta_size = image_meta_size.view(-1, 6 * 256)
         extra_vec = torch.cat([extra_vec, image_meta_size], dim=1)  # [B, D + 6 * 256]
 
@@ -326,7 +328,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         extra_vec = torch.cat([extra_vec, style_embedding], dim=1)
 
         # Concatenate all extra vectors
-        c = t + self.extra_embedder(extra_vec)  # [B, D]
+        c = t + self.extra_embedder(extra_vec.to(self.dtype))  # [B, D]
 
         # ========================= Forward pass through HunYuanDiT blocks =========================
         skips = []
@@ -347,6 +349,43 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         if return_dict:
             return {'x': x}
         return x
+    
+    def forward(self, x, timesteps, context, t5_embeds=None, attention_mask=None, t5_attention_mask=None, image_meta_size=None, **kwargs):
+        batch_size, _, height, width = x.shape
+        
+        style = torch.as_tensor([0, 0] * (batch_size//2), device=x.device)
+        src_size_cond = (width//2*16, height//2*16)
+        size_cond = list(src_size_cond) + [width*8, height*8, 0, 0]
+        image_meta_size = torch.as_tensor([size_cond] * batch_size, device=x.device)
+        rope = self.calc_rope(*src_size_cond)
+
+        noise_pred = self.forward_core(
+            x = x.to(self.dtype),
+            t = timesteps.to(self.dtype),
+            encoder_hidden_states = context.to(self.dtype),
+            text_embedding_mask   = attention_mask.to(self.dtype),
+            encoder_hidden_states_t5 = t5_embeds.to(self.dtype),
+            text_embedding_mask_t5   = t5_attention_mask.to(self.dtype),
+            image_meta_size = image_meta_size.to(self.dtype),
+            style = style,
+            cos_cis_img = rope[0],
+            sin_cis_img = rope[1],
+        )
+        noise_pred = noise_pred.to(torch.float)
+        eps, _ = noise_pred[:, :self.in_channels], noise_pred[:, self.in_channels:]
+        return eps
+        
+    def calc_rope(self, height, width):
+        """
+        Probably not the best in terms of perf to have this here
+        """
+        th = height // 8 // self.patch_size
+        tw = width // 8 // self.patch_size
+        base_size = 512 // 8 // self.patch_size
+        start, stop = get_fill_resize_and_crop((th, tw), base_size)
+        sub_args = [start, stop, (th, tw)]
+        rope = get_2d_rotary_pos_embed(self.head_size, *sub_args)
+        return rope
 
     def initialize_weights(self):
         # Initialize transformer layers:
