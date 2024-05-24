@@ -35,7 +35,6 @@ class Resolution:
 class ResolutionGroup:
     def __init__(self):
         self.data = [
-            Resolution(768, 768),   # 1:1
             Resolution(1024, 1024), # 1:1
             Resolution(1280, 1280), # 1:1
             Resolution(1024, 768),  # 4:3
@@ -61,7 +60,7 @@ STANDARD_RATIO = np.array([
     9.0 / 16.0, # 9:16
 ])
 STANDARD_SHAPE = [
-    [(768, 768), (1024, 1024), (1280, 1280)],   # 1:1
+    [(1024, 1024), (1280, 1280)],   # 1:1
     [(1024, 768), (1152, 864), (1280, 960)],    # 4:3
     [(768, 1024), (864, 1152), (960, 1280)],    # 3:4
     [(1280, 768)],                              # 16:9
