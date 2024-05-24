@@ -4,7 +4,12 @@
   <img src="https://raw.githubusercontent.com/Tencent/HunyuanDiT/main/asset/logo.png"  height=100>
 </p>
 
-# Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding
+# Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding  
+
+<p align="center">
+  <span>English</span> |
+  <a href="./README_zh.md">简体中文</a>
+</p>
 
 <div align="center">
   <a href="https://github.com/Tencent/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT Code&message=Github&color=blue&logo=github-pages"></a> &ensp;
@@ -36,21 +41,13 @@ Welcome to our web-based [**Tencent Hunyuan Bot**](https://hunyuan.tencent.com/b
 
 You can use simple prompts similar to natural language text
 
-> 画一只穿着西装的猪
->
 > draw a pig in a suit
->
-> 生成一幅画，赛博朋克风，跑车
 > 
 > generate a painting, cyberpunk style, sports car
 
 or multi-turn language interactions to create the picture. 
 
-> 画一个木制的鸟
->
 > draw a wooden bird
->
-> 变成玻璃的
 >
 > turn into glass
 
@@ -82,6 +79,7 @@ or multi-turn language interactions to create the picture.
   - [🔑 Inference](#-inference)
     - [Using Gradio](#using-gradio)
     - [Using Command Line](#using-command-line)
+    - [Using ComfyUI](#-using-comfyUI)
     - [More Configurations](#more-configurations)
   - [🚀 Acceleration (for Linux)](#-acceleration-for-linux)
   - [🔗 BibTeX](#-bibtex)
@@ -110,7 +108,7 @@ and output the new text prompt for image generation.
 </p>
 
 ## 📈 Comparisons
-In order to comprehensively compare the generation capabilities of HunyuanDiT and other models, we constructed a 4-dimensional test set, including Text-Image Consistency, Excluding AI Artifacts, Subject Clarity, Aesthetic. More than 50 professional evaluators performs the evaluation.
+In order to comprehensively compare the generation capabilities of Hunyuan-DiT and other models, we constructed a 4-dimensional test set, including Text-Image Consistency, Excluding AI Artifacts, Subject Clarity, Aesthetic. More than 50 professional evaluators performs the evaluation.
 
 <p align="center">
 <table> 
@@ -129,10 +127,8 @@ In order to comprehensively compare the generation capabilities of HunyuanDiT an
 <tr> 
     <td>Playground 2.5</td> <td>✔</td> <td>71.9</td> <td>70.8</td> <td>94.9</td> <td>83.3</td> <td>54.3</td> 
 </tr> 
-
 <tr> 
     <td>SD 3</td> <td>&#10008</td> <td>77.1</td> <td>69.3</td> <td>94.6</td> <td>82.5</td> <td>56.7</td> 
-    
 </tr> 
 <tr> 
     <td>MidJourney v6</td><td>&#10008</td> <td>73.5</td> <td>80.2</td> <td>93.5</td> <td>87.2</td> <td>63.3</td> 
@@ -314,6 +310,10 @@ python sample_t2i.py --prompt "渔舟唱晚"  --load-4bit
 
 ```
 
+### Using ComfyUI
+
+ComfyUI for Hunyuan-DiT: [HunyuanDiT-ComfyUI](https://github.com/city96/ComfyUI_ExtraModels)
+
 More example prompts can be found in [example_prompts.txt](example_prompts.txt)
 
 ### More Configurations
@@ -337,7 +337,7 @@ We list some more useful configurations for easy usage:
 
 ## 🚀 Acceleration (for Linux)
 
-We provide TensorRT version of HunyuanDiT for inference acceleration (faster than flash attention).
+We provide TensorRT version of Hunyuan-DiT for inference acceleration (faster than flash attention).
 See [Tencent-Hunyuan/TensorRT-libs](https://huggingface.co/Tencent-Hunyuan/TensorRT-libs) for more details.
 
 
