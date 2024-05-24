@@ -60,7 +60,7 @@ class ModifiedHunYuanDiT(HYDiT):
         return super().forward(*args, **kwargs)
 
     def forward(self, x, timesteps, context, t5_embeds=None, attention_mask=None, t5_attention_mask=None, image_meta_size=None, **kwargs):
-        batch_size, _, height, width = x.shape
+        batch_size, _, width, height = x.shape
         
         style = torch.as_tensor([0, 0] * (batch_size//2), device=x.device)
         src_size_cond = (width//2*16, height//2*16)
