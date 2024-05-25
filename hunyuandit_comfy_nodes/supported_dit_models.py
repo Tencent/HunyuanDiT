@@ -4,8 +4,10 @@ import comfy.model_patcher
 import comfy.model_base
 import comfy.utils
 import torch
+import inspect
 from collections import namedtuple
 from ..hydit.modules.models import HunYuanDiT as HYDiT
+from ..hydit.modules.posemb_layers import get_2d_rotary_pos_embed, get_fill_resize_and_crop
 
 def batch_embeddings(embeds, batch_size):
 	bs_embed, seq_len, _ = embeds.shape
@@ -56,6 +58,13 @@ class HYDiT_Model(comfy.model_base.BaseModel):
         return out
     
 class ModifiedHunYuanDiT(HYDiT):
+    def __init__ (self, *args, **kwargs):
+        signature = inspect.signature(HYDiT.__init__)
+        params = set(signature.parameters.keys()) - {'self'}
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k in params}
+        
+        super().__init__(*args, **filtered_kwargs)
+
     def forward_core(self, *args, **kwargs):
         return super().forward(*args, **kwargs)
 
@@ -84,4 +93,17 @@ class ModifiedHunYuanDiT(HYDiT):
         noise_pred = noise_pred.to(torch.float)
         eps, _ = noise_pred[:, :self.in_channels], noise_pred[:, self.in_channels:]
         return eps
+    
+    def calc_rope(self, height, width):
+        """
+        Probably not the best in terms of perf to have this here
+        """
+        th = height // 8 // self.patch_size
+        tw = width // 8 // self.patch_size
+        base_size = 512 // 8 // self.patch_size
+        start, stop = get_fill_resize_and_crop((th, tw), base_size)
+        sub_args = [start, stop, (th, tw)]
+        head_size = self.hidden_size // self.num_heads
+        rope = get_2d_rotary_pos_embed(head_size, *sub_args)
+        return rope
 

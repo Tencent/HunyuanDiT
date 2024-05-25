@@ -9,7 +9,7 @@ from .attn_layers import Attention, FlashCrossMHAModified, FlashSelfMHAModified,
 from .embedders import TimestepEmbedder, PatchEmbed, timestep_embedding
 from .norm_layers import RMSNorm
 from .poolers import AttentionPool
-from .posemb_layers import get_2d_rotary_pos_embed, get_fill_resize_and_crop
+
 
 def modulate(x, shift, scale):
     return x * (1 + scale.unsqueeze(1)) + shift.unsqueeze(1)
@@ -174,7 +174,6 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
             num_heads=16,
             mlp_ratio=4.0,
             log_fn=print,
-		    **kwargs,
     ):
         super().__init__()
         self.args = args
@@ -348,19 +347,6 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         if return_dict:
             return {'x': x}
         return x
-    
-    def calc_rope(self, height, width):
-        """
-        Probably not the best in terms of perf to have this here
-        """
-        th = height // 8 // self.patch_size
-        tw = width // 8 // self.patch_size
-        base_size = 512 // 8 // self.patch_size
-        start, stop = get_fill_resize_and_crop((th, tw), base_size)
-        sub_args = [start, stop, (th, tw)]
-        head_size = self.hidden_size // self.num_heads
-        rope = get_2d_rotary_pos_embed(head_size, *sub_args)
-        return rope
 
     def initialize_weights(self):
         # Initialize transformer layers:
