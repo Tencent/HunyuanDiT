@@ -26,12 +26,14 @@ def get_args(default_args=None):
     parser.add_argument("--cfg-scale", type=float, default=6.0, help="Guidance scale for classifier-free.")
 
     # Prompt enhancement
+    parser.add_argument("--enhance-device", type=str, default="cuda", help="Device for DialogGen model inference.")
     parser.add_argument("--enhance", action="store_true", help="Enhance prompt with dialoggen.")
     parser.add_argument("--no-enhance", dest="enhance", action="store_false")
     parser.add_argument("--load-4bit", help="load DialogGen model with 4bit quantization.", action="store_true")
     parser.set_defaults(enhance=True)
 
     # Diffusion
+    parser.add_argument("--device", type=str, default="cuda", help="Device for diffusion model inference")
     parser.add_argument("--learn-sigma", action="store_true", help="Learn extra channels for sigma.")
     parser.add_argument("--no-learn-sigma", dest="learn_sigma", action="store_false")
     parser.set_defaults(learn_sigma=True)

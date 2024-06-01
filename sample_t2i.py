@@ -19,7 +19,7 @@ def inferencer():
     # Try to enhance prompt
     if args.enhance:
         logger.info("Loading DialogGen model (for prompt enhancement)...")
-        enhancer = DialogGen(str(models_root_path / "dialoggen"), args.load_4bit)
+        enhancer = DialogGen(str(models_root_path / "dialoggen"), device=args.enhance_device, load_4bit=args.load_4bit)
         logger.info("DialogGen model loaded.")
     else:
         enhancer = None

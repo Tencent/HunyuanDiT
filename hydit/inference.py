@@ -4,6 +4,10 @@ from pathlib import Path
 
 import numpy as np
 import torch
+try:
+    import intel_extension_for_pytorch as ipex
+except ImportError:
+    ipex = None
 
 # For reproducibility
 # torch.backends.cudnn.benchmark = False
@@ -159,7 +163,7 @@ class End2End(object):
         logger.info(f"Got text-to-image model root path: {t2i_root_path}")
 
         # Set device and disable gradient
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = args.device
         torch.set_grad_enabled(False)
         # Disable BertModel logging checkpoint info
         tf_logger.setLevel('ERROR')
@@ -179,7 +183,7 @@ class End2End(object):
         # ========================================================================
         logger.info(f"Loading T5 Text Encoder and T5 Tokenizer...")
         t5_text_encoder_path = self.root / 'mt5'
-        embedder_t5 = MT5Embedder(t5_text_encoder_path, torch_dtype=torch.float16, max_length=256)
+        embedder_t5 = MT5Embedder(t5_text_encoder_path, torch_dtype=torch.float16, max_length=256).to(self.device)
         self.embedder_t5 = embedder_t5
         logger.info(f"Loading t5_text_encoder and t5_tokenizer finished")
 

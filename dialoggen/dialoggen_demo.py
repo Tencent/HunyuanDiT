@@ -50,10 +50,10 @@ def load_images(image_files):
     return out
 
 
-def init_dialoggen_model(model_path, model_base=None, load_4bit=False):
+def init_dialoggen_model(model_path, model_base=None, device="cuda", load_4bit=False):
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, context_len = load_pretrained_model(
-        model_path, model_base, model_name, llava_type_model=True, load_4bit=load_4bit)
+        model_path, model_base, model_name, llava_type_model=True, load_4bit=load_4bit, device=device)
     return {"tokenizer": tokenizer,
             "model": model,
             "image_processor": image_processor}
@@ -117,7 +117,7 @@ def eval_model(models,
     input_ids = (
         tokenizer_image_token(prompt, models["tokenizer"], IMAGE_TOKEN_INDEX, return_tensors="pt")
         .unsqueeze(0)
-        .cuda()
+        .to(models["model"].device)
     )
     with torch.inference_mode():
         output_ids = models["model"].generate(
@@ -149,8 +149,8 @@ def remove_prefix(text):
 
 
 class DialogGen(object):
-    def __init__(self, model_path, load_4bit=False):
-        self.models = init_dialoggen_model(model_path, load_4bit=load_4bit)
+    def __init__(self, model_path, device="cuda", load_4bit=False):
+        self.models = init_dialoggen_model(model_path, device=device, load_4bit=load_4bit)
         self.query_template = "请先判断用户的意图，若为画图则在输出前加入<画图>:{}"
 
     def __call__(self, prompt, return_history=False, history=None, skip_special=False):
@@ -176,11 +176,13 @@ if __name__ == "__main__":
     parser.add_argument('--model_path', type=str, default='./ckpts/dialoggen')
     parser.add_argument('--prompt', type=str, default='画一只小猫')
     parser.add_argument('--image_file', type=str, default=None) # 'images/demo1.jpeg'
+    parser.add_argument("--enhance-device", type=str, default="cuda", help="Device for DialogGen model inference.")
+    parser.add_argument("--load-4bit", help="load DialogGen model with 4bit quantization.", action="store_true")
     args = parser.parse_args()
 
     query = f"请先判断用户的意图，若为画图则在输出前加入<画图>:{args.prompt}"
 
-    models = init_dialoggen_model(args.model_path)
+    models = init_dialoggen_model(args.model_path, device=args.enhance_device, load_4bit=args.load_4bit)
 
     res = eval_model(models,
         query=query,
