@@ -17,16 +17,19 @@ import os
 import warnings
 import shutil
 
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, BitsAndBytesConfig
+import transformers
+from transformers import AutoTokenizer, AutoConfig, BitsAndBytesConfig
 import torch
 from llava.model import *
 from llava.constants import DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 
 
 def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, load_4bit=False, device_map="auto", device="cuda", use_flash_attn=False, llava_type_model=True, **kwargs):
+    AutoModelForCausalLM = transformers.AutoModelForCausalLM
     if "xpu" in device and (load_8bit or load_4bit):
         try:
-            from ipex_llm.transformers import AutoModelForCausalLM
+            import ipex_llm.transformers
+            AutoModelForCausalLM = ipex_llm.transformers.AutoModelForCausalLM
         except ImportError:
             raise ImportError("""Please install the ipex_llm package to load 8bit/4bit models on XPU.
     pip install --pre ipex-llm[xpu]""")

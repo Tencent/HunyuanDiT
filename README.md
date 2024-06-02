@@ -283,12 +283,20 @@ python app/hydit_app.py --infer-mode fa
 # The enhancement will be unavailable until you restart the app without the `--no-enhance` flag. 
 python app/hydit_app.py --no-enhance
 
+# You can specify the device for HunyuanDiT inference and DialogGen inference respectively,
+# with `--device` and `--enhance-device` flag.
+python app/hydit_app.py --device cuda:0 --enhance-device cuda:1
+python app/hydit_app.py --device xpu:0 --enhance-device xpu:1 # Intel GPU
+
 # Start with English UI
 python app/hydit_app.py --lang en
 
 # Start a multi-turn T2I generation UI. 
 # If your GPU memory is less than 32GB, use '--load-4bit' to enable 4-bit quantization, which requires at least 22GB of memory.
 python app/multiTurnT2I_app.py
+# Using multiple GPU devices.
+python app/multiTurnT2I_app.py --device cuda:0 --enhance-device cuda:1 --load-4bit
+python app/multiTurnT2I_app.py --device xpu:0 --enhance-device xpu:1 --load-4bit # Intel GPU
 ```
 Then the demo can be accessed through http://0.0.0.0:443
 
