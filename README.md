@@ -25,6 +25,7 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 > [**DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857) <br>
 
 ## 🔥🔥🔥 News!!
+* Jun 06, 2024: :tada: Hunyuan-DiT is now available in ComfyUI. Please check [ComfyUI](#using-comfyui) for more details.
 * Jun 06, 2024: 🚀 We introduce Distillation version for Hunyuan-DiT acceleration, which achieves **50%** acceleration on NVIDIA GPUs. Please check [Tencent-Hunyuan/Distillation](https://huggingface.co/Tencent-Hunyuan/Distillation) for more details.
 * Jun 05, 2024: 🤗 Hunyuan-DiT is now available in 🤗 Diffusers! Please check the [example](#using--diffusers) below.
 * Jun 04, 2024: :globe_with_meridians: Support Tencent Cloud links to download the pretrained models! Please check the [links](#-download-pretrained-models) below.
@@ -73,7 +74,7 @@ or multi-turn language interactions to create the picture.
 - [X] Web Demo (Gradio) 
 - [x] Multi-turn T2I Demo (Gradio)
 - [X] Cli Demo 
-- [ ] ComfyUI
+- [X] ComfyUI
 - [X] Diffusers
 - [ ] WebUI
 
@@ -94,6 +95,7 @@ or multi-turn language interactions to create the picture.
     - [Using Diffusers](#using--diffusers)
     - [Using Command Line](#using-command-line)
     - [More Configurations](#more-configurations)
+    - [Using ComfyUI](#using-comfyui)
   - [🚀 Acceleration (for Linux)](#-acceleration-for-linux)
   - [🔗 BibTeX](#-bibtex)
 
@@ -389,6 +391,46 @@ We list some more useful configurations for easy usage:
 |  `--load-key`   |    ema    | Load the student model or EMA model (ema or module) |
 |  `--load-4bit`  |   Fasle   |     Load DialogGen model with 4bit quantization     |
 
+### Using ComfyUI
+
+We provide several commands to quick start: 
+
+```shell
+# Download comfyui code
+git clone https://github.com/comfyanonymous/ComfyUI.git
+
+# Install torch, torchvision, torchaudio
+pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu117
+
+# Install Comfyui essential python package
+cd ComfyUI
+pip install -r requirements.txt
+
+# ComfyUI has been successfully installed!
+
+# Download model weight as before or link the existing model folder to ComfyUI.
+python -m pip install "huggingface_hub[cli]"
+mkdir models/hunyuan
+huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./models/hunyuan/ckpts
+
+# Move to the ComfyUI custom_nodes folder and copy comfyui-hydit folder from HunyuanDiT Repo.
+cd custom_nodes
+cp -r ${HunyuanDiT}/comfyui-hydit ./
+cd comfyui-hydit
+
+# Install some essential python Package.
+pip install -r requirements.txt
+
+# Our tool has been successfully installed!
+
+# Go to ComfyUI main folder
+cd ../..
+# Run the ComfyUI Lauch command
+python main.py --listen --port 80
+
+# Running ComfyUI successfully!
+```
+More details can be found in [ComfyUI README](comfyui-hydit/README.md)
 
 ## 🚀 Acceleration (for Linux)
 

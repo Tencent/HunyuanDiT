@@ -1,0 +1,109 @@
+{
+  "21": {
+    "inputs": {
+      "pipeline_folder_name": "ckpts",
+      "model_name": "pytorch_model_ema.pt",
+      "vae_name": "disable",
+      "backend": "ksampler"
+    },
+    "class_type": "DiffusersPipelineLoader",
+    "_meta": {
+      "title": "HunYuan Pipeline Loader"
+    }
+  },
+  "24": {
+    "inputs": {
+      "seed": 8806508,
+      "steps": 30,
+      "cfg": 6,
+      "sampler_name": "ddim",
+      "scheduler": "ddim_uniform",
+      "denoise": 1,
+      "model": [
+        "21",
+        1
+      ],
+      "positive": [
+        "25",
+        0
+      ],
+      "negative": [
+        "26",
+        0
+      ],
+      "latent_image": [
+        "27",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "25": {
+    "inputs": {
+      "text": "描绘的风格是写实，画面主要描述一双泥泞的靴子在雨天里，靴子颜色是棕色，泥沙溅在 Boot 的表面，背景是湿漉漉的地板，泥泞的环境，天气是阴沉的雨天，镜头是近景",
+      "clip": [
+        "21",
+        2
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "26": {
+    "inputs": {
+      "text": "错误的眼睛，糟糕的人脸，毁容，糟糕的艺术，变形，多余的肢体，模糊的颜色，模糊，重复，病态，残缺，",
+      "clip": [
+        "21",
+        2
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "27": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "28": {
+    "inputs": {
+      "samples": [
+        "24",
+        0
+      ],
+      "vae": [
+        "21",
+        3
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "29": {
+    "inputs": {
+      "images": [
+        "28",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "6": {
+    "inputs": {
+      "images": [
+        "18",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "15": {
+    "inputs": {
+      "scheduler_name": "ddim"
+    },
+    "class_type": "DiffusersSchedulerLoader",
+    "_meta": {
+      "title": "HunYuan Scheduler Loader"
+    }
+  },
+  "16": {
+    "inputs": {
+      "pipeline": [
+        "21",
+        0
+      ],
+      "scheduler": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "DiffusersModelMakeup",
+    "_meta": {
+      "title": "HunYuan Model Makeup"
+    }
+  },
+  "18": {
+    "inputs": {
+      "batch_size": 1,
+      "width": 1024,
+      "height": 1024,
+      "steps": 30,
+      "cfg": 6,
+      "seed": 8806508,
+      "maked_pipeline": [
+        "16",
+        0
+      ],
+      "positive": [
+        "19",
+        0
+      ],
+      "negative": [
+        "19",
+        1
+      ]
+    },
+    "class_type": "DiffusersSampler",
+    "_meta": {
+      "title": "HunYuan Sampler"
+    }
+  },
+  "19": {
+    "inputs": {
+      "positive": "描绘的风格是写实，画面主要描述一双泥泞的靴子在雨天里，靴子颜色是棕色，泥沙溅在 Boot 的表面，背景是湿漉漉的地板，泥泞的环境，天气是阴沉的雨天，镜头是近景",
+      "negative": "错误的眼睛，糟糕的人脸，毁容，糟糕的艺术，变形，多余的肢体，模糊的颜色，模糊，重复，病态，残缺，"
+    },
+    "class_type": "DiffusersClipTextEncode",
+    "_meta": {
+      "title": "HunYuan Clip Text Encode"
+    }
+  },
+  "21": {
+    "inputs": {
+      "pipeline_folder_name": "ckpts",
+      "model_name": "pytorch_model_ema.pt",
+      "vae_name": "disable",
+      "backend": "diffusers"
+    },
+    "class_type": "DiffusersPipelineLoader",
+    "_meta": {
+      "title": "HunYuan Pipeline Loader"
+    }
+  }
+}
