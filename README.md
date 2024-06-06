@@ -331,6 +331,21 @@ pipe.to("cuda")
 prompt = "一个宇航员在骑马"
 image = pipe(prompt).images[0]
 ```
+You can use our distilled model to generate images even faster:
+
+```py
+import torch
+from diffusers import HunyuanDiTPipeline
+
+pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled", torch_dtype=torch.float16)
+pipe.to("cuda")
+
+# You may also use English prompt as HunyuanDiT supports both English and Chinese
+# prompt = "An astronaut riding a horse"
+prompt = "一个宇航员在骑马"
+image = pipe(prompt, num_inference_steps=25).images[0]
+```
+More details can be found in [HunyuanDiT-Diffusers-Distilled](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled)
 
 ### Using Command Line
 
