@@ -20,13 +20,14 @@
 
 This repo contains PyTorch model definitions, pre-trained weights and inference/sampling code for our paper exploring Hunyuan-DiT. You can find more visualizations on our [project page](https://dit.hunyuan.tencent.com/).
 
-> [**Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding**](https://arxiv.org/abs/2405.08748) <br>
+> [**Hunyuan-DiT: A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding**](https://arxiv.org/abs/2405.08748) <br>
 
-> [**DialogGen:Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857)<br>
-
+> [**DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857) <br>
 
 ## 🔥🔥🔥 News!!
-
+* Jun 06, 2024: 🚀 We introduce Distillation version for Hunyuan-DiT acceleration, which achieves **50%** acceleration on NVIDIA GPUs. Please check [Tencent-Hunyuan/Distillation](https://huggingface.co/Tencent-Hunyuan/Distillation) for more details.
+* Jun 05, 2024: 🤗 Hunyuan-DiT is now available in 🤗 Diffusers! Please check the [example](#using--diffusers) below.
+* Jun 04, 2024: :globe_with_meridians: Support Tencent Cloud links to download the pretrained models! Please check the [links](#-download-pretrained-models) below.
 * May 22, 2024: 🚀 We introduce TensorRT version for Hunyuan-DiT acceleration, which achieves **47%** acceleration on NVIDIA GPUs. Please check [TensorRT-libs](https://huggingface.co/Tencent-Hunyuan/TensorRT-libs) for instructions.
 * May 22, 2024: 💬 We support demo running multi-turn text2image generation now. Please check the [script](#using-gradio) below.
 
@@ -59,14 +60,23 @@ or multi-turn language interactions to create the picture.
 - Hunyuan-DiT (Text-to-Image Model)
   - [x] Inference 
   - [x] Checkpoints 
-  - [ ] Distillation Version (Coming soon ⏩️)
+  - [x] Distillation Version (Coming soon ⏩️)
   - [x] TensorRT Version (Coming soon ⏩️)
   - [ ] Training (Coming later ⏩️)
+  - [ ] Lora
+  - [ ] Controlnet (Pose, Canny, Depth, Tile)
+  - [ ] IP-adapter
+  - [ ] Hunyuan-DiT-XL checkpoints (0.7B model)
+  - [ ] Caption model (Re-caption the raw image-text pairs)
 - [DialogGen](https://github.com/Centaurusalpha/DialogGen) (Prompt Enhancement Model)
-  - [x] Inference 
+  - [x] Inference
 - [X] Web Demo (Gradio) 
 - [x] Multi-turn T2I Demo (Gradio)
 - [X] Cli Demo 
+- [ ] ComfyUI
+- [X] Diffusers
+- [ ] WebUI
+
 
 ## Contents
 - [Hunyuan-DiT](#hunyuan-dit--a-powerful-multi-resolution-diffusion-transformer-with-fine-grained-chinese-understanding)
@@ -81,6 +91,7 @@ or multi-turn language interactions to create the picture.
   - [🧱 Download Pretrained Models](#-download-pretrained-models)
   - [🔑 Inference](#-inference)
     - [Using Gradio](#using-gradio)
+    - [Using Diffusers](#using--diffusers)
     - [Using Command Line](#using-command-line)
     - [More Configurations](#more-configurations)
   - [🚀 Acceleration (for Linux)](#-acceleration-for-linux)
@@ -257,13 +268,14 @@ process, you can ignore the error and rerun the download command.
 
 All models will be automatically downloaded. For more information about the model, visit the Hugging Face repository [here](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT).
 
-|       Model        | #Params |                                              Download URL                                               |
-|:------------------:|:-------:|:-------------------------------------------------------------------------------------------------------:|
-|        mT5         |  1.6B   |               [mT5](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/mt5)                |
-|        CLIP        |  350M   |        [CLIP](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/clip_text_encoder)        |
-|     DialogGen      |  7.0B   |           [DialogGen](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/dialoggen)            |
-| sdxl-vae-fp16-fix  |   83M   | [sdxl-vae-fp16-fix](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/sdxl-vae-fp16-fix)  |
-|    Hunyuan-DiT     |  1.5B   |          [Hunyuan-DiT](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/model)           |
+|       Model        | #Params |                                      Huggingface Download URL                                           |                                      Tencent Cloud Download URL                                 |
+|:------------------:|:-------:|:-------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
+|        mT5         |  1.6B   |               [mT5](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/mt5)                |               [mT5](https://dit.hunyuan.tencent.com/download/HunyuanDiT/mt5.zip)                |
+|        CLIP        |  350M   |        [CLIP](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/clip_text_encoder)        |        [CLIP](https://dit.hunyuan.tencent.com/download/HunyuanDiT/clip_text_encoder.zip)        |
+|      Tokenizer     |  -      |     [Tokenizer](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/tokenizer)              |      [Tokenizer](https://dit.hunyuan.tencent.com/download/HunyuanDiT/tokenizer.zip)             |
+|     DialogGen      |  7.0B   |           [DialogGen](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/dialoggen)            |           [DialogGen](https://dit.hunyuan.tencent.com/download/HunyuanDiT/dialoggen.zip)        |
+| sdxl-vae-fp16-fix  |   83M   | [sdxl-vae-fp16-fix](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/sdxl-vae-fp16-fix)  | [sdxl-vae-fp16-fix](https://dit.hunyuan.tencent.com/download/HunyuanDiT/sdxl-vae-fp16-fix.zip)  |
+|    Hunyuan-DiT     |  1.5B   |          [Hunyuan-DiT](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/model)           |          [Hunyuan-DiT](https://dit.hunyuan.tencent.com/download/HunyuanDiT/model.zip)           |
 
 
 ## 🔑 Inference
@@ -291,6 +303,34 @@ python app/hydit_app.py --lang en
 python app/multiTurnT2I_app.py
 ```
 Then the demo can be accessed through http://0.0.0.0:443
+
+### Using 🤗 Diffusers
+
+Please install PyTorch version 2.0 or higher in advance to satisfy the requirements of the specified version of the diffusers library.  
+
+Install 🤗 diffusers, ensuring that the version is at least 0.28.1:
+
+```shell
+pip install git+https://github.com/huggingface/diffusers.git
+```
+or
+```shell
+pip install diffusers
+```
+
+You can generate images with both Chinese and English prompts using the following Python script:
+```py
+import torch
+from diffusers import HunyuanDiTPipeline
+
+pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-Diffusers", torch_dtype=torch.float16)
+pipe.to("cuda")
+
+# You may also use English prompt as HunyuanDiT supports both English and Chinese
+# prompt = "An astronaut riding a horse"
+prompt = "一个宇航员在骑马"
+image = pipe(prompt).images[0]
+```
 
 ### Using Command Line
 
@@ -337,9 +377,11 @@ We list some more useful configurations for easy usage:
 
 ## 🚀 Acceleration (for Linux)
 
-We provide TensorRT version of HunyuanDiT for inference acceleration (faster than flash attention).
+- We provide TensorRT version of HunyuanDiT for inference acceleration (faster than flash attention).
 See [Tencent-Hunyuan/TensorRT-libs](https://huggingface.co/Tencent-Hunyuan/TensorRT-libs) for more details.
 
+- We provide Distillation version of HunyuanDiT for inference acceleration.
+See [Tencent-Hunyuan/Distillation](https://huggingface.co/Tencent-Hunyuan/Distillation) for more details.
 
 ## 🔗 BibTeX
 If you find [Hunyuan-DiT](https://arxiv.org/abs/2405.08748) or [DialogGen](https://arxiv.org/abs/2403.08857) useful for your research and applications, please cite using this BibTeX:
