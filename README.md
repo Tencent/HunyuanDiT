@@ -61,8 +61,8 @@ or multi-turn language interactions to create the picture.
 - Hunyuan-DiT (Text-to-Image Model)
   - [x] Inference 
   - [x] Checkpoints 
-  - [x] Distillation Version (Coming soon ⏩️)
-  - [x] TensorRT Version (Coming soon ⏩️)
+  - [x] Distillation Version
+  - [x] TensorRT Version
   - [ ] Training (Coming later ⏩️)
   - [ ] Lora
   - [ ] Controlnet (Pose, Canny, Depth, Tile)
@@ -304,7 +304,7 @@ python app/hydit_app.py --lang en
 # If your GPU memory is less than 32GB, use '--load-4bit' to enable 4-bit quantization, which requires at least 22GB of memory.
 python app/multiTurnT2I_app.py
 ```
-Then the demo can be accessed through http://0.0.0.0:443
+Then the demo can be accessed through http://0.0.0.0:443. It should be noted that the 0.0.0.0 here needs to be repleaed with the server IP.
 
 ### Using 🤗 Diffusers
 
