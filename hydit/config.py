@@ -54,6 +54,8 @@ def get_args(default_args=None):
     parser.add_argument("--no-fp16", dest="use_fp16", action="store_false")
     parser.set_defaults(use_fp16=True)
     parser.add_argument("--onnx-workdir", type=str, default="onnx_model", help="Path to save ONNX model")
+    parser.add_argument("--plugin-tag", type=str, default="others", choices=["others", "hopper"], help="Plugin architecture tag for choosing plugin package")
+
 
     # Sampling
     parser.add_argument("--batch-size", type=int, default=1, help="Per-GPU batch size")

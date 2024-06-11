@@ -222,7 +222,12 @@ class End2End(object):
 
             trt_dir = self.root / "model_trt"
             engine_dir = trt_dir / "engine"
-            plugin_path = trt_dir / "fmha_plugins/9.2_plugin_cuda11/fMHAPlugin.so"
+            
+            if self.args.plugin_tag == "others":
+                plugin_postfix = ""
+            elif self.args.plugin_tag == "hopper":
+                plugin_postfix = "_Hopper"
+            plugin_path = trt_dir / "fmha_plugins/9.2_plugin_cuda11/fMHAPlugin{}.so".format(plugin_postfix)
             model_name = "model_onnx"
 
             logger.info(f"Loading TensorRT model {engine_dir}/{model_name}...")
