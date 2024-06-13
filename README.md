@@ -341,7 +341,6 @@ All models will be automatically downloaded. For more information about the mode
     
      ```shell
       # Single Resolution Data Preparation
-      cd /HunyuanDiT
       idk base -c dataset/yamls/porcelain.yaml -t dataset/porcelain/jsons/porcelain.json
    
       # Multi Resolution Data Preparation     
