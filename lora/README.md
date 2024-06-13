@@ -70,7 +70,7 @@ Recommended parameter settings
 |:---------------:|:---------:|:---------------------------------------------------:|:--:|
 |   `--batch_size` |    Training batch size    |        1        | Depends on GPU memory|
 |   `--grad-accu-steps` |    Size of gradient accumulation    |       2        | - |
-|   `--rank` |    Rank of lora    |       64        | choosing from 8-128 |
+|   `--rank` |    Rank of lora    |       64        | Choosing from 8-128 |
 |   `--max-training-steps` |    Training steps  |       2000        | Depend on training data size, for reference apply 2000 steps on 100 images|
 |   `--lr` |    Learning rate  |        0.0001        | - |
 
