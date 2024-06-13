@@ -15,12 +15,13 @@ from loguru import logger
 from transformers import BertModel, BertTokenizer
 from transformers.modeling_utils import logger as tf_logger
 
-from .constants import SAMPLER_FACTORY, NEGATIVE_PROMPT, TRT_MAX_WIDTH, TRT_MAX_HEIGHT, TRT_MAX_BATCH_SIZE
+from .constants import SAMPLER_FACTORY, NEGATIVE_PROMPT
 from .diffusion.pipeline import StableDiffusionPipeline
 from .modules.models import HunYuanDiT, HUNYUAN_DIT_CONFIG
 from .modules.posemb_layers import get_2d_rotary_pos_embed, get_fill_resize_and_crop
 from .modules.text_encoder import MT5Embedder
 from .utils.tools import set_seeds
+from peft import LoraConfig
 
 
 class Resolution:
@@ -201,7 +202,6 @@ class End2End(object):
 
         self.infer_mode = self.args.infer_mode
         if self.infer_mode in ['fa', 'torch']:
-            model_dir = self.root / "model"
             model_path = model_dir / f"pytorch_model_{self.args.load_key}.pt"
             if not model_path.exists():
                 raise ValueError(f"model_path not exists: {model_path}")
@@ -215,6 +215,15 @@ class End2End(object):
             logger.info(f"Loading torch model {model_path}...")
             state_dict = torch.load(model_path, map_location=lambda storage, loc: storage)
             self.model.load_state_dict(state_dict)
+
+            lora_ckpt = args.lora_ckpt
+            if lora_ckpt is not None and lora_ckpt != "":
+                logger.info(f"Loading Lora checkpoint {lora_ckpt}...")
+
+                self.model.load_adapter(lora_ckpt)
+                self.model.merge_and_unload()
+                
+
             self.model.eval()
             logger.info(f"Loading torch model finished")
         elif self.infer_mode == 'trt':
@@ -301,8 +310,7 @@ class End2End(object):
             seed = random.randint(0, 1_000_000)
         if not isinstance(seed, int):
             raise TypeError(f"`seed` must be an integer, but got {type(seed)}")
-        generator = set_seeds(seed)
-
+        generator = set_seeds(seed, device=self.device)
         # ========================================================================
         # Arguments: target_width, target_height
         # ========================================================================

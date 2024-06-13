@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+
+import argparse
+
+from index_kits.dataset.make_dataset_core import startup, make_multireso
+from index_kits.common import show_index_info
+from index_kits import __version__
+
+
+def common_args(parser):
+    parser.add_argument('-t', '--target', type=str, required=True, help='Save path')
+
+
+def get_args():
+    parser = argparse.ArgumentParser(description="""
+    IndexKits is a tool to build and manage index files for large-scale datasets. 
+    It supports both base index and multi-resolution index.
+    
+    Introduction
+    ------------
+    This command line tool provides the following functionalities:
+    1. Show index v2 information
+    2. Build base index v2
+    3. Build multi-resolution index v2
+    
+    Examples
+    --------
+    1. Show index v2 information
+        index_kits show /path/to/index.json
+    
+    2. Build base index v2
+        Default usage:
+        index_kits base -c /path/to/config.yaml -t /path/to/index.json
+        
+        Use multiple processes:
+        index_kits base -c /path/to/config.yaml -t /path/to/index.json -w 40
+    
+    3. Build multi-resolution index v2
+    
+        Build with a configuration file:
+        index_kits multireso -c /path/to/config.yaml -t /path/to/index_mb_gt512.json
+        
+        Build by specifying arguments without a configuration file:
+        index_kits multireso --src /path/to/index.json --base-size 512 --reso-step 32 --min-size 512 -t /path/to/index_mb_gt512.json 
+        
+        Build by specifying target-ratios:
+        index_kits multireso --src /path/to/index.json --base-size 512 --target-ratios 1:1 4:3 3:4 16:9 9:16 --min-size 512 -t /path/to/index_mb_gt512.json
+        
+        Build with multiple source index files.
+        index_kits multireso --src /path/to/index1.json /path/to/index2.json --base-size 512 --reso-step 32 --min-size 512 -t /path/to/index_mb_gt512.json
+    """, formatter_class=argparse.RawTextHelpFormatter)
+    sub_parsers = parser.add_subparsers(dest='task', required=True)
+
+    # Show index message
+    show_parser = sub_parsers.add_parser('show', description="""
+    Show base/multireso index v2 information.
+    
+    Example
+    -------
+    index_kits show /path/to/index.json
+    """, formatter_class=argparse.RawTextHelpFormatter)
+    show_parser.add_argument('src', type=str, help='Path to a base/multireso index file.')
+    show_parser.add_argument('--arrow-files', action='store_true', help='Show arrow files only.')
+    show_parser.add_argument('--depth', type=int, default=1,
+                             help='Arrow file depth. Default is 1, the level of last folder in the arrow file path. '
+                                  'Set it to 0 to show the full path including `xxx/last_folder/*.arrow`.')
+
+    # Single resolution bucket
+    base_parser = sub_parsers.add_parser('base', description="""
+    Build base index v2.
+    
+    Example
+    -------
+    index_kits base -c /path/to/config.yaml -t /path/to/index.json
+    """, formatter_class=argparse.RawTextHelpFormatter)
+    base_parser.add_argument('-c', '--config', type=str, required=True, help='Configuration file path')
+    common_args(base_parser)
+    base_parser.add_argument('-w', '--world-size', type=int, default=1)
+    base_parser.add_argument('--work-dir', type=str, default='.', help='Work directory')
+    base_parser.add_argument('--use-cache', action='store_true', help='Use cache to avoid reprocessing. '
+                                                                      'Perform merge pkl results directly.')
+
+    # Multi-resolution bucket
+    mo_parser = sub_parsers.add_parser('multireso', description="""
+    Build multi-resolution index v2
+    
+    Example
+    -------
+    Build with a configuration file:
+    index_kits multireso -c /path/to/config.yaml -t /path/to/index_mb_gt512.json
+    
+    Build by specifying arguments without a configuration file:
+    index_kits multireso --src /path/to/index.json --base-size 512 --reso-step 32 --min-size 512 -t /path/to/index_mb_gt512.json
+    
+    Build by specifying target-ratios:
+    index_kits multireso --src /path/to/index.json --base-size 512 --target-ratios 1:1 4:3 3:4 16:9 9:16 --min-size 512 -t /path/to/index_mb_gt512.json
+    
+    Build with multiple source index files.
+    index_kits multireso --src /path/to/index1.json /path/to/index2.json --base-size 512 --reso-step 32 --min-size 512 -t /path/to/index_mb_gt512.json
+    """, formatter_class=argparse.RawTextHelpFormatter)
+    mo_parser.add_argument('-c', '--config', type=str, default=None,
+                           help='Configuration file path in a yaml format. Either --config or --src must be provided.')
+    mo_parser.add_argument('-s', '--src', type=str, nargs='+', default=None,
+                           help='Source index files. Either --config or --src must be provided.')
+    common_args(mo_parser)
+    mo_parser.add_argument('--base-size', type=int, default=None, help="Base size. Typically set as 256/512/1024 according to image size you train model.")
+    mo_parser.add_argument('--reso-step', type=int, default=None,
+                           help="Resolution step. Either reso_step or target_ratios must be provided.")
+    mo_parser.add_argument('--target-ratios', type=str, nargs='+', default=None,
+                           help="Target ratios. Either reso_step or target_ratios must be provided.")
+    mo_parser.add_argument('--md5-file', type=str, default=None,
+                           help='You can provide an md5 to height and width file to accelerate the process. '
+                                'It is a pickle file that contains a dict, which maps md5 to (height, width) tuple.')
+    mo_parser.add_argument('--align', type=int, default=16, help="Used when --target-ratios is provided. Align size of source image height and width.")
+    mo_parser.add_argument('--min-size', type=int, default=0,
+                           help="Minimum size. Images smaller than this size will be ignored.")
+
+    # Common
+    parser.add_argument('-v', '--version', action='version', version=f'%(prog)s {__version__}')
+
+    args = parser.parse_args()
+    return args
+
+
+if __name__ == '__main__':
+    args = get_args()
+    if args.task == 'show':
+        show_index_info(args.src,
+                        args.arrow_files,
+                        args.depth,
+                        )
+    elif args.task == 'base':
+        startup(args.config,
+                args.target,
+                args.world_size,
+                args.work_dir,
+                use_cache=args.use_cache,
+                )
+    elif args.task == 'multireso':
+        make_multireso(args.target,
+                       args.config,
+                       args.src,
+                       args.base_size,
+                       args.reso_step,
+                       args.target_ratios,
+                       args.align,
+                       args.min_size,
+                       args.md5_file,
+                       )

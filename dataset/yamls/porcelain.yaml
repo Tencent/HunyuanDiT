@@ -1,0 +1,15 @@
+source:
+    - ./dataset/porcelain/arrows/00000.arrow
+
+filter:
+    column:
+        -   name: height
+            type: int
+            action: ge
+            target: 1024
+            default: 1024
+        -   name: width
+            type: int
+            action: ge
+            target: 1024
+            default: 1024

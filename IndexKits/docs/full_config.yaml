@@ -1,0 +1,36 @@
+source:
+    - /HunyuanDiT/dataset/task1/*.arrow
+    -   /HunyuanDiT/dataset/task2/*.arrow:
+            repeat: 2
+
+remove_md5_dup: false
+
+filter:
+    column:
+        -   name: height
+            type: int
+            action: ge
+            target: 512
+            default: 1024
+        -   name: width
+            type: int
+            action: ge
+            target: 512
+            default: 1024
+    md5:
+        -   name: Badcase
+            path: /path/to/bad_case_md5.txt
+            type: list
+            action: in
+            is_valid: false
+
+repeater:
+    md5:
+        -   name: Hardcase Repeat
+            path: /path/to/hard_case_md5.json
+            type: dict
+            plus: 3
+        -   name: Goodcase Repeat
+            path: /path/to/good_case_md5.txt
+            type: list
+            repeat: 6

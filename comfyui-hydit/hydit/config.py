@@ -51,7 +51,7 @@ def get_args(default_args=None):
     parser_hunyuan.add_argument("--negative", type=str, default="错误的眼睛，糟糕的人脸，毁容，糟糕的艺术，变形，多余的肢体，模糊的颜色，模糊，重复，病态，残缺，", help="Negative prompt.")
 
     # Acceleration
-    parser_hunyuan.add_argument("--use_fp16", action="store_true", help="Use FP16 precision.")
+    parser_hunyuan.add_argument("--use-fp16", action="store_true", help="Use FP16 precision.")
     parser_hunyuan.add_argument("--no-fp16", dest="use_fp16", action="store_false")
     parser_hunyuan.set_defaults(use_fp16=True)
 

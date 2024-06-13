@@ -25,8 +25,11 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 > [**DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857) <br>
 
 ## 🔥🔥🔥 News!!
+* Jun 13, 2024: :zap: HYDiT-v1.1 version is released, which mitigates the issue of image oversaturation and alleviates the watermark issue. Please check [HunyuanDiT-v1.1 ](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1) and 
+[Distillation-v1.1](https://huggingface.co/Tencent-Hunyuan/Distillation-v1.1) for more details.
+* Jun 13, 2024: :truck: The training code is released, offering [full-parameter training](#full-parameter-training) and [LoRA training](#lora).
 * Jun 06, 2024: :tada: Hunyuan-DiT is now available in ComfyUI. Please check [ComfyUI](#using-comfyui) for more details.
-* Jun 06, 2024: 🚀 We introduce Distillation version for Hunyuan-DiT acceleration, which achieves **50%** acceleration on NVIDIA GPUs. Please check [Tencent-Hunyuan/Distillation](https://huggingface.co/Tencent-Hunyuan/Distillation) for more details.
+* Jun 06, 2024: 🚀 We introduce Distillation version for Hunyuan-DiT acceleration, which achieves **50%** acceleration on NVIDIA GPUs. Please check [Distillation](https://huggingface.co/Tencent-Hunyuan/Distillation) for more details.
 * Jun 05, 2024: 🤗 Hunyuan-DiT is now available in 🤗 Diffusers! Please check the [example](#using--diffusers) below.
 * Jun 04, 2024: :globe_with_meridians: Support Tencent Cloud links to download the pretrained models! Please check the [links](#-download-pretrained-models) below.
 * May 22, 2024: 🚀 We introduce TensorRT version for Hunyuan-DiT acceleration, which achieves **47%** acceleration on NVIDIA GPUs. Please check [TensorRT-libs](https://huggingface.co/Tencent-Hunyuan/TensorRT-libs) for instructions.
@@ -63,8 +66,8 @@ or multi-turn language interactions to create the picture.
   - [x] Checkpoints 
   - [x] Distillation Version
   - [x] TensorRT Version
-  - [ ] Training (Coming later ⏩️)
-  - [ ] Lora
+  - [x] Training
+  - [x] Lora
   - [ ] Controlnet (Pose, Canny, Depth, Tile)
   - [ ] IP-adapter
   - [ ] Hunyuan-DiT-XL checkpoints (0.7B model)
@@ -90,6 +93,10 @@ or multi-turn language interactions to create the picture.
   - [📜 Requirements](#-requirements)
   - [🛠 Dependencies and Installation](#%EF%B8%8F-dependencies-and-installation)
   - [🧱 Download Pretrained Models](#-download-pretrained-models)
+  - [:truck: Training](#truck-training)
+    - [Data Preparation](#data-preparation)
+    - [Full Parameter Training](#full-parameter-training)
+    - [LoRA](#lora)
   - [🔑 Inference](#-inference)
     - [Using Gradio](#using-gradio)
     - [Using Diffusers](#using--diffusers)
@@ -278,13 +285,112 @@ All models will be automatically downloaded. For more information about the mode
 |     DialogGen      |  7.0B   |           [DialogGen](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/dialoggen)            |           [DialogGen](https://dit.hunyuan.tencent.com/download/HunyuanDiT/dialoggen.zip)        |
 | sdxl-vae-fp16-fix  |   83M   | [sdxl-vae-fp16-fix](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/sdxl-vae-fp16-fix)  | [sdxl-vae-fp16-fix](https://dit.hunyuan.tencent.com/download/HunyuanDiT/sdxl-vae-fp16-fix.zip)  |
 |    Hunyuan-DiT     |  1.5B   |          [Hunyuan-DiT](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/model)           |          [Hunyuan-DiT](https://dit.hunyuan.tencent.com/download/HunyuanDiT/model.zip)           |
+|    Data demo       |  -      |                                    -                                                                    |      [Data demo](https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip)             |
+
+## :truck: Training
+
+### Data Preparation
+
+  Refer to the commands below to prepare the training data. 
+  
+  1. Install dependencies
+  
+      We offer an efficient data management library, named IndexKits, supporting the management of reading hundreds of millions of data during training, see more in [docs](./IndexKits/README.md).
+      ```shell
+      # 1 Install dependencies
+      cd HunyuanDiT
+      pip install -e ./IndexKits
+     ```
+  2. Data download 
+  
+     Feel free to download the [data demo](https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip).
+     ```shell
+     # 2 Data download
+     wget -O ./dataset/data_demo.zip https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip
+     unzip ./dataset/data_demo.zip -d ./dataset
+     mkdir ./dataset/porcelain/arrows ./dataset/porcelain/jsons
+     ```
+  3. Data conversion 
+  
+     Create a CSV file for training data with the fields listed in the table below.
+    
+     |    Fields       | Required  |  Description     |   Example   |
+     |:---------------:| :------:  |:----------------:|:-----------:|
+     |   `image_path`  | Required  |  image path               |     `./dataset/porcelain/images/0.png`        | 
+     |   `text_zh`     | Required  |    text               |  青花瓷风格，一只蓝色的鸟儿站在蓝色的花瓶上，周围点缀着白色花朵，背景是白色 | 
+     |   `md5`         | Optional  |    image md5 (Message Digest Algorithm 5)  |    `d41d8cd98f00b204e9800998ecf8427e`         | 
+     |   `width`       | Optional  |    image width    |     `1024 `       | 
+     |   `height`      | Optional  |    image height   |    ` 1024 `       | 
+     
+     > ⚠️ Optional fields like MD5, width, and height can be omitted. If omitted, the script below will automatically calculate them. This process can be time-consuming when dealing with large-scale training data.
+  
+     We utilize [Arrow](https://github.com/apache/arrow) for training data format, offering a standard and efficient in-memory data representation. A conversion script is provided to transform CSV files into Arrow format.
+     ```shell  
+     # 3 Data conversion 
+     python ./hydit/data_loader/csv2arrow.py ./dataset/porcelain/csvfile/image_text.csv ./dataset/porcelain/arrows
+     ```
+  
+  4. Data Selection and Configuration File Creation 
+     
+      We configure the training data through YAML files. In these files, you can set up standard data processing strategies for filtering, copying, deduplicating, and more regarding the training data. For more details, see [docs](IndexKits/docs/MakeDataset.md).
+  
+      For a sample file, please refer to [file](./dataset/yamls/porcelain.yaml). For a full parameter configuration file, see [file](./IndexKits/docs/MakeDataset.md).
+  
+     
+  5. Create training data index file using YAML file.
+    
+     ```shell
+      # Single Resolution Data Preparation
+      cd /HunyuanDiT
+      idk base -c dataset/yamls/porcelain.yaml -t dataset/porcelain/jsons/porcelain.json
+   
+      # Multi Resolution Data Preparation     
+      idk multireso -c dataset/yamls/porcelain_mt.yaml -t dataset/porcelain/jsons/porcelain_mt.json
+      ```
+   
+  The directory structure for `porcelain` dataset is:
+
+  ```shell
+   cd ./dataset
+  
+   porcelain
+      ├──images/  (image files)
+      │  ├──0.png
+      │  ├──1.png
+      │  ├──......
+      ├──csvfile/  (csv files containing text-image pairs)
+      │  ├──image_text.csv
+      ├──arrows/  (arrow files containing all necessary training data)
+      │  ├──00000.arrow
+      │  ├──00001.arrow
+      │  ├──......
+      ├──jsons/  (final training data index files which read data from arrow files during training)
+      │  ├──porcelain.json
+      │  ├──porcelain_mt.json
+   ```
+
+### Full-parameter Training
+ 
+  To leverage DeepSpeed in training, you have the flexibility to control **single-node** / **multi-node** training by adjusting parameters such as `--hostfile` and `--master_addr`. For more details, see [link](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node).
+
+  ```shell
+  # Single Resolution Data Preparation
+  PYTHONPATH=./ sh hydit/train.sh --index-file dataset/porcelain/jsons/porcelain.json
+  
+  # Multi Resolution Data Preparation
+  PYTHONPATH=./ sh hydit/train.sh --index-file dataset/porcelain/jsons/porcelain.json --multireso --reso-step 64
+  ```
+
+### LoRA
+
+We provide training and inference scripts for LoRA, detailed in the [guidances](./lora/README.md). 
 
 
 ## 🔑 Inference
 
 ### Using Gradio
 
-Make sure you have activated the conda environment before running the following command.
+Make sure the conda environment is activated before running the following command.
 
 ```shell
 # By default, we start a Chinese UI.
@@ -304,7 +410,7 @@ python app/hydit_app.py --lang en
 # If your GPU memory is less than 32GB, use '--load-4bit' to enable 4-bit quantization, which requires at least 22GB of memory.
 python app/multiTurnT2I_app.py
 ```
-Then the demo can be accessed through http://0.0.0.0:443. It should be noted that the 0.0.0.0 here needs to be repleaed with the server IP.
+Then the demo can be accessed through http://0.0.0.0:443. It should be noted that the 0.0.0.0 here needs to be X.X.X.X with your server IP.
 
 ### Using 🤗 Diffusers
 

@@ -4,7 +4,8 @@ diffusers==0.21.2
 peft==0.10.0
 protobuf==3.19.0
 torchvision==0.14.1
-transformers==4.37.2
+transformers==4.39.1
+peft==0.10.0
 accelerate==0.29.3
 loguru==0.7.2
 einops==0.7.0
@@ -17,3 +18,5 @@ onnx-graphsurgeon==0.3.27
 polygraphy==0.47.1
 pandas==2.0.3
 gradio==3.50.2
+deepspeed==0.6.3
+pyarrow==16.1.0

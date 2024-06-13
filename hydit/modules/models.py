@@ -10,6 +10,14 @@ from .embedders import TimestepEmbedder, PatchEmbed, timestep_embedding
 from .norm_layers import RMSNorm
 from .poolers import AttentionPool
 
+from transformers.integrations import PeftAdapterMixin
+from typing import Any, Optional, Union
+from tqdm import tqdm
+from peft.utils import (
+    ModulesToSaveWrapper,
+    _get_submodules,
+)
+
 
 def modulate(x, shift, scale):
     return x * (1 + scale.unsqueeze(1)) + shift.unsqueeze(1)
@@ -136,11 +144,13 @@ class FinalLayer(nn.Module):
         return x
 
 
-class HunYuanDiT(ModelMixin, ConfigMixin):
+class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
     """
     HunYuanDiT: Diffusion model with a Transformer backbone.
 
     Inherit ModelMixin and ConfigMixin to be compatible with the sampler StableDiffusionPipeline of diffusers.
+
+    Inherit PeftAdapterMixin to be compatible with the PEFT training pipeline.
 
     Parameters
     ----------
@@ -191,10 +201,10 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         self.text_len_t5 = args.text_len_t5
         self.norm = args.norm
 
-        use_flash_attn = args.infer_mode == 'fa'
+        use_flash_attn = args.infer_mode == 'fa' or args.use_flash_attn
         if use_flash_attn:
             log_fn(f"    Enable Flash Attention.")
-        qk_norm = True  # See http://arxiv.org/abs/2302.05442 for details.
+        qk_norm = args.qk_norm  # See http://arxiv.org/abs/2302.05442 for details.
 
         self.mlp_t5 = nn.Sequential(
             nn.Linear(self.text_states_dim_t5, self.text_states_dim_t5 * 4, bias=True),
@@ -287,7 +297,6 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         return_dict: bool
             Whether to return a dictionary.
         """
-
         text_states = encoder_hidden_states                     # 2,77,1024
         text_states_t5 = encoder_hidden_states_t5               # 2,256,2048
         text_states_mask = text_embedding_mask.bool()           # 2,77
@@ -396,6 +405,82 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
         imgs = x.reshape(shape=(x.shape[0], c, h * p, w * p))
         return imgs
 
+    def _replace_module(self, parent, child_name, new_module, child) -> None:
+        setattr(parent, child_name, new_module)
+        # It's not necessary to set requires_grad here, as that is handled by
+        # _mark_only_adapters_as_trainable
+
+        # child layer wraps the original module, unpack it
+        if hasattr(child, "base_layer"):
+            child = child.get_base_layer()
+        elif hasattr(child, "quant_linear_module"):
+            # TODO maybe not necessary to have special treatment?
+            child = child.quant_linear_module
+
+        if not hasattr(new_module, "base_layer"):
+            new_module.weight = child.weight
+            if hasattr(child, "bias"):
+                new_module.bias = child.bias
+
+        if getattr(child, "state", None) is not None:
+            if hasattr(new_module, "base_layer"):
+                new_module.base_layer.state = child.state
+            else:
+                new_module.state = child.state
+            new_module.to(child.weight.device)
+
+        # dispatch to correct device
+        for name, module in new_module.named_modules():
+            # if any(prefix in name for prefix in PREFIXES):
+            #     module.to(child.weight.device)
+            if "ranknum" in name:
+                module.to(child.weight.device)
+
+    def merge_and_unload(self,
+                         merge=True,
+                        progressbar: bool = False,
+                        safe_merge: bool = False,
+                        adapter_names = None,):
+        if merge:
+            if getattr(self, "quantization_method", None) == "gptq":
+                raise ValueError("Cannot merge layers when the model is gptq quantized")
+
+        def merge_recursively(module):
+            # helper function to recursively merge the base_layer of the target
+            path = []
+            layer = module
+            while hasattr(layer, "base_layer"):
+                path.append(layer)
+                layer = layer.base_layer
+            for layer_before, layer_after in zip(path[:-1], path[1:]):
+                layer_after.merge(safe_merge=safe_merge, adapter_names=adapter_names)
+                layer_before.base_layer = layer_after.base_layer
+            module.merge(safe_merge=safe_merge, adapter_names=adapter_names)
+
+        key_list = [key for key, _ in self.named_modules()]
+        desc = "Unloading " + ("and merging " if merge else "") + "model"
+
+        for key in tqdm(key_list, disable=not progressbar, desc=desc):
+            try:
+                parent, target, target_name = _get_submodules(self, key)
+            except AttributeError:
+                continue
+
+            if hasattr(target, "base_layer"):
+                if merge:
+                    merge_recursively(target)
+                self._replace_module(parent, target_name, target.get_base_layer(), target)
+            elif isinstance(target, ModulesToSaveWrapper):
+                # save any additional trainable modules part of `modules_to_save`
+                new_module = target.modules_to_save[target.active_adapter]
+                if hasattr(new_module, "base_layer"):
+                    # check if the module is itself a tuner layer
+                    if merge:
+                        new_module.merge(safe_merge=safe_merge, adapter_names=adapter_names)
+                    new_module = new_module.get_base_layer()
+                setattr(parent, target_name, new_module)
+
+
 
 #################################################################################
 #                            HunYuanDiT Configs                                 #
@@ -404,6 +489,14 @@ class HunYuanDiT(ModelMixin, ConfigMixin):
 HUNYUAN_DIT_CONFIG = {
     'DiT-g/2': {'depth': 40, 'hidden_size': 1408, 'patch_size': 2, 'num_heads': 16, 'mlp_ratio': 4.3637},
     'DiT-XL/2': {'depth': 28, 'hidden_size': 1152, 'patch_size': 2, 'num_heads': 16},
-    'DiT-L/2': {'depth': 24, 'hidden_size': 1024, 'patch_size': 2, 'num_heads': 16},
-    'DiT-B/2': {'depth': 12, 'hidden_size': 768, 'patch_size': 2, 'num_heads': 12},
+}
+
+def DiT_g_2(args, **kwargs):
+    return HunYuanDiT(args, depth=40, hidden_size=1408, patch_size=2, num_heads=16, mlp_ratio=4.3637, **kwargs)
+def DiT_XL_2(args, **kwargs):
+    return HunYuanDiT(args, depth=28, hidden_size=1152, patch_size=2, num_heads=16, **kwargs)
+
+HUNYUAN_DIT_MODELS = {
+    'DiT-g/2':  DiT_g_2,
+    'DiT-XL/2': DiT_XL_2,
 }
