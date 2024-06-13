@@ -7,5 +7,5 @@ from .bucket import Resolution, ResolutionGroup
 from .indexer import IndexV2Builder, ArrowIndexV2
 from .common import load_index, show_index_info
 
-__version__ = "0.4.0"
+__version__ = "0.3.5"
 
