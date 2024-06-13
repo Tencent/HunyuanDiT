@@ -17,13 +17,23 @@ import os
 import warnings
 import shutil
 
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, BitsAndBytesConfig
+import transformers
+from transformers import AutoTokenizer, AutoConfig, BitsAndBytesConfig
 import torch
 from llava.model import *
 from llava.constants import DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 
 
 def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, load_4bit=False, device_map="auto", device="cuda", use_flash_attn=False, llava_type_model=True, **kwargs):
+    AutoModelForCausalLM = transformers.AutoModelForCausalLM
+    if "xpu" in device and (load_8bit or load_4bit):
+        try:
+            import ipex_llm.transformers
+            AutoModelForCausalLM = ipex_llm.transformers.AutoModelForCausalLM
+        except ImportError:
+            raise ImportError("""Please install the ipex_llm package to load 8bit/4bit models on XPU.
+    pip install --pre ipex-llm[xpu]""")
+
     kwargs = {"device_map": device_map, **kwargs}
 
     if device != "cuda":
@@ -32,12 +42,16 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
         kwargs['load_in_8bit'] = True
     elif load_4bit:
         kwargs['load_in_4bit'] = True
-        kwargs['quantization_config'] = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.float16,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_quant_type='nf4'
-        )
+        if "cuda" in device:
+            kwargs['quantization_config'] = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type='nf4'
+            )
+        if "xpu" in device:
+            kwargs['torch_dtype'] = torch.float16
+            kwargs['modules_to_not_convert'] = ['lm_head', 'mm_projector']
     else:
         kwargs['torch_dtype'] = torch.float16
 
@@ -163,4 +177,5 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
     else:
         context_len = 2048
 
+    model = model.to(device=device)
     return tokenizer, model, image_processor, context_len
