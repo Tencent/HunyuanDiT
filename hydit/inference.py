@@ -15,7 +15,7 @@ from loguru import logger
 from transformers import BertModel, BertTokenizer
 from transformers.modeling_utils import logger as tf_logger
 
-from .constants import SAMPLER_FACTORY, NEGATIVE_PROMPT
+from .constants import SAMPLER_FACTORY, NEGATIVE_PROMPT, TRT_MAX_WIDTH, TRT_MAX_HEIGHT, TRT_MAX_BATCH_SIZE
 from .diffusion.pipeline import StableDiffusionPipeline
 from .modules.models import HunYuanDiT, HUNYUAN_DIT_CONFIG
 from .modules.posemb_layers import get_2d_rotary_pos_embed, get_fill_resize_and_crop
