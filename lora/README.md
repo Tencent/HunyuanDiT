@@ -41,10 +41,10 @@ Examples of training data and inference results are as follows:
     <td colspan="4" align="center">Examples of inference results</td>
   </tr>
   <tr>
-    <td align="center"><img src="asset/porcelain/results/0.png" alt="Image 0" width="200"/></td>
-    <td align="center"><img src="asset/porcelain/results/1.png" alt="Image 1" width="200"/></td>
-    <td align="center"><img src="asset/porcelain/results/2.png" alt="Image 2" width="200"/></td>
-    <td align="center"><img src="asset/porcelain/results/3.png" alt="Image 3" width="200"/></td>
+    <td align="center"><img src="asset/porcelain/inference/0.png" alt="Image 4" width="200"/></td>
+    <td align="center"><img src="asset/porcelain/inference/1.png" alt="Image 5" width="200"/></td>
+    <td align="center"><img src="asset/porcelain/inference/2.png" alt="Image 6" width="200"/></td>
+    <td align="center"><img src="asset/porcelain/inference/3.png" alt="Image 7" width="200"/></td>
   </tr>
   <tr>
     <td align="center">青花瓷风格，苏州园林</td>
