@@ -1,6 +1,6 @@
 task_flag="dit_g2_full_1024p"                                # the task flag is used to identify folders.
 resume=./ckpts/t2i/model/                                    # checkpoint root for resume
-index_file=dataset/index_v2_json/jade.json                   # index file for dataloader
+index_file=dataset/porcelain/jsons/porcelain.json            # index file for dataloader
 results_dir=./log_EXP                                        # save root for results
 batch_size=1                                                 # training batch size
 image_size=1024                                              # training image resolution

@@ -19,6 +19,43 @@ huggingface-cli download Tencent-Hunyuan/HYDiT-LoRA --local-dir ./ckpts/t2i/lora
 python sample_t2i.py --prompt "青花瓷风格，一只猫在追蝴蝶"  --no-enhance --load-key ema --lora_ckpt ./ckpts/t2i/lora/porcelain
 ```
 
+Examples of training data and inference results are as follows:
+<table>
+  <tr>
+    <td colspan="4" align="center">Examples of training data</td>
+  </tr>
+  
+  <tr>
+    <td align="center"><img src="asset/porcelain/train/0.png" alt="Image 0" width="200"/></td>
+    <td align="center"><img src="asset/porcelain/train/1.png" alt="Image 1" width="200"/></td>
+    <td align="center"><img src="asset/porcelain/train/2.png" alt="Image 2" width="200"/></td>
+    <td align="center"><img src="asset/porcelain/train/3.png" alt="Image 3" width="200"/></td>
+  </tr>
+  <tr>
+    <td align="center">青花瓷风格，一只蓝色的鸟儿站在蓝色的花瓶上，周围点缀着白色花朵，背景是白色，</td>
+    <td align="center">青花瓷风格，这是一幅蓝白相间的陶瓷盘子，上面描绘着一只狐狸和它的幼崽在森林中漫步，背景是白色，</td>
+    <td align="center">青花瓷风格，在黑色背景上，一只蓝色的狼站在蓝白相间的盘子上，周围是树木和月亮，</td>
+    <td align="center">青花瓷风格，在蓝色背景上，一只蓝色蝴蝶和白色花朵被放置在中央，</td>
+  </tr>
+  <tr>
+    <td colspan="4" align="center">Examples of inference results</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="asset/porcelain/results/0.png" alt="Image 0" width="200"/></td>
+    <td align="center"><img src="asset/porcelain/results/1.png" alt="Image 1" width="200"/></td>
+    <td align="center"><img src="asset/porcelain/results/2.png" alt="Image 2" width="200"/></td>
+    <td align="center"><img src="asset/porcelain/results/3.png" alt="Image 3" width="200"/></td>
+  </tr>
+  <tr>
+    <td align="center">青花瓷风格，苏州园林</td>
+    <td align="center">青花瓷风格，一朵荷花</td>
+    <td align="center">青花瓷风格，一只羊</td>
+    <td align="center">青花瓷风格，一个女孩在雨中跳舞</td>
+  </tr>
+  
+</table>
+
+
 ### Training
     
 We provide three types of weights for fine-tuning LoRA, `ema`, `module` and `distill`, and you can choose according to the actual effect. By default, we use `ema` weights. 
