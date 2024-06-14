@@ -1,17 +1,17 @@
-model='DiT-g/2'                                 # model type
-task_flag="lora_jade_ema_rank64"                # task flag 
-resume=./ckpts/t2i/model/                       # resume checkpoint 
-index_file=dataset/index_v2_json/jade.json      # the selected data indices
-results_dir=./log_EXP                           # save root for results
-batch_size=1                                    # training batch size
-image_size=1024                                 # training image resolution
-grad_accu_steps=2                               # gradient accumulation steps
-warmup_num_steps=0                              # warm-up steps
-lr=0.0001                                       # learning rate
-ckpt_every=100                                  # create a ckpt every a few steps.
-ckpt_latest_every=2000                          # create a ckpt named `latest.pt` every a few steps.
-rank=64                                         # rank of lora
-max_training_steps=2000                         # Maximum training iteration steps
+model='DiT-g/2'                                         # model type
+task_flag="lora_porcelain_ema_rank64"                   # task flag 
+resume=./ckpts/t2i/model/                               # resume checkpoint 
+index_file=dataset/porcelain/jsons/porcelain.json       # the selected data indices
+results_dir=./log_EXP                                   # save root for results
+batch_size=1                                            # training batch size
+image_size=1024                                         # training image resolution
+grad_accu_steps=2                                       # gradient accumulation steps
+warmup_num_steps=0                                      # warm-up steps
+lr=0.0001                                               # learning rate
+ckpt_every=100                                          # create a ckpt every a few steps.
+ckpt_latest_every=2000                                  # create a ckpt named `latest.pt` every a few steps.
+rank=64                                                 # rank of lora
+max_training_steps=2000                                 # Maximum training iteration steps
 
 PYTHONPATH=./ deepspeed hydit/train_deepspeed.py \
     --task-flag ${task_flag} \
