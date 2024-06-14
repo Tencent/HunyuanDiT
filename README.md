@@ -392,7 +392,16 @@ We provide training and inference scripts for LoRA, detailed in the [guidances](
   # Inference using trained LORA weights.
   python sample_t2i.py --prompt "青花瓷风格，一只小狗"  --no-enhance --lora_ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
   ```
-
+ We offer two types of trained LoRA weights for `porcelain` and `jade`, see details at [links](https://huggingface.co/Tencent-Hunyuan/HYDiT-LoRA)
+  ```shell
+  cd HunyuanDiT
+  # Use the huggingface-cli tool to download the model.
+  huggingface-cli download Tencent-Hunyuan/HYDiT-LoRA --local-dir ./ckpts/t2i/lora
+  
+  # Quick start
+  python sample_t2i.py --prompt "青花瓷风格，一只猫在追蝴蝶"  --no-enhance --load-key ema --lora_ckpt ./ckpts/t2i/lora/porcelain
+  ```
+ 
 ## 🔑 Inference
 
 ### Using Gradio
