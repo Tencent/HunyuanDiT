@@ -13,10 +13,7 @@
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Union
 
-import PIL
-import numpy as np
 import torch
-import torchvision.transforms as T
 from diffusers.configuration_utils import FrozenDict
 from diffusers.image_processor import VaeImageProcessor
 from diffusers.loaders import FromSingleFileMixin, LoraLoaderMixin, TextualInversionLoaderMixin
@@ -27,7 +24,6 @@ from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from diffusers.schedulers import KarrasDiffusionSchedulers
 from diffusers.utils import (
-    PIL_INTERPOLATION,
     deprecate,
     logging,
     replace_example_docstring,
@@ -43,30 +39,18 @@ logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 EXAMPLE_DOC_STRING = """
     Examples:
         ```py
-        >>> import requests
         >>> import torch
-        >>> from PIL import Image
-        >>> from io import BytesIO
+        >>> from diffusers import StableDiffusionPipeline
 
-        >>> from diffusers import StableDiffusionImg2ImgPipeline
+        >>> pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16)
+        >>> pipe = pipe.to("cuda")
 
-        >>> device = "cuda"
-        >>> model_id_or_path = "runwayml/stable-diffusion-v1-5"
-        >>> pipe = StableDiffusionImg2ImgPipeline.from_pretrained(model_id_or_path, torch_dtype=torch.float16)
-        >>> pipe = pipe.to(device)
-
-        >>> url = "https://raw.githubusercontent.com/CompVis/stable-diffusion/main/assets/stable-samples/img2img/sketch-mountains-input.jpg"
-
-        >>> response = requests.get(url)
-        >>> init_image = Image.open(BytesIO(response.content)).convert("RGB")
-        >>> init_image = init_image.resize((768, 512))
-
-        >>> prompt = "A fantasy landscape, trending on artstation"
-
-        >>> images = pipe(prompt=prompt, image=init_image, strength=0.75, guidance_scale=7.5).images
-        >>> images[0].save("fantasy_landscape.png")
+        >>> prompt = "a photo of an astronaut riding a horse on mars"
+        >>> image = pipe(prompt).images[0]
         ```
 """
+
+
 def rescale_noise_cfg(noise_cfg, noise_pred_text, guidance_rescale=0.0):
     """
     Rescale `noise_cfg` according to `guidance_rescale`. Based on findings of [Common Diffusion Noise Schedules and
@@ -80,34 +64,10 @@ def rescale_noise_cfg(noise_cfg, noise_pred_text, guidance_rescale=0.0):
     noise_cfg = guidance_rescale * noise_pred_rescaled + (1 - guidance_rescale) * noise_cfg
     return noise_cfg
 
-def preprocess(image):
-    deprecation_message = "The preprocess method is deprecated and will be removed in diffusers 1.0.0. Please use VaeImageProcessor.preprocess(...) instead"
-    deprecate("preprocess", "1.0.0", deprecation_message, standard_warn=False)
-    if isinstance(image, torch.Tensor):
-        return image
-    elif isinstance(image, PIL.Image.Image):
-        image = [image]
 
-    if isinstance(image[0], PIL.Image.Image):
-        w, h = image[0].size
-        w, h = (x - x % 8 for x in (w, h))  # resize to integer multiple of 8
-
-        image = [np.array(i.resize((w, h), resample=PIL_INTERPOLATION["lanczos"]))[None, :] for i in image]
-        image = np.concatenate(image, axis=0)
-        image = np.array(image).astype(np.float32) / 255.0
-        image = image.transpose(0, 3, 1, 2)
-        image = 2.0 * image - 1.0
-        image = torch.from_numpy(image)
-    elif isinstance(image[0], torch.Tensor):
-        image = torch.cat(image, dim=0)
-    return image
-
-
-class StableDiffusionPipeline(
-    DiffusionPipeline, TextualInversionLoaderMixin, LoraLoaderMixin, FromSingleFileMixin
-):
+class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, LoraLoaderMixin, FromSingleFileMixin):
     r"""
-    Pipeline for text-guided image-to-image generation using Stable Diffusion.
+    Pipeline for text-to-image generation using Stable Diffusion.
 
     This model inherits from [`DiffusionPipeline`]. Check the superclass documentation for the generic methods
     implemented for all pipelines (downloading, saving, running on a particular device, etc.).
@@ -126,7 +86,8 @@ class StableDiffusionPipeline(
         tokenizer (Optional[`~transformers.BertTokenizer`, `~transformers.CLIPTokenizer`]):
             A `BertTokenizer` or `CLIPTokenizer` to tokenize text.
         unet (Optional[`HunYuanDiT`, `UNet2DConditionModel`]):
-            A `UNet2DConditionModel` to denoise the encoded image latents.
+            A `HunYuanDiT` or `UNet2DConditionModel` to denoise the encoded image latents.
+            Notice: Here we still keep the word `unet` for compatibility with the previous version of the pipeline.
         scheduler ([`SchedulerMixin`]):
             A scheduler to be used in combination with `unet` to denoise the encoded image latents. Can be one of
             [`DDIMScheduler`], [`LMSDiscreteScheduler`], or [`PNDMScheduler`].
@@ -225,7 +186,35 @@ class StableDiffusionPipeline(
         self.image_processor = VaeImageProcessor(vae_scale_factor=self.vae_scale_factor)
         self.register_to_config(requires_safety_checker=requires_safety_checker)
 
-    # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline._encode_prompt
+    def enable_vae_slicing(self):
+        r"""
+        Enable sliced VAE decoding. When this option is enabled, the VAE will split the input tensor in slices to
+        compute decoding in several steps. This is useful to save some memory and allow larger batch sizes.
+        """
+        self.vae.enable_slicing()
+
+    def disable_vae_slicing(self):
+        r"""
+        Disable sliced VAE decoding. If `enable_vae_slicing` was previously enabled, this method will go back to
+        computing decoding in one step.
+        """
+        self.vae.disable_slicing()
+
+    def enable_vae_tiling(self):
+        r"""
+        Enable tiled VAE decoding. When this option is enabled, the VAE will split the input tensor into tiles to
+        compute decoding and encoding in several steps. This is useful for saving a large amount of memory and to allow
+        processing larger images.
+        """
+        self.vae.enable_tiling()
+
+    def disable_vae_tiling(self):
+        r"""
+        Disable tiled VAE decoding. If `enable_vae_tiling` was previously enabled, this method will go back to
+        computing decoding in one step.
+        """
+        self.vae.disable_tiling()
+
     def _encode_prompt(
             self,
             prompt,
@@ -256,7 +245,6 @@ class StableDiffusionPipeline(
 
         return prompt_embeds
 
-    # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.encode_prompt
     def encode_prompt(
             self,
             prompt,
@@ -338,7 +326,7 @@ class StableDiffusionPipeline(
             untruncated_ids = tokenizer(prompt, padding="longest", return_tensors="pt").input_ids
 
             if untruncated_ids.shape[-1] >= text_input_ids.shape[-1] and not torch.equal(
-                    text_input_ids, untruncated_ids
+                text_input_ids, untruncated_ids
             ):
                 removed_text = tokenizer.batch_decode(
                     untruncated_ids[:, tokenizer.model_max_length - 1 : -1]
@@ -427,34 +415,6 @@ class StableDiffusionPipeline(
 
         return prompt_embeds, negative_prompt_embeds, attention_mask, uncond_attention_mask
 
-    def _convert_to_rgb(self, image):
-        return image.convert('RGB')
-
-    def image_transform(self, image_size=224):
-        transform = T.Compose([
-            T.Resize((image_size, image_size), interpolation=T.InterpolationMode.BICUBIC),
-            self._convert_to_rgb,
-            T.ToTensor(),
-            T.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
-        ])
-        return transform
-
-    def encode_img(self, img, device, do_classifier_free_guidance):
-        # print('len', len(img))
-        # print('img', img.size)
-        img = img[0]    # TODO: support batch processing
-        image_preprocess = self.image_transform(224)
-        img_for_clip = image_preprocess(img)
-        # print('img_for_clip', img_for_clip.shape)
-        img_for_clip = img_for_clip.unsqueeze(0)
-        img_clip_embedding = self.img_encoder(img_for_clip.to(device)).to(dtype=torch.float16)
-        # print('img_clip_embedding_1_type', img_clip_embedding.dtype)
-        if do_classifier_free_guidance:
-            negative_img_clip_embedding = torch.zeros_like(img_clip_embedding)
-        return img_clip_embedding, negative_img_clip_embedding
-
-
-    # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.run_safety_checker
     def run_safety_checker(self, image, device, dtype):
         if self.safety_checker is None:
             has_nsfw_concept = None
@@ -469,7 +429,6 @@ class StableDiffusionPipeline(
             )
         return image, has_nsfw_concept
 
-    # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.decode_latents
     def decode_latents(self, latents):
         deprecation_message = "The decode_latents method is deprecated and will be removed in 1.0.0. Please use VaeImageProcessor.postprocess(...) instead"
         deprecate("decode_latents", "1.0.0", deprecation_message, standard_warn=False)
@@ -481,7 +440,6 @@ class StableDiffusionPipeline(
         image = image.cpu().permute(0, 2, 3, 1).float().numpy()
         return image
 
-    # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.prepare_extra_step_kwargs
     def prepare_extra_step_kwargs(self, generator, eta):
         # prepare extra kwargs for the scheduler step, since not all schedulers have the same signature
         # eta (η) is only used with the DDIMScheduler, it will be ignored for other schedulers.
@@ -545,15 +503,6 @@ class StableDiffusionPipeline(
                     f" got: `prompt_embeds` {prompt_embeds.shape} != `negative_prompt_embeds`"
                     f" {negative_prompt_embeds.shape}."
                 )
-
-    def get_timesteps(self, num_inference_steps, strength, device):
-        # get the original timestep using init_timestep
-        init_timestep = min(int(num_inference_steps * strength), num_inference_steps)
-
-        t_start = max(num_inference_steps - init_timestep, 0)
-        timesteps = self.scheduler.timesteps[t_start * self.scheduler.order :]
-
-        return timesteps, num_inference_steps - t_start
 
     def prepare_latents(self, batch_size, num_channels_latents, height, width, dtype, device, generator, latents=None):
         shape = (batch_size, num_channels_latents, height // self.vae_scale_factor, width // self.vae_scale_factor)
@@ -642,6 +591,10 @@ class StableDiffusionPipeline(
             generator (`torch.Generator` or `List[torch.Generator]`, *optional*):
                 A [`torch.Generator`](https://pytorch.org/docs/stable/generated/torch.Generator.html) to make
                 generation deterministic.
+            latents (`torch.FloatTensor`, *optional*):
+                Pre-generated noisy latents sampled from a Gaussian distribution, to be used as inputs for image
+                generation. Can be used to tweak the same generation with different prompts. If not provided, a latents
+                tensor is generated by sampling using the supplied random `generator`.
             prompt_embeds (`torch.FloatTensor`, *optional*):
                 Pre-generated text embeddings. Can be used to easily tweak text inputs (prompt weighting). If not
                 provided, text embeddings are generated from the `prompt` input argument.
@@ -781,9 +734,20 @@ class StableDiffusionPipeline(
                         return_dict=False,
                     )
                 elif self.infer_mode == "trt":
-                    raise NotImplementedError("TensorRT model is not supported yet.")
+                    noise_pred = self.unet(
+                        x=latent_model_input.contiguous(),
+                        t_emb=t_expand.contiguous(),
+                        context=prompt_embeds.contiguous(),
+                        image_meta_size=ims.contiguous(),
+                        style=style.contiguous(),
+                        freqs_cis_img0=freqs_cis_img[0].to(device).contiguous(),
+                        freqs_cis_img1=freqs_cis_img[1].to(device).contiguous(),
+                        text_embedding_mask=attention_mask.contiguous(),
+                        encoder_hidden_states_t5=prompt_embeds_t5.contiguous(),
+                        text_embedding_mask_t5=attention_mask_t5.contiguous(),
+                    )
                 else:
-                    raise ValueError("[ERROR] invalid inference mode! please check your config file")
+                    raise ValueError("Unknown infer_mode: {self.infer_mode}")
                 if learn_sigma:
                     noise_pred, _ = noise_pred.chunk(2, dim=1)
 
