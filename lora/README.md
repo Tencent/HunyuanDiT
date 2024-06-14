@@ -2,7 +2,7 @@
 ## Using LoRA to fine-tune HunyuanDiT
 
 
-## Instructions
+### Instructions
 
  The dependencies and installation are basically the same as the [**original model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1).
 
