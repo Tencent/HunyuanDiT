@@ -374,10 +374,10 @@ All models will be automatically downloaded. For more information about the mode
   To leverage DeepSpeed in training, you have the flexibility to control **single-node** / **multi-node** training by adjusting parameters such as `--hostfile` and `--master_addr`. For more details, see [link](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node).
 
   ```shell
-  # Single Resolution Data Preparation
+  # Single Resolution Training
   PYTHONPATH=./ sh hydit/train.sh --index-file dataset/porcelain/jsons/porcelain.json
   
-  # Multi Resolution Data Preparation
+  # Multi Resolution Training
   PYTHONPATH=./ sh hydit/train.sh --index-file dataset/porcelain/jsons/porcelain.json --multireso --reso-step 64
   ```
 
@@ -385,6 +385,13 @@ All models will be automatically downloaded. For more information about the mode
 
 We provide training and inference scripts for LoRA, detailed in the [guidances](./lora/README.md). 
 
+  ```shell
+  # Training for porcelain LoRA.
+  PYTHONPATH=./ sh lora/train_lora.sh --index-file dataset/porcelain/jsons/porcelain.json
+
+  # Inference using trained LORA weights.
+  python sample_t2i.py --prompt "青花瓷风格，一只小狗"  --no-enhance --lora_ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
+  ```
 
 ## 🔑 Inference
 
