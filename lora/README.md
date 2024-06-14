@@ -1,6 +1,21 @@
 
 ## Using LoRA to fine-tune HunyuanDiT
 
+
+## Instructions
+
+ The dependencies and installation are basically the same as the [**original model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1).
+
+ We provide two types of trained LoRA weights for you to test.
+ 
+ Then download the model using the following commands:
+
+```bash
+cd HunyuanDiT
+# Use the huggingface-cli tool to download the model.
+huggingface-cli download Tencent-Hunyuan/HYDiT-LoRA --local-dir ./ckpts/t2i/lora
+```
+
 ### Training
     
 We provide three types of weights for fine-tuning LoRA, `ema`, `module` and `distill`, and you can choose according to the actual effect. By default, we use `ema` weights. 
