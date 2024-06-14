@@ -14,6 +14,9 @@
 cd HunyuanDiT
 # Use the huggingface-cli tool to download the model.
 huggingface-cli download Tencent-Hunyuan/HYDiT-LoRA --local-dir ./ckpts/t2i/lora
+
+# Quick start
+python sample_t2i.py --prompt "青花瓷风格，一只猫在追蝴蝶"  --no-enhance --load-key ema --lora_ckpt ./ckpts/t2i/lora/porcelain
 ```
 
 ### Training
