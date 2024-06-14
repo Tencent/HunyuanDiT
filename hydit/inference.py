@@ -202,6 +202,7 @@ class End2End(object):
 
         self.infer_mode = self.args.infer_mode
         if self.infer_mode in ['fa', 'torch']:
+            model_dir = self.root / "model"
             model_path = model_dir / f"pytorch_model_{self.args.load_key}.pt"
             if not model_path.exists():
                 raise ValueError(f"model_path not exists: {model_path}")
@@ -222,7 +223,7 @@ class End2End(object):
 
                 self.model.load_adapter(lora_ckpt)
                 self.model.merge_and_unload()
-                
+
 
             self.model.eval()
             logger.info(f"Loading torch model finished")
