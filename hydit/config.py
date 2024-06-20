@@ -39,15 +39,17 @@ def get_args(default_args=None):
     parser.add_argument("--text-len-t5", type=int, default=256, help="Token length of T5 text encoder output.")
 
     # LoRA config
-    parser.add_argument("--training_parts", type=str, default='all', choices=['all', 'lora'], help="Training parts")
+    parser.add_argument("--training-parts", type=str, default='all', choices=['all', 'lora'], help="Training parts")
     parser.add_argument("--rank", type=int, default=64, help="Rank of LoRA")
-    parser.add_argument("--lora_ckpt", type=str, default=None, help="LoRA checkpoint")
+    parser.add_argument("--lora-ckpt", type=str, default=None, help="LoRA checkpoint")
     parser.add_argument('--target-modules', type=str, nargs='+', default=['Wqkv', 'q_proj', 'kv_proj', 'out_proj'],
                         help="Target modules for LoRA fine tune")
-    parser.add_argument("--output_merge_path", type=str, default=None, help="Output path for merged model")
-    
-    
+    parser.add_argument("--output-merge-path", type=str, default=None, help="Output path for merged model")
 
+    # controlnet config
+    parser.add_argument("--control-type", type=str, default='canny', choices=['canny', 'depth', 'pose'], help="Controlnet condition type")
+    parser.add_argument("--control-weight", type=float, default=1.0, help="Controlnet weight")
+    parser.add_argument("--condition-image-path", type=str, default=None, help="Inference condition image path")
 
     # Diffusion
     parser.add_argument("--learn-sigma", action="store_true", help="Learn extra channels for sigma.")

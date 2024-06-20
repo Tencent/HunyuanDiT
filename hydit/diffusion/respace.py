@@ -89,9 +89,12 @@ class SpacedDiffusion(GaussianDiffusion):
         return super().p_mean_variance(self._wrap_model(model), *args, **kwargs)
 
     def training_losses(
-        self, model, *args, **kwargs
+        self, model, controlnet=None, *args, **kwargs
     ):  # pylint: disable=signature-differs
-        return super().training_losses(self._wrap_model(model), *args, **kwargs)
+        if controlnet != None:
+            return super().training_losses(self._wrap_model(model), controlnet=self._wrap_model(controlnet), *args, **kwargs)
+        else:
+            return super().training_losses(self._wrap_model(model), *args, **kwargs)
 
     def condition_mean(self, cond_fn, *args, **kwargs):
         return super().condition_mean(self._wrap_model(cond_fn), *args, **kwargs)

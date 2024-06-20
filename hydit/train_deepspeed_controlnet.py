@@ -29,12 +29,21 @@ from hydit.ds_config import deepspeed_config_from_args
 from hydit.modules.ema import EMA
 from hydit.modules.fp16_layers import Float16Module
 from hydit.modules.models import HUNYUAN_DIT_MODELS
+from hydit.modules.controlnet import HunYuanControlNet
 from hydit.modules.posemb_layers import init_image_posemb
 from hydit.utils.tools import create_logger, set_seeds, create_exp_folder, model_resume, get_trainable_params
 from IndexKits.index_kits import ResolutionGroup
 from IndexKits.index_kits.sampler import DistributedSamplerWithStartIndex, BlockDistributedSampler
 from peft import LoraConfig, get_peft_model
 
+from hydit.annotator.dwpose import DWposeDetector
+torch.optim.lr_scheduler.LRScheduler = torch.optim.lr_scheduler._LRScheduler
+from transformers import pipeline
+import cv2
+from PIL import Image
+
+depth_estimator = pipeline('depth-estimation', device='cuda:{}'.format(int(os.getenv('LOCAL_RANK', '0'))))
+pose_detector = DWposeDetector()
 
 def deepspeed_initialize(args, logger, model, opt, deepspeed_config):
     logger.info(f"Initialize deepspeed...")
@@ -102,10 +111,32 @@ def save_checkpoint(args, rank, logger, model, ema, epoch, train_steps, checkpoi
     if rank == 0 and len(dst_paths) > 0:
         # Delete optimizer states to avoid occupying too much disk space.
         for dst_path in dst_paths:
-            for opt_state_path in glob(f"{dst_path}/zero_dp_rank_*_tp_rank_00_pp_rank_00_optim_states.pt"):
+            for opt_state_path in glob(f"{dst_path}/*_00_optim_states.pt"):
                 os.remove(opt_state_path)
 
     return checkpoint_path
+
+def get_canny(np_img, low_threshold = 100, high_threshold = 200):
+    # tensor = deNormalize()
+    # image = tensor_to_img(tensor)
+    image = cv2.Canny(np_img, low_threshold,high_threshold)
+    image = image[:,:,None]
+    image = np.concatenate([image,image,image], axis=2)
+    ## 输出边缘图像
+    ## 归一化为张量
+    # canny_tensor = img_to_norm_tensor(canny_img)
+    return image
+
+def get_depth(np_img):
+    pil_img = Image.fromarray(np_img)
+    depth = depth_estimator(pil_img)['depth']
+    depth = np.array(depth)
+    depth = depth[:, :, None]
+    depth = np.concatenate([depth, depth, depth], axis=2)
+    return depth
+
+def get_pose(np_img):
+    return pose_detector(np_img)[0]
 
 @torch.no_grad()
 def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5, freqs_cis_img):
@@ -132,6 +163,20 @@ def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5
     image_meta_size = kwargs['image_meta_size'].to(device)
     style = kwargs['style'].to(device)
 
+    np_img = image.squeeze(0).add(1).mul(255 / 2).permute(1, 2, 0).cpu().numpy().astype('uint8')
+    if args.control_type == 'canny':
+        condition = get_canny(np_img)
+    elif args.control_type == 'depth':
+        condition = get_depth(np_img)
+    elif args.control_type == 'pose':
+        condition = get_pose(np_img)
+    else:
+        raise NotImplementedError
+    condtion = Image.fromarray(condition)
+    condition = TF.to_tensor(condition)
+    condition = TF.normalize(condition, [0.5], [0.5])
+    condition = condition.unsqueeze(0).to(device)
+
     if args.extra_fp16:
         image = image.half()
         image_meta_size = image_meta_size.half() if image_meta_size is not None else None
@@ -140,6 +185,7 @@ def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5
     image = image.to(device)
     vae_scaling_factor = vae.config.scaling_factor
     latents = vae.encode(image).latent_dist.sample().mul_(vae_scaling_factor)
+    condition = vae.encode(condition).latent_dist.sample().mul_(vae_scaling_factor)
 
     # positional embedding
     _, _, height, width = image.shape
@@ -156,6 +202,7 @@ def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5
         style=style,
         cos_cis_img=cos_cis_img,
         sin_cis_img=sin_cis_img,
+        condition=condition,
     )
 
     return latents, model_kwargs
@@ -163,6 +210,7 @@ def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5
 def main(args):
     if args.training_parts == "lora":
         args.use_ema = False
+    args.use_ema = False
 
     assert torch.cuda.is_available(), "Training currently requires at least one GPU."
 
@@ -231,6 +279,11 @@ def main(args):
                                        input_size=latent_size,
                                        log_fn=logger.info,
                                         )
+        controlnet = HunYuanControlNet(args,
+                                       input_size=latent_size,
+                                       depth=40, hidden_size=1408, patch_size=2, num_heads=16, mlp_ratio=4.3637,
+                                       log_fn=logger.info,
+                                        )
     # Multi-resolution / Single-resolution training.
     if args.multireso:
         resolutions = ResolutionGroup(image_size[0],
@@ -259,6 +312,7 @@ def main(args):
     # Setup FP16 main model:
     if args.use_fp16:
         model = Float16Module(model, args)
+        controlnet = Float16Module(controlnet, args)
     logger.info(f"    Using main model with data type {'fp16' if args.use_fp16 else 'fp32'}")
 
     diffusion = create_diffusion(
@@ -364,14 +418,27 @@ def main(args):
             model = get_peft_model(model, loraconfig)
         
     logger.info(f"    Training parts: {args.training_parts}")
+
+    if args.use_fp16:
+        controlnet.module.from_dit(model.module)
+        controlnet.module.set_trainable()
+    else:
+        controlnet.from_dit(model)
+        controlnet.set_trainable()
+    logger.info(f"    ControlNet loaded from DIT")
+
     
-    model, opt, scheduler = deepspeed_initialize(args, logger, model, opt, deepspeed_config)
+    
+    controlnet, opt, scheduler = deepspeed_initialize(args, logger, controlnet, opt, deepspeed_config)
 
     # ===========================================================================
     # Training
     # ===========================================================================
 
-    model.train()
+    model.eval()
+    model.requires_grad_(False)
+    model = model.to(device)
+    
     if args.use_ema:
         ema.eval()
 
@@ -382,8 +449,8 @@ def main(args):
     logger.info(" ****************************** Running training ******************************")
     logger.info(f"      Number GPUs:               {world_size}")
     logger.info(f"      Number training samples:   {len(dataset):,}")
-    logger.info(f"      Number parameters:         {sum(p.numel() for p in model.parameters()):,}")
-    logger.info(f"      Number trainable params:   {sum(p.numel() for p in get_trainable_params(model)):,}")
+    logger.info(f"      Number parameters:         {sum(p.numel() for p in controlnet.parameters()):,}")
+    logger.info(f"      Number trainable params:   {sum(p.numel() for p in get_trainable_params(controlnet)):,}")
     logger.info("    ------------------------------------------------------------------------------")
     logger.info(f"      Iters per epoch:           {iters_per_epoch:,}")
     logger.info(f"      Batch size per device:     {batch_size}")
@@ -454,11 +521,11 @@ def main(args):
                         ema.update(model.module.module, step=step)
                     torch.cuda.current_stream().wait_stream(ema_stream)
 
-            loss_dict = diffusion.training_losses(model=model, x_start=latents, model_kwargs=model_kwargs)
+            loss_dict = diffusion.training_losses(model=model, x_start=latents, model_kwargs=model_kwargs, controlnet=controlnet)
             loss = loss_dict["loss"].mean()
-            model.backward(loss)
+            controlnet.backward(loss)
             last_batch_iteration = (train_steps + 1) // (global_batch_size // (batch_size * world_size))
-            model.step(lr_kwargs={'last_batch_iteration': last_batch_iteration})
+            controlnet.step(lr_kwargs={'last_batch_iteration': last_batch_iteration})
 
             if args.use_ema and not args.async_ema or (args.async_ema and step == len(loader)-1):
                 if args.use_fp16:
@@ -499,7 +566,7 @@ def main(args):
 
             if (train_steps % args.ckpt_every == 0 or train_steps % args.ckpt_latest_every == 0  # or train_steps == args.max_training_steps
                 ) and train_steps > 0:
-                save_checkpoint(args, rank, logger, model, ema, epoch, train_steps, checkpoint_dir)
+                save_checkpoint(args, rank, logger, controlnet, ema, epoch, train_steps, checkpoint_dir)
 
             if train_steps >= args.max_training_steps:
                 logger.info(f"Breaking step loop at {train_steps}.")

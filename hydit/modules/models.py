@@ -270,6 +270,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
                 cos_cis_img=None,
                 sin_cis_img=None,
                 return_dict=True,
+                controls=None,
                 ):
         """
         Forward pass of the encoder.
@@ -341,13 +342,18 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
         skips = []
         for layer, block in enumerate(self.blocks):
             if layer > self.depth // 2:
-                skip = skips.pop()
+                if controls is not None:
+                    skip = skips.pop() + controls.pop()
+                else:
+                    skip = skips.pop()
                 x = block(x, c, text_states, freqs_cis_img, skip)   # (N, L, D)
             else:
                 x = block(x, c, text_states, freqs_cis_img)         # (N, L, D)
 
             if layer < (self.depth // 2 - 1):
                 skips.append(x)
+        if controls is not None and len(controls) != 0:
+            raise ValueError("The number of controls is not equal to the number of skip connections.")
 
         # ========================= Final layer =========================
         x = self.final_layer(x, c)                              # (N, L, patch_size ** 2 * out_channels)

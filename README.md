@@ -25,6 +25,7 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 > [**DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857) <br>
 
 ## 🔥🔥🔥 News!!
+* Jun 19, 2024: :tada: ControlNet is released, supporting canny, pose and depth control. See [training/inference codes](#controlnet) for details.
 * Jun 13, 2024: :zap: HYDiT-v1.1 version is released, which mitigates the issue of image oversaturation and alleviates the watermark issue. Please check [HunyuanDiT-v1.1 ](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1) and 
 [Distillation-v1.1](https://huggingface.co/Tencent-Hunyuan/Distillation-v1.1) for more details.
 * Jun 13, 2024: :truck: The training code is released, offering [full-parameter training](#full-parameter-training) and [LoRA training](#lora).
@@ -68,9 +69,9 @@ or multi-turn language interactions to create the picture.
   - [x] TensorRT Version
   - [x] Training
   - [x] Lora
-  - [ ] Controlnet (Pose, Canny, Depth, Tile)
+  - [x] Controlnet (Pose, Canny, Depth)
   - [ ] IP-adapter
-  - [ ] Hunyuan-DiT-XL checkpoints (0.7B model)
+  - [ ] Hunyuan-DiT-S checkpoints (0.7B model)
   - [ ] Caption model (Re-caption the raw image-text pairs)
 - [DialogGen](https://github.com/Centaurusalpha/DialogGen) (Prompt Enhancement Model)
   - [x] Inference
@@ -79,6 +80,7 @@ or multi-turn language interactions to create the picture.
 - [X] Cli Demo 
 - [X] ComfyUI
 - [X] Diffusers
+- [ ] Kohya
 - [ ] WebUI
 
 
@@ -103,6 +105,8 @@ or multi-turn language interactions to create the picture.
     - [Using Command Line](#using-command-line)
     - [More Configurations](#more-configurations)
     - [Using ComfyUI](#using-comfyui)
+  - [:building_construction: Adatper](#building_construction-adapter)
+    - [ControlNet](#controlnet)
   - [🚀 Acceleration (for Linux)](#-acceleration-for-linux)
   - [🔗 BibTeX](#-bibtex)
 
@@ -378,10 +382,12 @@ All models will be automatically downloaded. For more information about the mode
   PYTHONPATH=./ sh hydit/train.sh --index-file dataset/porcelain/jsons/porcelain.json
   
   # Multi Resolution Training
-  PYTHONPATH=./ sh hydit/train.sh --index-file dataset/porcelain/jsons/porcelain.json --multireso --reso-step 64
+  PYTHONPATH=./ sh hydit/train.sh --index-file dataset/porcelain/jsons/porcelain_mt.json --multireso --reso-step 64
   ```
 
 ### LoRA
+
+
 
 We provide training and inference scripts for LoRA, detailed in the [guidances](./lora/README.md). 
 
@@ -390,7 +396,7 @@ We provide training and inference scripts for LoRA, detailed in the [guidances](
   PYTHONPATH=./ sh lora/train_lora.sh --index-file dataset/porcelain/jsons/porcelain.json
 
   # Inference using trained LORA weights.
-  python sample_t2i.py --prompt "青花瓷风格，一只小狗"  --no-enhance --lora_ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
+  python sample_t2i.py --prompt "青花瓷风格，一只小狗"  --no-enhance --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
   ```
  We offer two types of trained LoRA weights for `porcelain` and `jade`, see details at [links](https://huggingface.co/Tencent-Hunyuan/HYDiT-LoRA)
   ```shell
@@ -399,9 +405,45 @@ We provide training and inference scripts for LoRA, detailed in the [guidances](
   huggingface-cli download Tencent-Hunyuan/HYDiT-LoRA --local-dir ./ckpts/t2i/lora
   
   # Quick start
-  python sample_t2i.py --prompt "青花瓷风格，一只猫在追蝴蝶"  --no-enhance --load-key ema --lora_ckpt ./ckpts/t2i/lora/porcelain
+  python sample_t2i.py --prompt "青花瓷风格，一只猫在追蝴蝶"  --no-enhance --load-key ema --lora-ckpt ./ckpts/t2i/lora/porcelain
   ```
- 
+ <table>
+  <tr>
+    <td colspan="4" align="center">Examples of training data</td>
+  </tr>
+  
+  <tr>
+    <td align="center"><img src="lora/asset/porcelain/train/0.png" alt="Image 0" width="200"/></td>
+    <td align="center"><img src="lora/asset/porcelain/train/1.png" alt="Image 1" width="200"/></td>
+    <td align="center"><img src="lora/asset/porcelain/train/2.png" alt="Image 2" width="200"/></td>
+    <td align="center"><img src="lora/asset/porcelain/train/3.png" alt="Image 3" width="200"/></td>
+  </tr>
+  <tr>
+    <td align="center">青花瓷风格，一只蓝色的鸟儿站在蓝色的花瓶上，周围点缀着白色花朵，背景是白色 （Porcelain style, a blue bird stands on a blue vase, surrounded by white flowers, with a white background.
+）</td>
+    <td align="center">青花瓷风格，这是一幅蓝白相间的陶瓷盘子，上面描绘着一只狐狸和它的幼崽在森林中漫步，背景是白色 （Porcelain style, this is a blue and white ceramic plate depicting a fox and its cubs strolling in the forest, with a white background.）</td>
+    <td align="center">青花瓷风格，在黑色背景上，一只蓝色的狼站在蓝白相间的盘子上，周围是树木和月亮 （Porcelain style, on a black background, a blue wolf stands on a blue and white plate, surrounded by trees and the moon.）</td>
+    <td align="center">青花瓷风格，在蓝色背景上，一只蓝色蝴蝶和白色花朵被放置在中央 （Porcelain style, on a blue background, a blue butterfly and white flowers are placed in the center.）</td>
+  </tr>
+  <tr>
+    <td colspan="4" align="center">Examples of inference results</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="lora/asset/porcelain/inference/0.png" alt="Image 4" width="200"/></td>
+    <td align="center"><img src="lora/asset/porcelain/inference/1.png" alt="Image 5" width="200"/></td>
+    <td align="center"><img src="lora/asset/porcelain/inference/2.png" alt="Image 6" width="200"/></td>
+    <td align="center"><img src="lora/asset/porcelain/inference/3.png" alt="Image 7" width="200"/></td>
+  </tr>
+  <tr>
+    <td align="center">青花瓷风格，苏州园林 （Porcelain style,  Suzhou Gardens.）</td>
+    <td align="center">青花瓷风格，一朵荷花 （Porcelain style,  a lotus flower.）</td>
+    <td align="center">青花瓷风格，一只羊（Porcelain style, a sheep.）</td>
+    <td align="center">青花瓷风格，一个女孩在雨中跳舞（Porcelain style, a girl dancing in the rain.）</td>
+  </tr>
+  
+</table>
+
+
 ## 🔑 Inference
 
 ### Using Gradio
@@ -553,6 +595,65 @@ python main.py --listen --port 80
 # Running ComfyUI successfully!
 ```
 More details can be found in [ComfyUI README](comfyui-hydit/README.md)
+
+## :building_construction: Adapter
+
+### ControlNet
+
+We provide training scripts for ControlNet, detailed in the [guidances](./controlnet/README.md). 
+
+  ```shell
+  # Training for canny ControlNet.
+  PYTHONPATH=./ sh hydit/train_controlnet.sh
+  ```
+ We offer three types of trained ControlNet weights for `canny` `depth` and `pose`, see details at [links](https://huggingface.co/Tencent-Hunyuan/HYDiT-ControlNet)
+  ```shell
+  cd HunyuanDiT
+  # Use the huggingface-cli tool to download the model.
+  # We recommend using distilled weights as the base model for ControlNet inference, as our provided pretrained weights are trained on them.
+  huggingface-cli download Tencent-Hunyuan/HYDiT-ControlNet --local-dir ./ckpts/t2i/controlnet
+  huggingface-cli download Tencent-Hunyuan/Distillation-v1.1 ./pytorch_model_distill.pt --local-dir ./ckpts/t2i/model
+  
+  # Quick start
+  python3 sample_controlnet.py  --no-enhance --load-key distill --infer-steps 50 --control-type canny --prompt "在夜晚的酒店门前，一座古老的中国风格的狮子雕像矗立着，它的眼睛闪烁着光芒，仿佛在守护着这座建筑。背景是夜晚的酒店前，构图方式是特写，平视，居中构图。这张照片呈现了真实摄影风格，蕴含了中国雕塑文化，同时展现了神秘氛围" --condition-image-path controlnet/asset/input/canny.jpg --control-weight 1.0
+  ```
+ 
+ <table>
+  <tr>
+    <td colspan="3" align="center">Condition Input</td>
+  </tr>
+  
+   <tr>
+    <td align="center">Canny ControlNet </td>
+    <td align="center">Depth ControlNet </td>
+    <td align="center">Pose ControlNet </td>
+  </tr>
+
+  <tr>
+    <td align="center">在夜晚的酒店门前，一座古老的中国风格的狮子雕像矗立着，它的眼睛闪烁着光芒，仿佛在守护着这座建筑。背景是夜晚的酒店前，构图方式是特写，平视，居中构图。这张照片呈现了真实摄影风格，蕴含了中国雕塑文化，同时展现了神秘氛围<br>（At night, an ancient Chinese-style lion statue stands in front of the hotel, its eyes gleaming as if guarding the building. The background is the hotel entrance at night, with a close-up, eye-level, and centered composition. This photo presents a realistic photographic style, embodies Chinese sculpture culture, and reveals a mysterious atmosphere.） </td>
+    <td align="center">在茂密的森林中，一只黑白相间的熊猫静静地坐在绿树红花中，周围是山川和海洋。背景是白天的森林，光线充足<br>（In the dense forest, a black and white panda sits quietly in green trees and red flowers, surrounded by mountains, rivers, and the ocean. The background is the forest in a bright environment.） </td>
+    <td align="center">一位亚洲女性，身穿绿色上衣，戴着紫色头巾和紫色围巾，站在黑板前。背景是黑板。照片采用近景、平视和居中构图的方式呈现真实摄影风格<br>（An Asian woman, dressed in a green top, wearing a purple headscarf and a purple scarf, stands in front of a blackboard. The background is the blackboard. The photo is presented in a close-up, eye-level, and centered composition, adopting a realistic photographic style） </td>
+  </tr>
+
+  <tr>
+    <td align="center"><img src="controlnet/asset/input/canny.jpg" alt="Image 0" width="200"/></td>
+    <td align="center"><img src="controlnet/asset/input/depth.jpg" alt="Image 1" width="200"/></td>
+    <td align="center"><img src="controlnet/asset/input/pose.jpg" alt="Image 2" width="200"/></td>
+    
+  </tr>
+  
+  <tr>
+    <td colspan="3" align="center">ControlNet Output</td>
+  </tr>
+
+  <tr>
+    <td align="center"><img src="controlnet/asset/output/canny.jpg" alt="Image 3" width="200"/></td>
+    <td align="center"><img src="controlnet/asset/output/depth.jpg" alt="Image 4" width="200"/></td>
+    <td align="center"><img src="controlnet/asset/output/pose.jpg" alt="Image 5" width="200"/></td>
+  </tr>
+ 
+</table>
+
 
 ## 🚀 Acceleration (for Linux)
 

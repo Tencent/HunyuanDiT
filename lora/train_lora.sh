@@ -16,7 +16,7 @@ max_training_steps=2000                                 # Maximum training itera
 PYTHONPATH=./ deepspeed hydit/train_deepspeed.py \
     --task-flag ${task_flag} \
     --model ${model} \
-    --training_parts lora \
+    --training-parts lora \
     --rank ${rank} \
     --resume-split \
     --resume ${resume} \
