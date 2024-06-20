@@ -201,7 +201,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
         self.text_len_t5 = args.text_len_t5
         self.norm = args.norm
 
-        use_flash_attn = args.infer_mode == 'fa' or args.use_flash_attn
+        use_flash_attn = args.infer_mode == 'fa' or getattr(args, 'use_flash_attn', False)
         if use_flash_attn:
             log_fn(f"    Enable Flash Attention.")
         qk_norm = args.qk_norm  # See http://arxiv.org/abs/2302.05442 for details.

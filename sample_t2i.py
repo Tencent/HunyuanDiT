@@ -1,11 +1,8 @@
 from pathlib import Path
-
 from loguru import logger
-
 from dialoggen.dialoggen_demo import DialogGen
 from hydit.config import get_args
 from hydit.inference import End2End
-
 
 def inferencer():
     args = get_args()
@@ -26,6 +23,15 @@ def inferencer():
 
     return args, gen, enhancer
 
+def get_next_index(save_dir):
+    all_files = list(save_dir.glob('*.png'))
+    indices = []
+    for f in all_files:
+        try:
+            indices.append(int(f.stem))
+        except ValueError:
+            logger.warning(f"Skipping file with non-integer name: {f}")
+    return max(indices, default=-1) + 1
 
 if __name__ == "__main__":
     args, gen, enhancer = inferencer()
@@ -59,12 +65,9 @@ if __name__ == "__main__":
     # Save images
     save_dir = Path('results')
     save_dir.mkdir(exist_ok=True)
+
     # Find the first available index
-    all_files = list(save_dir.glob('*.png'))
-    if all_files:
-        start = max([int(f.stem) for f in all_files]) + 1
-    else:
-        start = 0
+    start = get_next_index(save_dir)
 
     for idx, pil_img in enumerate(images):
         save_path = save_dir / f"{idx + start}.png"

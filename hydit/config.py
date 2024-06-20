@@ -4,7 +4,7 @@ from .constants import *
 from .modules.models import HUNYUAN_DIT_CONFIG, HUNYUAN_DIT_MODELS
 from .diffusion.gaussian_diffusion import ModelVarType
 
-import deepspeed
+# import deepspeed
 
 def model_var_type(value):
     try:
@@ -184,15 +184,32 @@ def get_args(default_args=None):
     # ========================================================================================================
     # Deepspeed config
     # ========================================================================================================
-    parser = deepspeed.add_config_arguments(parser)
-    parser.add_argument('--local_rank', type=int, default=None,
-                        help='local rank passed from distributed launcher.')
-    parser.add_argument('--deepspeed-optimizer', action='store_true',
-                        help='Switching to the optimizers in DeepSpeed')
-    parser.add_argument('--remote-device', type=str, default='none', choices=['none', 'cpu', 'nvme'],
-                        help='Remote device for ZeRO-3 initialized parameters.')
-    parser.add_argument('--zero-stage', type=int, default=1)
-    parser.add_argument("--async-ema", action="store_true", help="Whether to use multi stream to excut EMA.")
+    # parser = deepspeed.add_config_arguments(parser)
+    # parser.add_argument('--local_rank', type=int, default=None,
+    #                     help='local rank passed from distributed launcher.')
+    # parser.add_argument('--deepspeed-optimizer', action='store_true',
+    #                     help='Switching to the optimizers in DeepSpeed')
+    # parser.add_argument('--remote-device', type=str, default='none', choices=['none', 'cpu', 'nvme'],
+    #                     help='Remote device for ZeRO-3 initialized parameters.')
+    # parser.add_argument('--zero-stage', type=int, default=1)
+    # parser.add_argument("--async-ema", action="store_true", help="Whether to use multi stream to excut EMA.")
+
+        # Attempt to import DeepSpeed and add its arguments if available
+    try:
+        import deepspeed
+
+        # Add DeepSpeed-specific arguments
+        parser = deepspeed.add_config_arguments(parser)
+        parser.add_argument('--local_rank', type=int, default=None,
+                            help='local rank passed from distributed launcher.')
+        parser.add_argument('--deepspeed-optimizer', action='store_true',
+                            help='Switching to the optimizers in DeepSpeed')
+        parser.add_argument('--remote-device', type=str, default='none', choices=['none', 'cpu', 'nvme'],
+                            help='Remote device for ZeRO-3 initialized parameters.')
+        parser.add_argument('--zero-stage', type=int, default=1)
+        parser.add_argument("--async-ema", action="store_true", help="Whether to use multi stream to excut EMA.")
+    except ImportError:
+        print("DeepSpeed not available. Skipping related arguments...")
 
     args = parser.parse_args(default_args)
 
