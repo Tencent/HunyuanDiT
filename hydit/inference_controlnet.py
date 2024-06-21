@@ -224,6 +224,8 @@ class End2End(object):
                                                 log_fn=logger.info,
                                                 ).half().to(self.device)
             controlnet_state_dict = torch.load(controlnet_path)
+            if 'module' in controlnet_state_dict:
+                controlnet_state_dict = controlnet_state_dict['module']
             self.controlnet.load_state_dict(controlnet_state_dict)
             logger.info(f"Loading controlnet finished")
             # Load model checkpoint
@@ -421,7 +423,7 @@ class End2End(object):
             use_fp16=self.args.use_fp16,
             learn_sigma=self.args.learn_sigma,
             image=image,
-            control_weight=self.args.control_weight,
+            control_weight=eval(self.args.control_weight),
         )[0]
         gen_time = time.time() - start_time
         logger.debug(f"Success, time: {gen_time}")

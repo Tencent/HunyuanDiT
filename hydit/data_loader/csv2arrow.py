@@ -79,10 +79,14 @@ def make_arrow(csv_root, dataset_root, start_id=0, end_id=-1):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) != 3:
-        print("Usage: python hydit/data_loader/csv2arrow.py ${csv_root} ${output_arrow_data_path}")
+    if len(sys.argv) != 4:
+        print("Usage: python hydit/data_loader/csv2arrow.py ${csv_root} ${output_arrow_data_path} ${pool_num}")
+        print("csv_root: The path to your created CSV file. For more details, see https://github.com/Tencent/HunyuanDiT?tab=readme-ov-file#truck-training")
+        print("output_arrow_data_path: The path for storing the created Arrow file")
+        print("pool_num: The number of processes, used for multiprocessing. If you encounter memory issues, you can set pool_num to 1")
         sys.exit(1)
     csv_root = sys.argv[1]
     output_arrow_data_path = sys.argv[2]
-    pool = Pool(500)
+    pool_num = int(sys.argv[3])
+    pool = Pool(pool_num)
     make_arrow(csv_root, output_arrow_data_path)

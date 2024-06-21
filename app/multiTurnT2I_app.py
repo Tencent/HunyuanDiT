@@ -14,7 +14,7 @@ import requests
 import base64
 import pandas as pd
 from sample_t2i import inferencer
-from dialoggen.dialoggen_demo import init_dialoggen_model, eval_model
+from mllm.dialoggen_demo import init_dialoggen_model, eval_model
 
 SIZES = {
     "正方形(square, 1024x1024)": (1024, 1024),
@@ -45,7 +45,7 @@ def get_image_md5(image):
 
 
 # mllm调用
-def request_mllm(server_url='http://0.0.0.0:8080',history_messages=[], question="画一个木制的鸟",image=""):
+def request_dialogGen(server_url='http://0.0.0.0:8080',history_messages=[], question="画一个木制的鸟",image=""):
     if image != "":
         image = base64.b64encode(open(image, "rb").read()).decode()
     print("history_messages before request",history_messages)
@@ -95,7 +95,7 @@ def image_generation(
 # 图文对话
 def chat(history_messages, input_text):
 
-    history_messages, response_text = request_mllm(history_messages=history_messages, question=input_text)
+    history_messages, response_text = request_dialogGen(history_messages=history_messages, question=input_text)
     return history_messages, response_text
 #
 def pipeline(input_text, state, infer_steps, seed, image_size):
@@ -141,7 +141,7 @@ def upload_image(state, image_input):
         (224, 224)).convert('RGB')
     input_image.save(image_input.name)  # Overwrite with smaller image.
     system_prompt = '请先判断用户的意图，若为画图则在输出前加入<画图>:'
-    history_messages, response = request_mllm(question="这张图描述了什么？",history_messages=history_messages,
+    history_messages, response = request_dialogGen(question="这张图描述了什么？",history_messages=history_messages,
                                               image=image_input.name)
     conversation += [(f'<img src="./file={image_input.name}"  style="display: inline-block;">', response)]
     print("conversation" , conversation)

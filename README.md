@@ -25,6 +25,9 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 > [**DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857) <br>
 
 ## 🔥🔥🔥 News!!
+* Jun 27, 2024: :art: Hunyuan-Captioner is released, providing fine-grained caption for training data. See [mllm](./mllm) for details.
+* Jun 27, 2024: :tada: Support LoRa and ControlNet in diffusers. See [diffusers](./diffusers) for details.
+* Jun 27, 2024: :tada: 6GB GPU VRAM Inference scripts are released. See [lite](./lite) for details.
 * Jun 19, 2024: :tada: ControlNet is released, supporting canny, pose and depth control. See [training/inference codes](#controlnet) for details.
 * Jun 13, 2024: :zap: HYDiT-v1.1 version is released, which mitigates the issue of image oversaturation and alleviates the watermark issue. Please check [HunyuanDiT-v1.1 ](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1) and 
 [Distillation-v1.1](https://huggingface.co/Tencent-Hunyuan/Distillation-v1.1) for more details.
@@ -70,11 +73,15 @@ or multi-turn language interactions to create the picture.
   - [x] Training
   - [x] Lora
   - [x] Controlnet (Pose, Canny, Depth)
+  - [x] Hunyuan-Captioner (Re-caption the raw image-text pairs)
+  - [x] 6GB GPU VRAM Inference 
   - [ ] IP-adapter
   - [ ] Hunyuan-DiT-S checkpoints (0.7B model)
-  - [ ] Caption model (Re-caption the raw image-text pairs)
-- [DialogGen](https://github.com/Centaurusalpha/DialogGen) (Prompt Enhancement Model)
-  - [x] Inference
+- Mllm
+  - Hunyuan-Captioner
+    - [x] Inference
+  - [Hunyuan-DialogGen](https://github.com/Centaurusalpha/DialogGen) (Prompt Enhancement Model)
+    - [x] Inference
 - [X] Web Demo (Gradio) 
 - [x] Multi-turn T2I Demo (Gradio)
 - [X] Cli Demo 
@@ -100,6 +107,7 @@ or multi-turn language interactions to create the picture.
     - [Full Parameter Training](#full-parameter-training)
     - [LoRA](#lora)
   - [🔑 Inference](#-inference)
+    - [6GB GPU VRAM Inference](#6gb-gpu-vram-inference)
     - [Using Gradio](#using-gradio)
     - [Using Diffusers](#using--diffusers)
     - [Using Command Line](#using-command-line)
@@ -107,6 +115,7 @@ or multi-turn language interactions to create the picture.
     - [Using ComfyUI](#using-comfyui)
   - [:building_construction: Adatper](#building_construction-adapter)
     - [ControlNet](#controlnet)
+  - [:art: Hunyuan-Captioner](#art-hunyuan-captioner)
   - [🚀 Acceleration (for Linux)](#-acceleration-for-linux)
   - [🔗 BibTeX](#-bibtex)
 
@@ -225,6 +234,8 @@ cd HunyuanDiT
 We provide an `environment.yml` file for setting up a Conda environment.
 Conda's installation instructions are available [here](https://docs.anaconda.com/free/miniconda/index.html).
 
+We recommend CUDA versions 11.7 and 12.0+.
+
 ```shell
 # 1. Prepare conda environment
 conda env create -f environment.yml
@@ -337,7 +348,7 @@ All models will be automatically downloaded. For more information about the mode
   
   4. Data Selection and Configuration File Creation 
      
-      We configure the training data through YAML files. In these files, you can set up standard data processing strategies for filtering, copying, deduplicating, and more regarding the training data. For more details, see [docs](IndexKits/docs/MakeDataset.md).
+      We configure the training data through YAML files. In these files, you can set up standard data processing strategies for filtering, copying, deduplicating, and more regarding the training data. For more details, see [./IndexKits](IndexKits/docs/MakeDataset.md).
   
       For a sample file, please refer to [file](./dataset/yamls/porcelain.yaml). For a full parameter configuration file, see [file](./IndexKits/docs/MakeDataset.md).
   
@@ -389,7 +400,7 @@ All models will be automatically downloaded. For more information about the mode
 
 
 
-We provide training and inference scripts for LoRA, detailed in the [guidances](./lora/README.md). 
+We provide training and inference scripts for LoRA, detailed in the [./lora](./lora/README.md). 
 
   ```shell
   # Training for porcelain LoRA.
@@ -445,6 +456,37 @@ We provide training and inference scripts for LoRA, detailed in the [guidances](
 
 
 ## 🔑 Inference
+
+### 6GB GPU VRAM Inference
+Running HunyuanDiT in under 6GB GPU VRAM is available now based on [diffusers](https://huggingface.co/docs/diffusers/main/en/api/pipelines/hunyuandit). Here we provide instructions and demo for your quick start.
+
+> The 6GB version supports Nvidia Ampere architecture series graphics cards such as RTX 3070/3080/4080/4090, A100, and so on.
+
+The only thing you need do is to install the following library:
+
+```bash
+pip install -U bitsandbytes
+pip install git+https://github.com/huggingface/diffusers
+pip install torch==2.0.0
+```
+
+Then you can enjoy your HunyuanDiT text-to-image journey under 6GB GPU VRAM directly!
+
+Here is a demo for you.
+
+```bash
+cd HunyuanDiT
+
+# Quick start
+model_id=Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled
+prompt=一个宇航员在骑马
+infer_steps=50
+guidance_scale=6
+python3 lite/inference.py ${model_id} ${prompt} ${infer_steps} ${guidance_scale}
+```
+
+More details can be found in [./lite](lite/README.md).
+
 
 ### Using Gradio
 
@@ -513,6 +555,8 @@ image = pipe(prompt, num_inference_steps=25).images[0]
 ```
 More details can be found in [HunyuanDiT-Diffusers-Distilled](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled)
 
+**More functions:** For other functions like LoRA and ControlNet, please have a look at the README of [./diffusers](diffusers).
+
 ### Using Command Line
 
 We provide several commands to quick start: 
@@ -566,7 +610,7 @@ git clone https://github.com/comfyanonymous/ComfyUI.git
 # Install torch, torchvision, torchaudio
 pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu117
 
-# Install Comfyui essential python package
+# Install Comfyui essential python package.
 cd ComfyUI
 pip install -r requirements.txt
 
@@ -594,13 +638,13 @@ python main.py --listen --port 80
 
 # Running ComfyUI successfully!
 ```
-More details can be found in [ComfyUI README](comfyui-hydit/README.md)
+More details can be found in [./comfyui-hydit](comfyui-hydit/README.md)
 
 ## :building_construction: Adapter
 
 ### ControlNet
 
-We provide training scripts for ControlNet, detailed in the [guidances](./controlnet/README.md). 
+We provide training scripts for ControlNet, detailed in the [./controlnet](./controlnet/README.md). 
 
   ```shell
   # Training for canny ControlNet.
@@ -654,6 +698,86 @@ We provide training scripts for ControlNet, detailed in the [guidances](./contro
  
 </table>
 
+## :art: Hunyuan-Captioner
+Hunyuan-Captioner meets the need of text-to-image techniques by maintaining a high degree of image-text consistency. It can generate high-quality image descriptions from a variety of angles, including object description, objects relationships, background information, image style, etc. Our code is based on [LLaVA](https://github.com/haotian-liu/LLaVA) implementation.
+
+### Examples
+
+<td align="center"><img src="./asset/caption_demo.jpg" alt="Image 3" width="1200"/></td>
+
+### Instructions
+a. Install dependencies
+     
+The dependencies and installation are basically the same as the [**base model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1).
+
+b. Data download
+```shell
+cd HunyuanDiT
+wget -O ./dataset/data_demo.zip https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip
+unzip ./dataset/data_demo.zip -d ./dataset
+mkdir ./dataset/porcelain/arrows ./dataset/porcelain/jsons
+```
+
+c. Model download
+```shell
+# Use the huggingface-cli tool to download the model.
+huggingface-cli download Tencent-Hunyuan/HunyuanCaptioner --local-dir ./ckpts/captioner
+```
+
+### Inference
+
+Current supported prompt templates:
+
+|Mode           | Prompt template                           |Description                           | 
+| ---           | ---                                       | ---                                  |
+|caption_zh     | 描述这张图片                               |Caption in Chinese                    | 
+|insert_content | 根据提示词“{}”,描述这张图片                 |Insert specific knowledge into caption| 
+|caption_en     | Please describe the content of this image |Caption in English                    |
+|               |                                           |                                      |
+
+
+a. Single picture inference in Chinese
+
+```bash
+python mllm/caption_demo.py --mode "caption_zh" --image_file "mllm/images/demo1.png" --model_path "./ckpts/captioner"
+```
+
+b. Insert specific knowledge into caption
+
+```bash
+python mllm/caption_demo.py --mode "insert_content" --content "宫保鸡丁" --image_file "mllm/images/demo2.png" --model_path "./ckpts/captioner"
+```
+
+c. Single picture inference in English
+
+```bash
+python mllm/caption_demo.py --mode "caption_en" --image_file "mllm/images/demo3.png" --model_path "./ckpts/captioner"
+```
+
+d. Multiple pictures inference in Chinese
+
+```bash
+### Convert multiple pictures to csv file. 
+python mllm/make_csv.py --img_dir "mllm/images" --input_file "mllm/images/demo.csv"
+
+### Multiple pictures inference
+python mllm/caption_demo.py --mode "caption_zh" --input_file "mllm/images/demo.csv" --output_file "mllm/images/demo_res.csv" --model_path "./ckpts/captioner"
+```
+
+(Optional) To convert the output csv file to Arrow format, please refer to [Data Preparation #3](#data-preparation) for detailed instructions. 
+
+
+### Gradio 
+To launch a Gradio demo locally, please run the following commands one by one. For more detailed instructions, please refer to [LLaVA](https://github.com/haotian-liu/LLaVA). 
+```bash
+cd mllm
+python -m llava.serve.controller --host 0.0.0.0 --port 10000
+
+python -m llava.serve.gradio_web_server --controller http://0.0.0.0:10000 --model-list-mode reload --port 443
+
+python -m llava.serve.model_worker --host 0.0.0.0 --controller http://0.0.0.0:10000 --port 40000 --worker http://0.0.0.0:40000 --model-path "./ckpts/captioner" --model-name LlavaMistral
+```
+Then the demo can be accessed through http://0.0.0.0:443. It should be noted that the 0.0.0.0 here needs to be X.X.X.X with your server IP.
 
 ## 🚀 Acceleration (for Linux)
 

@@ -48,7 +48,7 @@ def get_args(default_args=None):
 
     # controlnet config
     parser.add_argument("--control-type", type=str, default='canny', choices=['canny', 'depth', 'pose'], help="Controlnet condition type")
-    parser.add_argument("--control-weight", type=float, default=1.0, help="Controlnet weight")
+    parser.add_argument("--control-weight", type=float, default=1.0, help="Controlnet weight, You can use a float to specify the weight for all layers, or use a list to separately specify the weight for each layer, for example, '[1.0 * (0.825 ** float(19 - i)) for i in range(19)]'")
     parser.add_argument("--condition-image-path", type=str, default=None, help="Inference condition image path")
 
     # Diffusion
@@ -94,7 +94,7 @@ def get_args(default_args=None):
     parser.add_argument("--infer-steps", type=int, default=100, help="Inference steps")
 
     # Prompt enhancement
-    parser.add_argument("--enhance", action="store_true", help="Enhance prompt with dialoggen.")
+    parser.add_argument("--enhance", action="store_true", help="Enhance prompt with mllm.")
     parser.add_argument("--no-enhance", dest="enhance", action="store_false")
     parser.add_argument("--load-4bit", help="load DialogGen model with 4bit quantization.", action="store_true")
     parser.set_defaults(enhance=True)

@@ -4,23 +4,56 @@ import comfy.model_patcher
 import comfy.model_base
 import comfy.utils
 from .hydit.modules.text_encoder import MT5Embedder
-from transformers import BertModel, BertTokenizer
+from transformers import BertModel, BertTokenizer, AutoTokenizer
 import torch
 import os
+from transformers import T5Config, T5EncoderModel, BertConfig, BertModel
+from transformers import AutoTokenizer, modeling_utils
+#import pdb
 
 class CLIP:
-    def __init__(self, root):
+    def __init__(self, root, text_encoder_path = None, t5_text_encoder_path = None):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        text_encoder_path = os.path.join(root,"clip_text_encoder")
-        clip_text_encoder = BertModel.from_pretrained(str(text_encoder_path), False, revision=None).to(self.device)
-        tokenizer_path = os.path.join(root,"tokenizer")
+        if text_encoder_path == None:
+            text_encoder_path = os.path.join(root,"clip_text_encoder")
+            clip_text_encoder = BertModel.from_pretrained(str(text_encoder_path), False, revision=None).to(self.device)
+        else:         
+            config = BertConfig.from_json_file(os.path.join(os.path.dirname(os.path.realpath(__file__)),"config_clip.json"))
+            with modeling_utils.no_init_weights():
+                clip_text_encoder = BertModel(config) 
+            sd = comfy.utils.load_torch_file(text_encoder_path)
+            prefix = "bert."
+            state_dict = {}
+            for key in sd:
+                nkey = key
+                if key.startswith(prefix):
+                        nkey = key[len(prefix):]
+                state_dict[nkey] = sd[key]
+
+            m, e = clip_text_encoder.load_state_dict(state_dict, strict=False)
+            if len(m) > 0 or len(e) > 0:
+                print(f"HYDiT: clip missing {len(m)} keys ({len(e)} extra)")
+                #clip_text_encoder.load_state_dict(sd, strict=False)
+            clip_text_encoder.eval().to(self.device)    
+
+        tokenizer_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "tokenizer_clip")
         self.tokenizer = HyBertTokenizer(tokenizer_path)
-        t5_text_encoder_path = os.path.join(root,'mt5')
-        embedder_t5 = MT5Embedder(t5_text_encoder_path, torch_dtype=torch.float16, max_length=256)
-        self.tokenizer_t5 = HyT5Tokenizer(embedder_t5.tokenizer, max_length=embedder_t5.max_length)
-        self.embedder_t5 = embedder_t5.model
+        #assert(0)
+        
+        if t5_text_encoder_path == None:
+            t5_text_encoder_path = os.path.join(root,'mt5')
+            embedder_t5 = MT5Embedder(t5_text_encoder_path, torch_dtype=torch.float16, max_length=256)
+            self.tokenizer_t5 = HyT5Tokenizer(embedder_t5.tokenizer, max_length=embedder_t5.max_length)
+            self.embedder_t5 = embedder_t5.model
+        else:
+
+            embedder_t5 = MT5Embedder(t5_text_encoder_path, torch_dtype=torch.float16, max_length=256, ksampler = True)
+            self.tokenizer_t5 = HyT5Tokenizer(embedder_t5.tokenizer, max_length=embedder_t5.max_length)
+            self.embedder_t5 = embedder_t5.model
+        
 
         self.cond_stage_model = clip_text_encoder
+        
 
     def tokenize(self, text):
         tokens = self.tokenizer.tokenize(text)
@@ -86,8 +119,12 @@ class HyBertTokenizer:
         return tokens
     
 class HyT5Tokenizer:
-    def __init__(self, tokenizer, max_length=77, truncation=True, return_attention_mask=True, device='cpu'):
-        self.tokenizer = tokenizer
+    def __init__(self, tokenizer, tokenizer_path = None, max_length=77, truncation=True, return_attention_mask=True, device='cpu'):
+        if tokenizer_path:
+            self.tokenizer = AutoTokenizer.from_pretrained(str(tokenizer_path))
+        else:
+            self.tokenizer = tokenizer
+
         self.max_length = max_length
         self.truncation = truncation
         self.return_attention_mask = return_attention_mask

@@ -1,0 +1,516 @@
+{
+  "last_node_id": 30,
+  "last_link_id": 16,
+  "nodes": [
+    {
+      "id": 16,
+      "type": "DiffusersModelMakeup",
+      "pos": [
+        600,
+        130
+      ],
+      "size": {
+        "0": 304.79998779296875,
+        "1": 66
+      },
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pipeline",
+          "type": "PIPELINE",
+          "link": 2
+        },
+        {
+          "name": "scheduler",
+          "type": "SCHEDULER",
+          "link": 3
+        },
+        {
+          "name": "controlnet",
+          "type": "CTRL",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MAKED_PIPELINE",
+          "type": "MAKED_PIPELINE",
+          "links": [
+            4
+          ],
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DiffusersModelMakeup"
+      }
+    },
+    {
+      "id": 15,
+      "type": "DiffusersSchedulerLoader",
+      "pos": [
+        49,
+        105
+      ],
+      "size": {
+        "0": 315,
+        "1": 58
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "SCHEDULER",
+          "type": "SCHEDULER",
+          "links": [
+            3
+          ],
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DiffusersSchedulerLoader"
+      },
+      "widgets_values": [
+        "ddim"
+      ]
+    },
+    {
+      "id": 19,
+      "type": "DiffusersClipTextEncode",
+      "pos": [
+        -41,
+        233
+      ],
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "STRINGC",
+          "links": [
+            5
+          ],
+          "shape": 3
+        },
+        {
+          "name": "negative",
+          "type": "STRINGC",
+          "links": [
+            6
+          ],
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DiffusersClipTextEncode"
+      },
+      "widgets_values": [
+        "玉石风格，一只小狗在追逐蝴蝶。",
+        "左右，四宫格，九宫格，错误的眼睛，糟糕的人脸，裸体，画布框架，毁容，糟糕的艺术，变形，多余的肢体，特写，黑白，模糊的颜色，模糊，重复，病态，残缺，框架"
+      ]
+    },
+    {
+      "id": 25,
+      "type": "DiffusersControlNetLoader",
+      "pos": [
+        40,
+        488
+      ],
+      "size": {
+        "0": 315,
+        "1": 58
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "CTRL",
+          "type": "CTRL",
+          "links": [
+            9
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DiffusersControlNetLoader"
+      },
+      "widgets_values": [
+        "pytorch_model_canny_distill.pt"
+      ]
+    },
+    {
+      "id": 21,
+      "type": "DiffusersPipelineLoader",
+      "pos": [
+        30,
+        597
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "lora",
+          "type": "lora_path",
+          "link": 15
+        }
+      ],
+      "outputs": [
+        {
+          "name": "PIPELINE",
+          "type": "PIPELINE",
+          "links": [
+            2
+          ],
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DiffusersPipelineLoader"
+      },
+      "widgets_values": [
+        "ckpts"
+      ]
+    },
+    {
+      "id": 23,
+      "type": "LoadImage",
+      "pos": [
+        373,
+        254
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            10
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "ComfyUI_temp_calve_00004_.png",
+        "image"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "PreviewImage",
+      "pos": [
+        1086,
+        132
+      ],
+      "size": [
+        253.2063696289065,
+        295.8073356216431
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 18,
+      "type": "DiffusersSampler",
+      "pos": [
+        741,
+        256
+      ],
+      "size": {
+        "0": 315,
+        "1": 286
+      },
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "maked_pipeline",
+          "type": "MAKED_PIPELINE",
+          "link": 4
+        },
+        {
+          "name": "positive",
+          "type": "STRINGC",
+          "link": 5
+        },
+        {
+          "name": "negative",
+          "type": "STRINGC",
+          "link": 6
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 12
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1
+          ],
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DiffusersSampler"
+      },
+      "widgets_values": [
+        1,
+        1024,
+        1024,
+        30,
+        1,
+        5.99,
+        214826175,
+        "fixed"
+      ]
+    },
+    {
+      "id": 26,
+      "type": "Canny",
+      "pos": [
+        429,
+        630
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            12,
+            16
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Canny"
+      },
+      "widgets_values": [
+        0.2,
+        0.5
+      ]
+    },
+    {
+      "id": 30,
+      "type": "PreviewImage",
+      "pos": [
+        1095,
+        478
+      ],
+      "size": [
+        240.53468134765626,
+        248.44370163726808
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 16
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 22,
+      "type": "DiffusersLoraLoader",
+      "pos": [
+        -312,
+        484
+      ],
+      "size": {
+        "0": 315,
+        "1": 58
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "lora_path",
+          "type": "lora_path",
+          "links": [
+            15
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DiffusersLoraLoader"
+      },
+      "widgets_values": [
+        "jade"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      18,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      21,
+      0,
+      16,
+      0,
+      "PIPELINE"
+    ],
+    [
+      3,
+      15,
+      0,
+      16,
+      1,
+      "SCHEDULER"
+    ],
+    [
+      4,
+      16,
+      0,
+      18,
+      0,
+      "MAKED_PIPELINE"
+    ],
+    [
+      5,
+      19,
+      0,
+      18,
+      1,
+      "STRINGC"
+    ],
+    [
+      6,
+      19,
+      1,
+      18,
+      2,
+      "STRINGC"
+    ],
+    [
+      9,
+      25,
+      0,
+      16,
+      2,
+      "CTRL"
+    ],
+    [
+      10,
+      23,
+      0,
+      26,
+      0,
+      "IMAGE"
+    ],
+    [
+      12,
+      26,
+      0,
+      18,
+      3,
+      "IMAGE"
+    ],
+    [
+      15,
+      22,
+      0,
+      21,
+      0,
+      "lora_path"
+    ],
+    [
+      16,
+      26,
+      0,
+      30,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6830134553650706,
+      "offset": {
+        "0": 893.4832153320312,
+        "1": 18.211286544799805
+      }
+    }
+  },
+  "version": 0.4
+}

@@ -15,12 +15,13 @@ from loguru import logger
 from transformers import BertModel, BertTokenizer
 from transformers.modeling_utils import logger as tf_logger
 
-from .constants import SAMPLER_FACTORY, NEGATIVE_PROMPT
+from .constants import SAMPLER_FACTORY, NEGATIVE_PROMPT, TRT_MAX_WIDTH, TRT_MAX_HEIGHT, TRT_MAX_BATCH_SIZE
 from .diffusion.pipeline import StableDiffusionPipeline
 from .modules.models import HunYuanDiT, HUNYUAN_DIT_CONFIG
 from .modules.posemb_layers import get_2d_rotary_pos_embed, get_fill_resize_and_crop
 from .modules.text_encoder import MT5Embedder
 from .utils.tools import set_seeds
+from peft import LoraConfig
 
 
 class Resolution:
@@ -35,7 +36,6 @@ class Resolution:
 class ResolutionGroup:
     def __init__(self):
         self.data = [
-            Resolution(768, 768),   # 1:1
             Resolution(1024, 1024), # 1:1
             Resolution(1280, 1280), # 1:1
             Resolution(1024, 768),  # 4:3
@@ -61,9 +61,9 @@ STANDARD_RATIO = np.array([
     9.0 / 16.0, # 9:16
 ])
 STANDARD_SHAPE = [
-    [(768, 768), (1024, 1024), (1280, 1280)],   # 1:1
-    [(1024, 768), (1152, 864), (1280, 960)],    # 4:3
-    [(768, 1024), (864, 1152), (960, 1280)],    # 3:4
+    [(1024, 1024), (1280, 1280)],   # 1:1
+    [(1280, 960)],                # 4:3
+    [(960, 1280)],                   # 3:4
     [(1280, 768)],                              # 16:9
     [(768, 1280)],                              # 9:16
 ]
@@ -125,8 +125,6 @@ def get_pipeline(args, vae, text_encoder, tokenizer, model, device, rank,
     # Build scheduler according to the sampler.
     scheduler_class = getattr(schedulers, scheduler)
     scheduler = scheduler_class(**kwargs)
-    #print(scheduler)
-    #assert(0)
 
     # Set timesteps for inference steps.
     scheduler.set_timesteps(args.infer_steps, device)
@@ -153,7 +151,7 @@ def get_pipeline(args, vae, text_encoder, tokenizer, model, device, rank,
 
 
 class End2End(object):
-    def __init__(self, args, models_root_path, MODEL_PATH = None, VAE_PATH = None):
+    def __init__(self, args, models_root_path):
         self.args = args
 
         # Check arguments
@@ -168,22 +166,16 @@ class End2End(object):
         tf_logger.setLevel('ERROR')
 
         # ========================================================================
-        model_dir = self.root / "model"
-
-        # ========================================================================
         logger.info(f"Loading CLIP Text Encoder...")
         text_encoder_path = self.root / "clip_text_encoder"
         self.clip_text_encoder = BertModel.from_pretrained(str(text_encoder_path), False, revision=None).to(self.device)
         logger.info(f"Loading CLIP Text Encoder finished")
-        #print(self.clip_text_encoder)
 
         # ========================================================================
         logger.info(f"Loading CLIP Tokenizer...")
         tokenizer_path = self.root / "tokenizer"
         self.tokenizer = BertTokenizer.from_pretrained(str(tokenizer_path))
         logger.info(f"Loading CLIP Tokenizer finished")
-        #print(self.tokenizer)
-        #assert(0)
 
         # ========================================================================
         logger.info(f"Loading T5 Text Encoder and T5 Tokenizer...")
@@ -194,21 +186,13 @@ class End2End(object):
 
         # ========================================================================
         logger.info(f"Loading VAE...")
-        if VAE_PATH:
-            vae_path = VAE_PATH
-            self.vae = AutoencoderKL.from_single_file(str(vae_path)).to(self.device)
-        else:
-            vae_path = self.root / "sdxl-vae-fp16-fix"
-            self.vae = AutoencoderKL.from_pretrained(str(vae_path)).to(self.device)
-
-
+        vae_path = self.root / "sdxl-vae-fp16-fix"
+        self.vae = AutoencoderKL.from_pretrained(str(vae_path)).to(self.device)
         logger.info(f"Loading VAE finished")
 
         # ========================================================================
         # Create model structure and load the checkpoint
         logger.info(f"Building HunYuan-DiT model...")
-        #print(self.args.model)
-        #print(self.args)
         model_config = HUNYUAN_DIT_CONFIG[self.args.model]
         self.patch_size = model_config['patch_size']
         self.head_size = model_config['hidden_size'] // model_config['num_heads']
@@ -218,11 +202,8 @@ class End2End(object):
 
         self.infer_mode = self.args.infer_mode
         if self.infer_mode in ['fa', 'torch']:
-            if MODEL_PATH:
-                model_path = Path(MODEL_PATH)
-            else:
-                model_path = model_dir / f"pytorch_model_{self.args.load_key}.pt"
-
+            model_dir = self.root / "model"
+            model_path = model_dir / f"pytorch_model_{self.args.load_key}.pt"
             if not model_path.exists():
                 raise ValueError(f"model_path not exists: {model_path}")
             # Build model structure
@@ -232,19 +213,46 @@ class End2End(object):
                                     log_fn=logger.info,
                                     ).half().to(self.device)    # Force to use fp16
             # Load model checkpoint
-            logger.info(f"Loading model checkpoint {model_path}...")
+            logger.info(f"Loading torch model {model_path}...")
             state_dict = torch.load(model_path, map_location=lambda storage, loc: storage)
             self.model.load_state_dict(state_dict)
+
+            lora_ckpt = args.lora_ckpt
+            if lora_ckpt is not None and lora_ckpt != "":
+                logger.info(f"Loading Lora checkpoint {lora_ckpt}...")
+
+                self.model.load_adapter(lora_ckpt)
+                self.model.merge_and_unload()
+                
+
             self.model.eval()
+            logger.info(f"Loading torch model finished")
         elif self.infer_mode == 'trt':
-            raise NotImplementedError("TensorRT model is not supported yet.")
+            from .modules.trt.hcf_model import TRTModel
+
+            trt_dir = self.root / "model_trt"
+            engine_dir = trt_dir / "engine"
+            plugin_path = trt_dir / "fmha_plugins/9.2_plugin_cuda11/fMHAPlugin.so"
+            model_name = "model_onnx"
+
+            logger.info(f"Loading TensorRT model {engine_dir}/{model_name}...")
+            self.model = TRTModel(model_name=model_name,
+                                  engine_dir=str(engine_dir),
+                                  image_height=TRT_MAX_HEIGHT,
+                                  image_width=TRT_MAX_WIDTH,
+                                  text_maxlen=args.text_len,
+                                  embedding_dim=args.text_states_dim,
+                                  plugin_path=str(plugin_path),
+                                  max_batch_size=TRT_MAX_BATCH_SIZE,
+                                  )
+            logger.info(f"Loading TensorRT model finished")
         else:
             raise ValueError(f"Unknown infer_mode: {self.infer_mode}")
 
         # ========================================================================
         # Build inference pipeline. We use a customized StableDiffusionPipeline.
         logger.info(f"Loading inference pipeline...")
-        #self.pipeline, self.sampler = self.load_sampler()
+        self.pipeline, self.sampler = self.load_sampler()
         logger.info(f'Loading pipeline finished')
 
         # ========================================================================
@@ -303,8 +311,7 @@ class End2End(object):
             seed = random.randint(0, 1_000_000)
         if not isinstance(seed, int):
             raise TypeError(f"`seed` must be an integer, but got {type(seed)}")
-        generator = set_seeds(seed)
-
+        generator = set_seeds(seed, device=self.device)
         # ========================================================================
         # Arguments: target_width, target_height
         # ========================================================================
@@ -378,8 +385,8 @@ class End2End(object):
         else:
             freqs_cis_img = self.calc_rope(target_height, target_width)
 
-        #if sampler is not None and sampler != self.sampler:
-        #    self.pipeline, self.sampler = self.load_sampler(sampler)
+        if sampler is not None and sampler != self.sampler:
+            self.pipeline, self.sampler = self.load_sampler(sampler)
 
         samples = self.pipeline(
             height=target_height,

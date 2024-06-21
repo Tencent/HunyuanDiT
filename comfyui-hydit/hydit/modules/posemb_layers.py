@@ -10,12 +10,12 @@ def _to_tuple(x):
         return x
 
 
-def get_fill_resize_and_crop(src, tgt):    # src 来源的分辨率   tgt base 分辨率
+def get_fill_resize_and_crop(src, tgt):
     th, tw = _to_tuple(tgt)
     h, w = _to_tuple(src)
 
-    tr = th / tw        # base 分辨率
-    r = h / w           # 目标分辨率
+    tr = th / tw        # base resolution
+    r = h / w           # target resolution
 
     # resize
     if r > tr:
@@ -23,7 +23,7 @@ def get_fill_resize_and_crop(src, tgt):    # src 来源的分辨率   tgt base �
         resize_width = int(round(th / h * w))
     else:
         resize_width = tw
-        resize_height = int(round(tw / w * h))    # 根据base分辨率，将目标分辨率resize下来
+        resize_height = int(round(tw / w * h))    # resize the target resolution down based on the base resolution
 
     crop_top = int(round((th - resize_height) / 2.0))
     crop_left = int(round((tw - resize_width) / 2.0))
@@ -44,13 +44,13 @@ def get_meshgrid(start, *args):
         num = (stop[0] - start[0], stop[1] - start[1])
     elif len(args) == 2:
         # start is start, args[0] is stop, args[1] is num
-        start = _to_tuple(start)       # 左上角   eg: 12,0
-        stop = _to_tuple(args[0])      # 右下角   eg: 20,32
-        num = _to_tuple(args[1])       # 目标大小  eg: 32,124
+        start = _to_tuple(start)
+        stop = _to_tuple(args[0])
+        num = _to_tuple(args[1])
     else:
         raise ValueError(f"len(args) should be 0, 1 or 2, but got {len(args)}")
 
-    grid_h = np.linspace(start[0], stop[0], num[0], endpoint=False, dtype=np.float32) # 12-20 中间差值32份   0-32 中间差值124份
+    grid_h = np.linspace(start[0], stop[0], num[0], endpoint=False, dtype=np.float32)
     grid_w = np.linspace(start[1], stop[1], num[1], endpoint=False, dtype=np.float32)
     grid = np.meshgrid(grid_w, grid_h)  # here w goes first
     grid = np.stack(grid, axis=0)   # [2, W, H]
@@ -137,7 +137,7 @@ def get_2d_rotary_pos_embed(embed_dim, start, *args, use_real=True):
         [HW, D/2]
     """
     grid = get_meshgrid(start, *args)   # [2, H, w]
-    grid = grid.reshape([2, 1, *grid.shape[1:]])   # 返回一个采样矩阵  分辨率与目标分辨率一致
+    grid = grid.reshape([2, 1, *grid.shape[1:]])   # Returns a sampling matrix with the same resolution as the target resolution
     pos_embed = get_2d_rotary_pos_embed_from_grid(embed_dim, grid, use_real=use_real)
     return pos_embed
 
@@ -193,14 +193,13 @@ def get_1d_rotary_pos_embed(dim: int, pos: Union[np.ndarray, int], theta: float 
 
 
 def calc_sizes(rope_img, patch_size, th, tw):
-    """ 计算 RoPE 的尺寸. """
     if rope_img == 'extend':
-        # 拓展模式
+        # Expansion mode
         sub_args = [(th, tw)]
     elif rope_img.startswith('base'):
-        # 基于一个尺寸, 其他尺寸插值获得.
-        base_size = int(rope_img[4:]) // 8 // patch_size            # 基于512作为base，其他根据512差值得到
-        start, stop = get_fill_resize_and_crop((th, tw), base_size)   # 需要在32x32里面 crop的左上角和右下角
+        # Based on the specified dimensions, other dimensions are obtained through interpolation.
+        base_size = int(rope_img[4:]) // 8 // patch_size
+        start, stop = get_fill_resize_and_crop((th, tw), base_size)
         sub_args = [start, stop, (th, tw)]
     else:
         raise ValueError(f"Unknown rope_img: {rope_img}")
@@ -218,7 +217,7 @@ def init_image_posemb(rope_img,
     freqs_cis_img = {}
     for reso in resolutions:
         th, tw = reso.height // 8 // patch_size, reso.width // 8 // patch_size
-        sub_args = calc_sizes(rope_img, patch_size, th, tw)      #  [左上角, 右下角, 目标高宽]   需要在32x32里面 crop的左上角和右下角
+        sub_args = calc_sizes(rope_img, patch_size, th, tw)
         freqs_cis_img[str(reso)] = get_2d_rotary_pos_embed(hidden_size // num_heads, *sub_args, use_real=rope_real)
         log_fn(f"    Using image RoPE ({rope_img}) ({'real' if rope_real else 'complex'}): {sub_args} | ({reso}) "
                f"{freqs_cis_img[str(reso)][0].shape if rope_real else freqs_cis_img[str(reso)].shape}")

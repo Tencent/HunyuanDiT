@@ -2,7 +2,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from dialoggen.dialoggen_demo import DialogGen
+from mllm.dialoggen_demo import DialogGen
 from hydit.config import get_args
 from hydit.inference import End2End
 

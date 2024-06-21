@@ -146,19 +146,24 @@ Recommended parameter settings
 ### Inference
 You can use the following command line for inference.
 
-a. Using canny ControlNet during inference
+a. You can use a float to specify the weight for all layers, **or use a list to separately specify the weight for each layer**, for example, '[1.0 * (0.825 ** float(19 - i)) for i in range(19)]'
+```bash
+python3 sample_controlnet.py  --control-weight [1.0 * (0.825 ** float(19 - i)) for i in range(19)] --no-enhance --load-key distill --infer-steps 50 --control-type canny --prompt "在夜晚的酒店门前，一座古老的中国风格的狮子雕像矗立着，它的眼睛闪烁着光芒，仿佛在守护着这座建筑。背景是夜晚的酒店前，构图方式是特写，平视，居中构图。这张照片呈现了真实摄影风格，蕴含了中国雕塑文化，同时展现了神秘氛围" --condition-image-path controlnet/asset/input/canny.jpg 
+```
+
+b. Using canny ControlNet during inference
 
 ```bash
 python3 sample_controlnet.py  --no-enhance --load-key distill --infer-steps 50 --control-type canny --prompt "在夜晚的酒店门前，一座古老的中国风格的狮子雕像矗立着，它的眼睛闪烁着光芒，仿佛在守护着这座建筑。背景是夜晚的酒店前，构图方式是特写，平视，居中构图。这张照片呈现了真实摄影风格，蕴含了中国雕塑文化，同时展现了神秘氛围" --condition-image-path controlnet/asset/input/canny.jpg --control-weight 1.0
 ```
 
-b. Using pose ControlNet during inference
+c. Using pose ControlNet during inference
 
 ```bash
 python3 sample_controlnet.py  --no-enhance --load-key distill --infer-steps 50 --control-type depth --prompt "在茂密的森林中，一只黑白相间的熊猫静静地坐在绿树红花中，周围是山川和海洋。背景是白天的森林，光线充足" --condition-image-path controlnet/asset/input/depth.jpg --control-weight 1.0
 ```
 
-c. Using depth ControlNet during inference
+d. Using depth ControlNet during inference
 
 ```bash
 python3 sample_controlnet.py  --no-enhance --load-key distill --infer-steps 50 --control-type pose --prompt "一位亚洲女性，身穿绿色上衣，戴着紫色头巾和紫色围巾，站在黑板前。背景是黑板。照片采用近景、平视和居中构图的方式呈现真实摄影风格" --condition-image-path controlnet/asset/input/pose.jpg --control-weight 1.0

@@ -6,6 +6,7 @@ import comfy.utils
 import torch
 from collections import namedtuple
 from .hydit.modules.models_comfyui import HunYuanDiT as HYDiT
+import pdb
 
 def batch_embeddings(embeds, batch_size):
 	bs_embed, seq_len, _ = embeds.shape
@@ -65,10 +66,11 @@ class ModifiedHunYuanDiT(HYDiT):
     def forward(self, x, timesteps, context, t5_embeds=None, attention_mask=None, t5_attention_mask=None, image_meta_size=None, **kwargs):
         batch_size, _, height, width = x.shape
         #assert(0)
+        #pdb.set_trace()
      
         
         style = torch.as_tensor([0, 0] * (batch_size//2), device=x.device)
-        src_size_cond = (width//2*16, height//2*16)
+        src_size_cond = (height//2*16, width//2*16)
         size_cond = list(src_size_cond) + [width*8, height*8, 0, 0]
         image_meta_size = torch.as_tensor([size_cond] * batch_size, device=x.device)
         rope = self.calc_rope(*src_size_cond)

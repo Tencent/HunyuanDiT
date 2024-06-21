@@ -741,7 +741,11 @@ class StableDiffusionControlNetPipeline(DiffusionPipeline, TextualInversionLoade
                         sin_cis_img=freqs_cis_img[1],
                         return_dict=False,
                     )
-                    controls = [control * control_weight for control in controls]
+                    if isinstance(control_weight, list):
+                        assert len(control_weight) == len(controls)
+                        controls = [control * weight for control, weight in zip(controls, control_weight)]
+                    else:
+                        controls = [control * control_weight for control in controls]
                     noise_pred = self.unet(
                         latent_model_input,
                         t_expand,

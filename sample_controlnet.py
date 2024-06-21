@@ -2,7 +2,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from dialoggen.dialoggen_demo import DialogGen
+from mllm.dialoggen_demo import DialogGen
 from hydit.config import get_args
 from hydit.inference_controlnet import End2End
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     logger.info("Generating images...")
     height, width = args.image_size
 
-    condition = Image.open(args.condition_image_path).convert('RGB').resize((height, width))
+    condition = Image.open(args.condition_image_path).convert('RGB').resize((width, height))
     image = norm_transform(condition)
     image = image.unsqueeze(0).cuda()
     
