@@ -25,6 +25,7 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 > [**DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857) <br>
 
 ## 🔥🔥🔥 News!!
+* Jul 03, 2024: :tada: Kohya-hydit version now available for v1.1 and v1.2 models, with GUI for inference. Official Kohya version is under review. See [kohya](./kohya_ss-hydit) for details.
 * Jun 27, 2024: :art: Hunyuan-Captioner is released, providing fine-grained caption for training data. See [mllm](./mllm) for details.
 * Jun 27, 2024: :tada: Support LoRa and ControlNet in diffusers. See [diffusers](./diffusers) for details.
 * Jun 27, 2024: :tada: 6GB GPU VRAM Inference scripts are released. See [lite](./lite) for details.
@@ -86,37 +87,49 @@ or multi-turn language interactions to create the picture.
 - [X] Cli Demo 
 - [X] ComfyUI
 - [X] Diffusers
-- [ ] Kohya
+- [X] Kohya
 - [ ] WebUI
 
 
 ## Contents
-- [Hunyuan-DiT](#hunyuan-dit--a-powerful-multi-resolution-diffusion-transformer-with-fine-grained-chinese-understanding)
-  - [Abstract](#abstract)
-  - [🎉 Hunyuan-DiT Key Features](#-hunyuan-dit-key-features)
-    - [Chinese-English Bilingual DiT Architecture](#chinese-english-bilingual-dit-architecture)
+- [Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding](#hunyuan-dit--a-powerful-multi-resolution-diffusion-transformer-with-fine-grained-chinese-understanding)
+  - [🔥🔥🔥 News!!](#-news)
+  - [🤖 Try it on the web](#-try-it-on-the-web)
+  - [📑 Open-source Plan](#-open-source-plan)
+  - [Contents](#contents)
+  - [**Abstract**](#abstract)
+  - [🎉 **Hunyuan-DiT Key Features**](#-hunyuan-dit-key-features)
+    - [**Chinese-English Bilingual DiT Architecture**](#chinese-english-bilingual-dit-architecture)
     - [Multi-turn Text2Image Generation](#multi-turn-text2image-generation)
   - [📈 Comparisons](#-comparisons)
   - [🎥 Visualization](#-visualization)
   - [📜 Requirements](#-requirements)
-  - [🛠 Dependencies and Installation](#%EF%B8%8F-dependencies-and-installation)
-  - [🧱 Download Pretrained Models](#-download-pretrained-models)
+  - [🛠️ Dependencies and Installation](#️-dependencies-and-installation)
+    - [Installation Guide for Linux](#installation-guide-for-linux)
+        - [1. Using HF-Mirror](#1-using-hf-mirror)
+        - [2. Resume Download](#2-resume-download)
   - [:truck: Training](#truck-training)
     - [Data Preparation](#data-preparation)
-    - [Full Parameter Training](#full-parameter-training)
+    - [Full-parameter Training](#full-parameter-training)
     - [LoRA](#lora)
   - [🔑 Inference](#-inference)
     - [6GB GPU VRAM Inference](#6gb-gpu-vram-inference)
     - [Using Gradio](#using-gradio)
-    - [Using Diffusers](#using--diffusers)
+    - [Using 🤗 Diffusers](#using--diffusers)
     - [Using Command Line](#using-command-line)
     - [More Configurations](#more-configurations)
     - [Using ComfyUI](#using-comfyui)
-  - [:building_construction: Adatper](#building_construction-adapter)
+    - [Using Kohya](#using-kohya)
+  - [:building\_construction: Adapter](#building_construction-adapter)
     - [ControlNet](#controlnet)
   - [:art: Hunyuan-Captioner](#art-hunyuan-captioner)
+    - [Examples](#examples)
+    - [Instructions](#instructions)
+    - [Inference](#inference)
+    - [Gradio](#gradio)
   - [🚀 Acceleration (for Linux)](#-acceleration-for-linux)
   - [🔗 BibTeX](#-bibtex)
+  - [Start History](#start-history)
 
 ## **Abstract**
 
@@ -247,6 +260,26 @@ python -m pip install -r requirements.txt
 
 # 4. (Optional) Install flash attention v2 for acceleration (requires CUDA 11.6 or above)
 python -m pip install git+https://github.com/Dao-AILab/flash-attention.git@v2.1.2.post3
+```
+
+Additionally, you can also use docker to set up the environment.
+```shell
+# 1. Use the following link to download the docker image tar file.
+# For CUDA 12
+wget https://dit.hunyuan.tencent.com/download/HunyuanDiT/hunyuan_dit_cu12.tar
+# For CUDA 11
+wget https://dit.hunyuan.tencent.com/download/HunyuanDiT/hunyuan_dit_cu11.tar
+
+# 2. Import the docker tar file and show the image meta information
+# For CUDA 12
+docker load -i hunyuan_dit_cu12.tar
+# For CUDA 11
+docker load -i hunyuan_dit_cu11.tar  
+
+docker image ls
+
+# 3. Run the container based on the image
+docker run -dit --gpus all --init --net=host --uts=host --ipc=host --name hunyuandit --security-opt=seccomp=unconfined --ulimit=stack=67108864 --ulimit=memlock=-1 --privileged  docker_image_tag
 ```
 
 ## 🧱 Download Pretrained Models
@@ -638,6 +671,63 @@ python main.py --listen --port 80
 # Running ComfyUI successfully!
 ```
 More details can be found in [./comfyui-hydit](comfyui-hydit/README.md)
+
+### Using Kohya
+
+We provide several commands to quick start LoRA Training and DreamBooth Training with Kohya: 
+
+```shell
+# Download kohya_ss GUI
+git clone https://github.com/bmaltais/kohya_ss.git
+cd kohya_ss/
+
+# Download sd-scripts training backend, use dev branch
+git clone -b dev https://github.com/kohya-ss/sd-scripts ./sd-scripts
+
+# Move the costom GUI codes to the kohya_ss GUI, and replace files with the same name
+cp -Rf ${HunyuanDiT}/kohya_ss-hydit/* ./
+
+# Download model weights as before or link the existing model folder to kohya_ss/models.
+python -m pip install "huggingface_hub[cli]"
+# If you want to download the full model, use the following command
+huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.1 --local-dir ./models/HunyuanDiT-V1.1
+huggingface-cli download Tencent-Hunyuan/HunyuanDiT-V1.2 --local-dir ./models/HunyuanDiT-V1.2
+# Or, if you want to download the fp16 pruned model
+huggingface-cli download KBlueLeaf/HunYuanDiT-V1.1-fp16-pruned --local-dir ./models/HunyuanDiT-V1.1-fp16-pruned
+
+# After the model is downloaded, you may need to modify the file name an make sure it follows the kohya standard format:
+# rename the file name in t2i/ folder as shown below:
+# HunyuanDiT-V1.2/t2i/
+#  - model/                  -> denoiser/
+#  - clip_text_encoder/      -> clip/
+#  - mt5/                    -> mt5/
+#  - sdxl-vae-fp16-fix/      -> vae/
+# Also you may need to move tokenizer/* into clip/ folder
+mv HunyuanDiT-V1.2/t2i/model/ HunyuanDiT-V1.2/t2i/denoiser/
+mv HunyuanDiT-V1.2/t2i/clip_text_encoder/ HunyuanDiT-V1.2/t2i/clip/
+mv HunyuanDiT-V1.2/t2i/mt5/ HunyuanDiT-V1.2/t2i/mt5/
+mv HunyuanDiT-V1.2/t2i/sdxl-vae-fp16-fix/ HunyuanDiT-V1.2/t2i/vae/
+mv HunyuanDiT-V1.2/t2i/tokenizer/* HunyuanDiT-V1.2/t2i/clip/ 
+
+# Install some essential python Package, 
+conda create -n hydit-kohya python=3.10.12
+conda activate hydit-kohya
+
+# Install some essential packages, please make sure cuda environment is installed and python version is 3.10
+# For cuda 12:
+pip install torch==2.1.2 torchvision==0.16.2 xformers==0.0.23.post1
+# For cuda 11:
+pip install torch==2.1.2+cu118 torchvision==0.16.2+cu118 xformers==0.0.23.post1+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
+# For cpu offloading to save GPU memory, we recommend to install Deepspeed as follows:
+DS_BUILD_CPU_ADAM=1 pip install deepspeed==0.14.1
+
+# Install other python package
+pip install -r hunyuan_requirements.txt
+
+# Run the Kohya_ss UI launch command
+python kohya_gui.py
+```
+More details can be found in [Kohya_ss README](kohya_ss-hydit/README.md)
 
 ## :building_construction: Adapter
 
