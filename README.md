@@ -25,12 +25,13 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 > [**DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857) <br>
 
 ## 🔥🔥🔥 News!!
+* Jul 08, 2024: :tada: HYDiT-v1.2 version is released. Please check [HunyuanDiT-v1.2](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2) and [Distillation-v1.2](https://huggingface.co/Tencent-Hunyuan/Distillation-v1.2) for more details.
 * Jul 03, 2024: :tada: Kohya-hydit version now available for v1.1 and v1.2 models, with GUI for inference. Official Kohya version is under review. See [kohya](./kohya_ss-hydit) for details.
 * Jun 27, 2024: :art: Hunyuan-Captioner is released, providing fine-grained caption for training data. See [mllm](./mllm) for details.
 * Jun 27, 2024: :tada: Support LoRa and ControlNet in diffusers. See [diffusers](./diffusers) for details.
 * Jun 27, 2024: :tada: 6GB GPU VRAM Inference scripts are released. See [lite](./lite) for details.
 * Jun 19, 2024: :tada: ControlNet is released, supporting canny, pose and depth control. See [training/inference codes](#controlnet) for details.
-* Jun 13, 2024: :zap: HYDiT-v1.1 version is released, which mitigates the issue of image oversaturation and alleviates the watermark issue. Please check [HunyuanDiT-v1.1 ](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1) and 
+* Jun 13, 2024: :zap: HYDiT-v1.1 version is released, which mitigates the issue of image oversaturation and alleviates the watermark issue. Please check [HunyuanDiT-v1.1](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1) and 
 [Distillation-v1.1](https://huggingface.co/Tencent-Hunyuan/Distillation-v1.1) for more details.
 * Jun 13, 2024: :truck: The training code is released, offering [full-parameter training](#full-parameter-training) and [LoRA training](#lora).
 * Jun 06, 2024: :tada: Hunyuan-DiT is now available in ComfyUI. Please check [ComfyUI](#using-comfyui) for more details.
@@ -258,7 +259,7 @@ conda activate HunyuanDiT
 # 3. Install pip dependencies
 python -m pip install -r requirements.txt
 
-# 4. (Optional) Install flash attention v2 for acceleration (requires CUDA 11.6 or above)
+# 4. Install flash attention v2 for acceleration (requires CUDA 11.6 or above)
 python -m pip install git+https://github.com/Dao-AILab/flash-attention.git@v2.1.2.post3
 ```
 
@@ -296,7 +297,7 @@ Then download the model using the following commands:
 mkdir ckpts
 # Use the huggingface-cli tool to download the model.
 # The download time may vary from 10 minutes to 1 hour depending on network conditions.
-huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
+huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.2 --local-dir ./ckpts
 ```
 
 <details>
@@ -307,7 +308,7 @@ huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
 If you encounter slow download speeds in China, you can try a mirror to speed up the download process. For example,
 
 ```shell
-HF_ENDPOINT=https://hf-mirror.com huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
+HF_ENDPOINT=https://hf-mirror.com huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.2 --local-dir ./ckpts
 ```
 
 ##### 2. Resume Download
@@ -324,16 +325,17 @@ process, you can ignore the error and rerun the download command.
 
 All models will be automatically downloaded. For more information about the model, visit the Hugging Face repository [here](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT).
 
-|       Model        | #Params |                                      Huggingface Download URL                                           |                                      Tencent Cloud Download URL                                 |
-|:------------------:|:-------:|:-------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-|        mT5         |  1.6B   |               [mT5](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/mt5)                |               [mT5](https://dit.hunyuan.tencent.com/download/HunyuanDiT/mt5.zip)                |
-|        CLIP        |  350M   |        [CLIP](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/clip_text_encoder)        |        [CLIP](https://dit.hunyuan.tencent.com/download/HunyuanDiT/clip_text_encoder.zip)        |
-|      Tokenizer     |  -      |     [Tokenizer](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/tokenizer)              |      [Tokenizer](https://dit.hunyuan.tencent.com/download/HunyuanDiT/tokenizer.zip)             |
-|     DialogGen      |  7.0B   |           [DialogGen](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/dialoggen)            |           [DialogGen](https://dit.hunyuan.tencent.com/download/HunyuanDiT/dialoggen.zip)        |
-| sdxl-vae-fp16-fix  |   83M   | [sdxl-vae-fp16-fix](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/sdxl-vae-fp16-fix)  | [sdxl-vae-fp16-fix](https://dit.hunyuan.tencent.com/download/HunyuanDiT/sdxl-vae-fp16-fix.zip)  |
-|    Hunyuan-DiT-v1.0     |  1.5B   |          [Hunyuan-DiT](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/model)           |          [Hunyuan-DiT-v1.0](https://dit.hunyuan.tencent.com/download/HunyuanDiT/model.zip)           |
-|    Hunyuan-DiT-v1.1     |  1.5B   |          [Hunyuan-DiT-v1.1](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1/tree/main/t2i/model)    |          [Hunyuan-DiT-v1.1](https://dit.hunyuan.tencent.com/download/HunyuanDiT/model-v1_1.zip)            |
-|    Data demo       |  -      |                                    -                                                                    |      [Data demo](https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip)             |
+|       Model       | #Params |                                        Huggingface Download URL                                        |                                   Tencent Cloud Download URL                                   |
+|:-----------------:|:-------:|:------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------:|
+|        mT5        |  1.6B   |               [mT5](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/mt5)               |               [mT5](https://dit.hunyuan.tencent.com/download/HunyuanDiT/mt5.zip)               |
+|       CLIP        |  350M   |       [CLIP](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/clip_text_encoder)        |       [CLIP](https://dit.hunyuan.tencent.com/download/HunyuanDiT/clip_text_encoder.zip)        |
+|     Tokenizer     |  -      |         [Tokenizer](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/tokenizer)         |         [Tokenizer](https://dit.hunyuan.tencent.com/download/HunyuanDiT/tokenizer.zip)         |
+|     DialogGen     |  7.0B   |           [DialogGen](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/dialoggen)           |         [DialogGen](https://dit.hunyuan.tencent.com/download/HunyuanDiT/dialoggen.zip)         |
+| sdxl-vae-fp16-fix |   83M   | [sdxl-vae-fp16-fix](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/sdxl-vae-fp16-fix) | [sdxl-vae-fp16-fix](https://dit.hunyuan.tencent.com/download/HunyuanDiT/sdxl-vae-fp16-fix.zip) |
+| Hunyuan-DiT-v1.0  |  1.5B   |          [Hunyuan-DiT](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/model)          |       [Hunyuan-DiT-v1.0](https://dit.hunyuan.tencent.com/download/HunyuanDiT/model.zip)        |
+| Hunyuan-DiT-v1.1  |  1.5B   |     [Hunyuan-DiT-v1.1](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1/tree/main/t2i/model)     |     [Hunyuan-DiT-v1.1](https://dit.hunyuan.tencent.com/download/HunyuanDiT/model-v1_1.zip)     |
+| Hunyuan-DiT-v1.2  |  1.5B   |     [Hunyuan-DiT-v1.2](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2/tree/main/t2i/model)     |     [Hunyuan-DiT-v1.2](https://dit.hunyuan.tencent.com/download/HunyuanDiT/model-v1_2.zip)     |
+|     Data demo     |  -      |                                                   -                                                    |         [Data demo](https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip)         |
 
 ## :truck: Training
 
@@ -417,7 +419,11 @@ All models will be automatically downloaded. For more information about the mode
    ```
 
 ### Full-parameter Training
- 
+  
+  **Requirement:** Two GPUs (each with >27GB GPU memory) are required for full-parameter training. (Single GPU with 80GB 
+  GPU memory should be also OK.) 
+  **Notice:** We are working on supporting full-parameter training with a single GPU with <=16GB GPU memory.
+
   To leverage DeepSpeed in training, you have the flexibility to control **single-node** / **multi-node** training by adjusting parameters such as `--hostfile` and `--master_addr`. For more details, see [link](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node).
 
   ```shell
@@ -426,6 +432,20 @@ All models will be automatically downloaded. For more information about the mode
   
   # Multi Resolution Training
   PYTHONPATH=./ sh hydit/train.sh --index-file dataset/porcelain/jsons/porcelain_mt.json --multireso --reso-step 64
+  
+  # Training with old version of HunyuanDiT (<= v1.1)
+  PYTHONPATH=./ sh hydit/train_v1.1.sh --index-file dataset/porcelain/jsons/porcelain.json
+  ```
+
+  After checkpoints are saved, you can use the following command to evaluate the model.
+  ```shell
+  # Inference
+    #   You should replace the 'log_EXP/xxx/checkpoints/final.pt' with your actual path.
+  python sample_t2i.py --infer-mode fa --prompt "青花瓷风格，一只可爱的哈士奇" --no-enhance --dit-weight log_EXP/xxx/checkpoints/final.pt --load-key module
+  
+  # Old version of HunyuanDiT (<= v1.1)
+  #   You should replace the 'log_EXP/xxx/checkpoints/final.pt' with your actual path.
+  python sample_t2i.py --infer-mode fa --prompt "青花瓷风格，一只可爱的哈士奇" --model-root ./HunyuanDiT-v1.1 --use-style-cond --size-cond 1024 1024 --beta-end 0.03 --no-enhance --dit-weight log_EXP/xxx/checkpoints/final.pt --load-key module
   ```
 
 ### LoRA
@@ -439,7 +459,7 @@ We provide training and inference scripts for LoRA, detailed in the [./lora](./l
   PYTHONPATH=./ sh lora/train_lora.sh --index-file dataset/porcelain/jsons/porcelain.json
 
   # Inference using trained LORA weights.
-  python sample_t2i.py --prompt "青花瓷风格，一只小狗"  --no-enhance --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
+  python sample_t2i.py --infer-mode fa --prompt "青花瓷风格，一只小狗"  --no-enhance --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
   ```
  We offer two types of trained LoRA weights for `porcelain` and `jade`, see details at [links](https://huggingface.co/Tencent-Hunyuan/HYDiT-LoRA)
   ```shell
@@ -448,7 +468,7 @@ We provide training and inference scripts for LoRA, detailed in the [./lora](./l
   huggingface-cli download Tencent-Hunyuan/HYDiT-LoRA --local-dir ./ckpts/t2i/lora
   
   # Quick start
-  python sample_t2i.py --prompt "青花瓷风格，一只猫在追蝴蝶"  --no-enhance --load-key ema --lora-ckpt ./ckpts/t2i/lora/porcelain
+  python sample_t2i.py --infer-mode fa --prompt "青花瓷风格，一只猫在追蝴蝶"  --no-enhance --load-key ema --lora-ckpt ./ckpts/t2i/lora/porcelain
   ```
  <table>
   <tr>
@@ -510,7 +530,7 @@ Here is a demo for you.
 cd HunyuanDiT
 
 # Quick start
-model_id=Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled
+model_id=Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled
 prompt=一个宇航员在骑马
 infer_steps=50
 guidance_scale=6
@@ -525,22 +545,19 @@ More details can be found in [./lite](lite/README.md).
 Make sure the conda environment is activated before running the following command.
 
 ```shell
-# By default, we start a Chinese UI.
-python app/hydit_app.py
-
-# Using Flash Attention for acceleration.
+# By default, we start a Chinese UI. Using Flash Attention for acceleration.
 python app/hydit_app.py --infer-mode fa
 
 # You can disable the enhancement model if the GPU memory is insufficient.
 # The enhancement will be unavailable until you restart the app without the `--no-enhance` flag. 
-python app/hydit_app.py --no-enhance
+python app/hydit_app.py --no-enhance --infer-mode fa
 
 # Start with English UI
-python app/hydit_app.py --lang en
+python app/hydit_app.py --lang en --infer-mode fa
 
 # Start a multi-turn T2I generation UI. 
 # If your GPU memory is less than 32GB, use '--load-4bit' to enable 4-bit quantization, which requires at least 22GB of memory.
-python app/multiTurnT2I_app.py
+python app/multiTurnT2I_app.py --infer-mode fa
 ```
 Then the demo can be accessed through http://0.0.0.0:443. It should be noted that the 0.0.0.0 here needs to be X.X.X.X with your server IP.
 
@@ -563,7 +580,7 @@ You can generate images with both Chinese and English prompts using the followin
 import torch
 from diffusers import HunyuanDiTPipeline
 
-pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-Diffusers", torch_dtype=torch.float16)
+pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers", torch_dtype=torch.float16)
 pipe.to("cuda")
 
 # You may also use English prompt as HunyuanDiT supports both English and Chinese
@@ -577,7 +594,7 @@ You can use our distilled model to generate images even faster:
 import torch
 from diffusers import HunyuanDiTPipeline
 
-pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled", torch_dtype=torch.float16)
+pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled", torch_dtype=torch.float16)
 pipe.to("cuda")
 
 # You may also use English prompt as HunyuanDiT supports both English and Chinese
@@ -585,7 +602,7 @@ pipe.to("cuda")
 prompt = "一个宇航员在骑马"
 image = pipe(prompt, num_inference_steps=25).images[0]
 ```
-More details can be found in [HunyuanDiT-Diffusers-Distilled](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled)
+More details can be found in [HunyuanDiT-v1.2-Diffusers-Distilled](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled)
 
 **More functions:** For other functions like LoRA and ControlNet, please have a look at the README of [./diffusers](diffusers).
 
@@ -594,20 +611,14 @@ More details can be found in [HunyuanDiT-Diffusers-Distilled](https://huggingfac
 We provide several commands to quick start: 
 
 ```shell
-# Prompt Enhancement + Text-to-Image. Torch mode
-python sample_t2i.py --prompt "渔舟唱晚"
-
-# Only Text-to-Image. Torch mode
-python sample_t2i.py --prompt "渔舟唱晚" --no-enhance
-
 # Only Text-to-Image. Flash Attention mode
-python sample_t2i.py --infer-mode fa --prompt "渔舟唱晚"
+python sample_t2i.py --infer-mode fa --prompt "渔舟唱晚" --no-enhance
 
 # Generate an image with other image sizes.
-python sample_t2i.py --prompt "渔舟唱晚" --image-size 1280 768
+python sample_t2i.py --infer-mode fa --prompt "渔舟唱晚" --image-size 1280 768
 
 # Prompt Enhancement + Text-to-Image. DialogGen loads with 4-bit quantization, but it may loss performance.
-python sample_t2i.py --prompt "渔舟唱晚"  --load-4bit
+python sample_t2i.py --infer-mode fa --prompt "渔舟唱晚"  --load-4bit
 
 ```
 
@@ -729,6 +740,24 @@ python kohya_gui.py
 ```
 More details can be found in [Kohya_ss README](kohya_ss-hydit/README.md)
 
+### Using Previous versions
+
+* **Hunyuan-DiT <= v1.1**
+
+```shell
+# ============================== v1.1 ==============================
+# Download the model
+huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.1 --local-dir ./HunyuanDiT-v1.1
+# Inference with the model
+python sample_t2i.py --infer-mode fa --prompt "渔舟唱晚" --model-root ./HunyuanDiT-v1.1 --use-style-cond --size-cond 1024 1024 --beta-end 0.03
+
+# ============================== v1.0 ==============================
+# Download the model
+huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./HunyuanDiT-v1.0
+# Inference with the model
+python sample_t2i.py --infer-mode fa --prompt "渔舟唱晚" --model-root ./HunyuanDiT-v1.0 --use-style-cond --size-cond 1024 1024 --beta-end 0.03
+```
+
 ## :building_construction: Adapter
 
 ### ControlNet
@@ -744,11 +773,12 @@ We provide training scripts for ControlNet, detailed in the [./controlnet](./con
   cd HunyuanDiT
   # Use the huggingface-cli tool to download the model.
   # We recommend using distilled weights as the base model for ControlNet inference, as our provided pretrained weights are trained on them.
-  huggingface-cli download Tencent-Hunyuan/HYDiT-ControlNet --local-dir ./ckpts/t2i/controlnet
-  huggingface-cli download Tencent-Hunyuan/Distillation-v1.1 ./pytorch_model_distill.pt --local-dir ./ckpts/t2i/model
+  huggingface-cli download Tencent-Hunyuan/HYDiT-ControlNet-v1.2 --local-dir ./ckpts/t2i/controlnet
+  huggingface-cli download Tencent-Hunyuan/Distillation-v1.2 ./pytorch_model_distill.pt --local-dir ./ckpts/t2i/model
   
   # Quick start
-  python3 sample_controlnet.py  --no-enhance --load-key distill --infer-steps 50 --control-type canny --prompt "在夜晚的酒店门前，一座古老的中国风格的狮子雕像矗立着，它的眼睛闪烁着光芒，仿佛在守护着这座建筑。背景是夜晚的酒店前，构图方式是特写，平视，居中构图。这张照片呈现了真实摄影风格，蕴含了中国雕塑文化，同时展现了神秘氛围" --condition-image-path controlnet/asset/input/canny.jpg --control-weight 1.0
+  python3 sample_controlnet.py --infer-mode fa --no-enhance --load-key distill --infer-steps 50 --control-type canny --prompt "在夜晚的酒店门前，一座古老的中国风格的狮子雕像矗立着，它的眼睛闪烁着光芒，仿佛在守护着这座建筑。背景是夜晚的酒店前，构图方式是特写，平视，居中构图。这张照片呈现了真实摄影风格，蕴含了中国雕塑文化，同时展现了神秘氛围" --condition-image-path controlnet/asset/input/canny.jpg --control-weight 1.0
+  
   ```
  
  <table>
@@ -764,8 +794,8 @@ We provide training scripts for ControlNet, detailed in the [./controlnet](./con
 
   <tr>
     <td align="center">在夜晚的酒店门前，一座古老的中国风格的狮子雕像矗立着，它的眼睛闪烁着光芒，仿佛在守护着这座建筑。背景是夜晚的酒店前，构图方式是特写，平视，居中构图。这张照片呈现了真实摄影风格，蕴含了中国雕塑文化，同时展现了神秘氛围<br>（At night, an ancient Chinese-style lion statue stands in front of the hotel, its eyes gleaming as if guarding the building. The background is the hotel entrance at night, with a close-up, eye-level, and centered composition. This photo presents a realistic photographic style, embodies Chinese sculpture culture, and reveals a mysterious atmosphere.） </td>
-    <td align="center">在茂密的森林中，一只黑白相间的熊猫静静地坐在绿树红花中，周围是山川和海洋。背景是白天的森林，光线充足<br>（In the dense forest, a black and white panda sits quietly in green trees and red flowers, surrounded by mountains, rivers, and the ocean. The background is the forest in a bright environment.） </td>
-    <td align="center">一位亚洲女性，身穿绿色上衣，戴着紫色头巾和紫色围巾，站在黑板前。背景是黑板。照片采用近景、平视和居中构图的方式呈现真实摄影风格<br>（An Asian woman, dressed in a green top, wearing a purple headscarf and a purple scarf, stands in front of a blackboard. The background is the blackboard. The photo is presented in a close-up, eye-level, and centered composition, adopting a realistic photographic style） </td>
+    <td align="center">在茂密的森林中，一只黑白相间的熊猫静静地坐在绿树红花中，周围是山川和海洋。背景是白天的森林，光线充足。照片采用特写、平视和居中构图的方式，呈现出写实的效果<br>（In the dense forest, a black and white panda sits quietly among the green trees and red flowers, surrounded by mountains and oceans. The background is a daytime forest with ample light. The photo uses a close-up, eye-level, and centered composition to create a realistic effect.） </td>
+    <td align="center">在白天的森林中，一位穿着绿色上衣的亚洲女性站在大象旁边。照片采用了中景、平视和居中构图的方式，呈现出写实的效果。这张照片蕴含了人物摄影文化，并展现了宁静的氛围<br>（In the daytime forest, an Asian woman wearing a green shirt stands beside an elephant. The photo uses a medium shot, eye-level, and centered composition to create a realistic effect. This picture embodies the character photography culture and conveys a serene atmosphere.） </td>
   </tr>
 
   <tr>
@@ -797,7 +827,7 @@ Hunyuan-Captioner meets the need of text-to-image techniques by maintaining a hi
 ### Instructions
 a. Install dependencies
      
-The dependencies and installation are basically the same as the [**base model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1).
+The dependencies and installation are basically the same as the [**base model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2).
 
 b. Model download
 ```shell

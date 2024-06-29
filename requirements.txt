@@ -5,7 +5,6 @@ peft==0.10.0
 protobuf==3.19.0
 torchvision==0.14.1
 transformers==4.39.1
-peft==0.10.0
 accelerate==0.29.3
 loguru==0.7.2
 einops==0.7.0

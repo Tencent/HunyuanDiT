@@ -125,6 +125,7 @@ def get_pipeline(args, vae, text_encoder, tokenizer, model, device, rank,
     # Build scheduler according to the sampler.
     scheduler_class = getattr(schedulers, scheduler)
     scheduler = scheduler_class(**kwargs)
+    logger.debug(f"Using sampler: {sampler} with scheduler: {scheduler}")
 
     # Set timesteps for inference steps.
     scheduler.set_timesteps(args.infer_steps, device)
@@ -182,6 +183,7 @@ class End2End(object):
         t5_text_encoder_path = self.root / 'mt5'
         embedder_t5 = MT5Embedder(t5_text_encoder_path, torch_dtype=torch.float16, max_length=256)
         self.embedder_t5 = embedder_t5
+        self.embedder_t5.model.to(self.device)  # Only move encoder to device
         logger.info(f"Loading t5_text_encoder and t5_tokenizer finished")
 
         # ========================================================================
@@ -202,20 +204,15 @@ class End2End(object):
 
         self.infer_mode = self.args.infer_mode
         if self.infer_mode in ['fa', 'torch']:
-            model_dir = self.root / "model"
-            model_path = model_dir / f"pytorch_model_{self.args.load_key}.pt"
-            if not model_path.exists():
-                raise ValueError(f"model_path not exists: {model_path}")
             # Build model structure
             self.model = HunYuanDiT(self.args,
                                     input_size=latent_size,
                                     **model_config,
                                     log_fn=logger.info,
                                     ).half().to(self.device)    # Force to use fp16
+
             # Load model checkpoint
-            logger.info(f"Loading torch model {model_path}...")
-            state_dict = torch.load(model_path, map_location=lambda storage, loc: storage)
-            self.model.load_state_dict(state_dict)
+            self.load_torch_weights()
 
             lora_ckpt = args.lora_ckpt
             if lora_ckpt is not None and lora_ckpt != "":
@@ -223,7 +220,6 @@ class End2End(object):
 
                 self.model.load_adapter(lora_ckpt)
                 self.model.merge_and_unload()
-                
 
             self.model.eval()
             logger.info(f"Loading torch model finished")
@@ -260,6 +256,68 @@ class End2End(object):
         logger.info("==================================================")
         logger.info(f"                Model is ready.                  ")
         logger.info("==================================================")
+
+    def load_torch_weights(self):
+        load_key = self.args.load_key
+        if self.args.dit_weight is not None:
+            dit_weight = Path(self.args.dit_weight)
+            if dit_weight.is_dir():
+                files = list(dit_weight.glob("*.pt"))
+                if len(files) == 0:
+                    raise ValueError(f"No model weights found in {dit_weight}")
+                if str(files[0]).startswith('pytorch_model_'):
+                    model_path = dit_weight / f"pytorch_model_{load_key}.pt"
+                    bare_model = True
+                elif any(str(f).endswith('_model_states.pt') for f in files):
+                    files = [f for f in files if str(f).endswith('_model_states.pt')]
+                    model_path = files[0]
+                    if len(files) > 1:
+                        logger.warning(f"Multiple model weights found in {dit_weight}, using {model_path}")
+                    bare_model = False
+                else:
+                    raise ValueError(f"Invalid model path: {dit_weight} with unrecognized weight format: "
+                                     f"{list(map(str, files))}. When given a directory as --dit-weight, only "
+                                     f"`pytorch_model_*.pt`(provided by HunyuanDiT official) and "
+                                     f"`*_model_states.pt`(saved by deepspeed) can be parsed. If you want to load a "
+                                     f"specific weight file, please provide the full path to the file.")
+            elif dit_weight.is_file():
+                model_path = dit_weight
+                bare_model = 'unknown'
+            else:
+                raise ValueError(f"Invalid model path: {dit_weight}")
+        else:
+            model_dir = self.root / "model"
+            model_path = model_dir / f"pytorch_model_{load_key}.pt"
+            bare_model = True
+
+        if not model_path.exists():
+            raise ValueError(f"model_path not exists: {model_path}")
+        logger.info(f"Loading torch model {model_path}...")
+        if model_path.suffix == '.safetensors':
+            raise NotImplementedError(f"Loading safetensors is not supported yet.")
+        else:
+            # Assume it's a single weight file in the *.pt format.
+            state_dict = torch.load(model_path, map_location=lambda storage, loc: storage)
+
+        if bare_model == 'unknown' and ('ema' in state_dict or 'module' in state_dict):
+            bare_model = False
+        if bare_model is False:
+            if load_key in state_dict:
+                state_dict = state_dict[load_key]
+            else:
+                raise KeyError(f"Missing key: `{load_key}` in the checkpoint: {model_path}. The keys in the checkpoint "
+                               f"are: {list(state_dict.keys())}.")
+
+        if 'style_embedder.weight' in state_dict and not hasattr(self.model, 'style_embedder'):
+            raise ValueError(f"You might be attempting to load the weights of HunYuanDiT version <= 1.1. You need "
+                             f"to set `--use-style-cond --size-cond 1024 1024 --beta-end 0.03` to adapt to these weights."
+                             f"Alternatively, you can use weights of version >= 1.2, which no longer depend on "
+                             f"these two parameters.")
+        if 'style_embedder.weight' not in state_dict and hasattr(self.model, 'style_embedder'):
+            raise ValueError(f"You might be attempting to load the weights of HunYuanDiT version >= 1.2. You need "
+                             f"to remove `--use-style-cond` and `--size-cond 1024 1024` to adapt to these weights.")
+        # Don't set strict=False. Always explicitly check the state_dict.
+        self.model.load_state_dict(state_dict, strict=True)
 
     def load_sampler(self, sampler=None):
         pipeline, sampler = get_pipeline(self.args,
@@ -303,6 +361,7 @@ class End2End(object):
                 batch_size=1,
                 src_size_cond=(1024, 1024),
                 sampler=None,
+                use_style_cond=False,
                 ):
         # ========================================================================
         # Arguments: seed
@@ -352,19 +411,28 @@ class End2End(object):
         # ========================================================================
         # Arguments: style. (A fixed argument. Don't Change it.)
         # ========================================================================
-        style = torch.as_tensor([0, 0] * batch_size, device=self.device)
+        if use_style_cond:
+            # Only for hydit <= 1.1
+            style = torch.as_tensor([0, 0] * batch_size, device=self.device)
+        else:
+            style = None
 
         # ========================================================================
         # Inner arguments: image_meta_size (Please refer to SDXL.)
         # ========================================================================
-        if isinstance(src_size_cond, int):
-            src_size_cond = [src_size_cond, src_size_cond]
-        if not isinstance(src_size_cond, (list, tuple)):
-            raise TypeError(f"`src_size_cond` must be a list or tuple, but got {type(src_size_cond)}")
-        if len(src_size_cond) != 2:
-            raise ValueError(f"`src_size_cond` must be a tuple of 2 integers, but got {len(src_size_cond)}")
-        size_cond = list(src_size_cond) + [target_width, target_height, 0, 0]
-        image_meta_size = torch.as_tensor([size_cond] * 2 * batch_size, device=self.device)
+        if src_size_cond is None:
+            size_cond = None
+            image_meta_size = None
+        else:
+            # Only for hydit <= 1.1
+            if isinstance(src_size_cond, int):
+                src_size_cond = [src_size_cond, src_size_cond]
+            if not isinstance(src_size_cond, (list, tuple)):
+                raise TypeError(f"`src_size_cond` must be a list or tuple, but got {type(src_size_cond)}")
+            if len(src_size_cond) != 2:
+                raise ValueError(f"`src_size_cond` must be a tuple of 2 integers, but got {len(src_size_cond)}")
+            size_cond = list(src_size_cond) + [target_width, target_height, 0, 0]
+            image_meta_size = torch.as_tensor([size_cond] * 2 * batch_size, device=self.device)
 
         # ========================================================================
         start_time = time.time()

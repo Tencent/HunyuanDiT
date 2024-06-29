@@ -16,7 +16,7 @@ class MT5Embedder(nn.Module):
         max_length=128,
     ):
         super().__init__()
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = "cpu"
         self.torch_dtype = torch_dtype or torch.bfloat16
         self.max_length = max_length
         if model_kwargs is None:

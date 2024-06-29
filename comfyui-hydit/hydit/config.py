@@ -136,17 +136,11 @@ def get_args(default_args=None):
 
     # Directory
     parser.add_argument("--results-dir", type=str, default="results")
-    parser.add_argument("--resume", type=str, default=None, help="Resume experiment from a checkpoint")
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--resume-module-root", type=str, default=None, help="Resume model states.")
+    parser.add_argument("--resume-ema-root", type=str, default=None, help="Resume ema states.")
     parser.add_argument("--no-strict", dest="strict", action="store_false", help="Strict loading of checkpoint")
     parser.set_defaults(strict=True)
-    parser.add_argument("--resume-deepspeed", action="store_true",
-                        help="Resume model and ema states from a checkpoint saved by Deepspeed version of DIT.")
-    parser.add_argument("--resume-split", action="store_true",
-                        help="Resume model and ema states from two checkpoint separated from DeepSpeed ckpt.")
-    parser.add_argument("--ema-to-module", action="store_true",
-                        help="If true, initialize the module with EMA weights.")
-    parser.add_argument("--module-to-ema", action="store_true",
-                        help="if true, initialize the ema with Module weights.")
 
     # Dataset
     parser.add_argument("--index-file", type=str, nargs='+', help="During training, provide a JSON file with data indices.")

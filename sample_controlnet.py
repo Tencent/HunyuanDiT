@@ -38,7 +38,6 @@ def inferencer():
 
 
 if __name__ == "__main__":
-
     args, gen, enhancer = inferencer()
 
     if enhancer:
@@ -70,6 +69,7 @@ if __name__ == "__main__":
                           guidance_scale=args.cfg_scale,
                           batch_size=args.batch_size,
                           src_size_cond=args.size_cond,
+                          use_style_cond=args.use_style_cond,
                           )
     images = results['images']
 

@@ -21,7 +21,7 @@ Here is a demo for you.
 cd HunyuanDiT
 
 # Quick start
-model_id=Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled
+model_id=Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled
 prompt=一个宇航员在骑马
 infer_steps=50
 guidance_scale=6

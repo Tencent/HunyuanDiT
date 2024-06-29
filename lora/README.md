@@ -4,7 +4,7 @@
 
 ### Instructions
 
- The dependencies and installation are basically the same as the [**base model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1).
+ The dependencies and installation are basically the same as the [**base model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2).
 
  We provide two types of trained LoRA weights for you to test.
  
@@ -16,7 +16,7 @@ cd HunyuanDiT
 huggingface-cli download Tencent-Hunyuan/HYDiT-LoRA --local-dir ./ckpts/t2i/lora
 
 # Quick start
-python sample_t2i.py --prompt "青花瓷风格，一只猫在追蝴蝶"  --no-enhance --load-key ema --lora-ckpt ./ckpts/t2i/lora/porcelain
+python sample_t2i.py --prompt "青花瓷风格，一只猫在追蝴蝶"  --no-enhance --load-key ema --lora-ckpt ./ckpts/t2i/lora/porcelain --infer-mode fa
 ```
 
 Examples of training data and inference results are as follows:
@@ -61,41 +61,40 @@ Examples of training data and inference results are as follows:
     
 We provide three types of weights for fine-tuning LoRA, `ema`, `module` and `distill`, and you can choose according to the actual effect. By default, we use `ema` weights. 
 
-Here is an example, we load the `ema` weights into the main model and perform LoRA fine-tuning through the `--ema-to-module` parameter. 
-
-If you want to load the `module` weights into the main model, just remove the `--ema-to-module` parameter.
+Here is an example for LoRA with HunYuanDiT v1.2, we load the `distill` weights into the main model and perform LoRA fine-tuning through the `resume_module_root=./ckpts/t2i/model/pytorch_model_distill.pt` setting. 
 
 If multiple resolution are used, you need to add the `--multireso` and `--reso-step 64 ` parameter. 
 
+If you want to train LoRA with HunYuanDiT v1.1, you could add `--use-style-cond`, `--size-cond 1024 1024` and `--beta-end 0.03`.
+
 ```bash
-model='DiT-g/2'                                        # model type
-task_flag="lora_porcelain_ema_rank64"                  # task flag 
-resume=./ckpts/t2i/model/                              # resume checkpoint 
-index_file=dataset/porcelain/jsons/porcelain.json      # the selected data indices
-results_dir=./log_EXP                                  # save root for results
-batch_size=1                                           # training batch size
-image_size=1024                                        # training image resolution
-grad_accu_steps=2                                      # gradient accumulation steps
-warmup_num_steps=0                                     # warm-up steps
-lr=0.0001                                              # learning rate
-ckpt_every=100                                         # create a ckpt every a few steps.
-ckpt_latest_every=2000                                 # create a ckpt named `latest.pt` every a few steps.
-rank=64                                                # rank of lora
-max_training_steps=2000                                # Maximum training iteration steps
+model='DiT-g/2'                                                   # model type
+task_flag="lora_porcelain_ema_rank64"                             # task flag
+resume_module_root=./ckpts/t2i/model/pytorch_model_distill.pt     # resume checkpoint
+index_file=dataset/porcelain/jsons/porcelain.json                 # the selected data indices
+results_dir=./log_EXP                                             # save root for results
+batch_size=1                                                      # training batch size
+image_size=1024                                                   # training image resolution
+grad_accu_steps=2                                                 # gradient accumulation steps
+warmup_num_steps=0                                                # warm-up steps
+lr=0.0001                                                         # learning rate
+ckpt_every=100                                                    # create a ckpt every a few steps.
+ckpt_latest_every=2000                                            # create a ckpt named `latest.pt` every a few steps.
+rank=64                                                           # rank of lora
+max_training_steps=2000                                           # Maximum training iteration steps
 
 PYTHONPATH=./ deepspeed hydit/train_deepspeed.py \
     --task-flag ${task_flag} \
     --model ${model} \
-    --training_parts lora \
+    --training-parts lora \
     --rank ${rank} \
-    --resume-split \
-    --resume ${resume} \
-    --ema-to-module \
+    --resume \
+    --resume-module-root ${resume_module_root} \
     --lr ${lr} \
-    --noise-schedule scaled_linear --beta-start 0.00085 --beta-end 0.03 \
+    --noise-schedule scaled_linear --beta-start 0.00085 --beta-end 0.018 \
     --predict-type v_prediction \
-    --uncond-p 0.44 \
-    --uncond-p-t5 0.44 \
+    --uncond-p 0 \
+    --uncond-p-t5 0 \
     --index-file ${index_file} \
     --random-flip \
     --batch-size ${batch_size} \
@@ -139,12 +138,12 @@ We provide the `--lora-ckpt` parameter for selecting the folder which contains l
 a. Using LoRA during inference
 
 ```bash
-python sample_t2i.py --prompt "青花瓷风格，一只小狗"  --no-enhance --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
+python sample_t2i.py --infer-mode fa --prompt "青花瓷风格，一只小狗"  --no-enhance --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt/
 ```
 
 b. Using LoRA in gradio
 ```bash
-python app/hydit_app.py --infer-mode fa  --no-enhance --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
+python app/hydit_app.py --infer-mode fa --no-enhance --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt/
 ```
 
 c. Merge LoRA weights into the main model
@@ -152,7 +151,7 @@ c. Merge LoRA weights into the main model
 We provide the `--output-merge-path` parameter to set the path for saving the merged weights.
 
 ```bash
-PYTHONPATH=./ python lora/merge.py --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt --output-merge-path ./ckpts/t2i/model/pytorch_model_merge.pt
+PYTHONPATH=./ python lora/merge.py --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0000100.pt/ --output-merge-path ./ckpts/t2i/model/pytorch_model_merge.pt
 ```
 
 d. Regarding how to use the LoRA weights we trained in diffusion, we provide the following script. To ensure compatibility with the diffuser, some modifications are made, which means that LoRA cannot be directly loaded. 
@@ -190,7 +189,7 @@ def load_hunyuan_dit_lora(transformer_state_dict, lora_state_dict, lora_scale):
     
     return transformer_state_dict
 
-pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers", torch_dtype=torch.float16)
+pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers", torch_dtype=torch.float16)
 pipe.to("cuda")
 
 from safetensors import safe_open

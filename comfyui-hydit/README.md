@@ -130,4 +130,6 @@ Below I'm trying to document all the nodes, thanks for some good work[[1]](#1)[[
 <a id="1">[1]</a> 
 https://github.com/Limitex/ComfyUI-Diffusers  
 <a id="2">[2]</a>
-https://github.com/Tencent/HunyuanDiT/pull/59
+https://github.com/Tencent/HunyuanDiT/pull/59  
+<a id="3">[3]</a>
+https://github.com/city96/ComfyUI_ExtraModels.git
