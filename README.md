@@ -73,12 +73,11 @@ or multi-turn language interactions to create the picture.
   - [x] Training
   - [x] Lora
   - [x] Controlnet (Pose, Canny, Depth)
-  - [x] Hunyuan-Captioner (Re-caption the raw image-text pairs)
   - [x] 6GB GPU VRAM Inference 
   - [ ] IP-adapter
   - [ ] Hunyuan-DiT-S checkpoints (0.7B model)
 - Mllm
-  - Hunyuan-Captioner
+  - Hunyuan-Captioner (Re-caption the raw image-text pairs)
     - [x] Inference
   - [Hunyuan-DialogGen](https://github.com/Centaurusalpha/DialogGen) (Prompt Enhancement Model)
     - [x] Inference
@@ -710,15 +709,7 @@ a. Install dependencies
      
 The dependencies and installation are basically the same as the [**base model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1).
 
-b. Data download
-```shell
-cd HunyuanDiT
-wget -O ./dataset/data_demo.zip https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip
-unzip ./dataset/data_demo.zip -d ./dataset
-mkdir ./dataset/porcelain/arrows ./dataset/porcelain/jsons
-```
-
-c. Model download
+b. Model download
 ```shell
 # Use the huggingface-cli tool to download the model.
 huggingface-cli download Tencent-Hunyuan/HunyuanCaptioner --local-dir ./ckpts/captioner
@@ -726,15 +717,15 @@ huggingface-cli download Tencent-Hunyuan/HunyuanCaptioner --local-dir ./ckpts/ca
 
 ### Inference
 
-Current supported prompt templates:
+Our model supports three different modes including: **directly generating Chinese caption**, **generating Chinese caption based on specific knowledge**, and **directly generating English caption**. The injected information can be either accurate cues or noisy labels (e.g., raw descriptions crawled from the internet). The model is capable of generating reliable and accurate descriptions based on both the inserted information and the image content.
 
-|Mode           | Prompt template                           |Description                           | 
+|Mode           | Prompt Template                           |Description                           | 
 | ---           | ---                                       | ---                                  |
 |caption_zh     | 描述这张图片                               |Caption in Chinese                    | 
-|insert_content | 根据提示词“{}”,描述这张图片                 |Insert specific knowledge into caption| 
+|insert_content | 根据提示词“{}”,描述这张图片                 |Caption with inserted knowledge| 
 |caption_en     | Please describe the content of this image |Caption in English                    |
 |               |                                           |                                      |
-
+ 
 
 a. Single picture inference in Chinese
 
@@ -775,7 +766,7 @@ python -m llava.serve.controller --host 0.0.0.0 --port 10000
 
 python -m llava.serve.gradio_web_server --controller http://0.0.0.0:10000 --model-list-mode reload --port 443
 
-python -m llava.serve.model_worker --host 0.0.0.0 --controller http://0.0.0.0:10000 --port 40000 --worker http://0.0.0.0:40000 --model-path "./ckpts/captioner" --model-name LlavaMistral
+python -m llava.serve.model_worker --host 0.0.0.0 --controller http://0.0.0.0:10000 --port 40000 --worker http://0.0.0.0:40000 --model-path "../ckpts/captioner" --model-name LlavaMistral
 ```
 Then the demo can be accessed through http://0.0.0.0:443. It should be noted that the 0.0.0.0 here needs to be X.X.X.X with your server IP.
 
