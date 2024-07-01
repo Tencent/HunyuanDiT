@@ -48,7 +48,7 @@ def get_args(default_args=None):
 
     # controlnet config
     parser.add_argument("--control-type", type=str, default='canny', choices=['canny', 'depth', 'pose'], help="Controlnet condition type")
-    parser.add_argument("--control-weight", type=float, default=1.0, help="Controlnet weight, You can use a float to specify the weight for all layers, or use a list to separately specify the weight for each layer, for example, '[1.0 * (0.825 ** float(19 - i)) for i in range(19)]'")
+    parser.add_argument("--control-weight", type=str, default=1.0, help="Controlnet weight, You can use a float to specify the weight for all layers, or use a list to separately specify the weight for each layer, for example, '[1.0 * (0.825 ** float(19 - i)) for i in range(19)]'")
     parser.add_argument("--condition-image-path", type=str, default=None, help="Inference condition image path")
 
     # Diffusion
