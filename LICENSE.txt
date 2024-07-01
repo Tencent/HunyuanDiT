@@ -72,3 +72,4 @@ Tencent endeavors to promote safe and fair use of its tools and features, includ
 17.	To intentionally exploit any of the vulnerabilities of a specific group of persons based on their age, social, physical or mental characteristics, in order to materially distort the behavior of a person pertaining to that group in a manner that causes or is likely to cause that person or another person physical or psychological harm;
 18.	For military purposes;
 19.	To engage in the unauthorized or unlicensed practice of any profession including, but not limited to, financial, legal, medical/health, or other professional practices.
+20.   modified by jwj
