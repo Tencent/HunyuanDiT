@@ -342,7 +342,7 @@ All models will be automatically downloaded. For more information about the mode
      We utilize [Arrow](https://github.com/apache/arrow) for training data format, offering a standard and efficient in-memory data representation. A conversion script is provided to transform CSV files into Arrow format.
      ```shell  
      # 3 Data conversion 
-     python ./hydit/data_loader/csv2arrow.py ./dataset/porcelain/csvfile/image_text.csv ./dataset/porcelain/arrows
+     python ./hydit/data_loader/csv2arrow.py ./dataset/porcelain/csvfile/image_text.csv ./dataset/porcelain/arrows 1
      ```
   
   4. Data Selection and Configuration File Creation 
