@@ -223,7 +223,7 @@ class End2End(object):
 
                 self.model.load_adapter(lora_ckpt)
                 self.model.merge_and_unload()
-                
+
 
             self.model.eval()
             logger.info(f"Loading torch model finished")
