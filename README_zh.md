@@ -203,9 +203,9 @@ https://github.com/Tencent/tencent.github.io/assets/27557933/94b4dcc3-104d-44e1-
 
 ## 📜 需求
 
-该版本包括了 DialogGen (一种提示增强的模型) and Hunyuan-DiT (一种文本到图像的模型).
+该版本包括了 DialogGen (一种提示增强的模型)和 Hunyuan-DiT (一种文本到图像的模型)。
 
-下面的表格显示了运行模型的要求 (batch size = 1):
+下表表明了运行模型的要求 (batch size = 1):
 
 |          模型           | --加载-4bit (DialogGen) | GPU最低显存      |       GPU型号       |
 |:-----------------------:|:-----------------------:|:---------------:|:---------------:|
@@ -250,7 +250,7 @@ python -m pip install git+https://github.com/Dao-AILab/flash-attention.git@v2.1.
 ```
 
 ## 🧱 下载预训练模型
-要下载模型，首先要安装huggingface-cli。 (详细的说明见[此处](https://huggingface.co/docs/huggingface_hub/guides/cli).)
+要下载模型，首先要安装huggingface-cli。 (详细的说明见[此处](https://huggingface.co/docs/huggingface_hub/guides/cli)。)
 
 ```shell
 python -m pip install "huggingface_hub[cli]"
@@ -267,7 +267,7 @@ huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
 ```
 
 <details>
-<summary>💡使用huggingface-cli的小技巧 (网络问题)</summary>
+<summary>💡使用huggingface-cli的小技巧 (网络下载问题)</summary>
 
 ##### 1. 使用HF-Mirror
 
@@ -287,9 +287,9 @@ HF_ENDPOINT=https://hf-mirror.com huggingface-cli download Tencent-Hunyuan/Hunyu
 
 ---
 
-所有的模型都可以免费下载. 更多有关模型的信息，请访问“Hugging Face”[资源库](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT)。
+所有的模型都可以免费下载。 若要获取更多有关模型的信息，请访问“Hugging Face”[资源库](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT)。
 
-|       Model        | #Params |                                      “Hugging Face”下载链接                                           |                                      腾讯云下载链接                                |
+|       模型        | #参数量 |                                      “Hugging Face”下载链接                                           |                                      腾讯云下载链接                                |
 |:------------------:|:-------:|:-------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
 |        mT5         |  1.6B   |               [mT5](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/mt5)                |               [mT5](https://dit.hunyuan.tencent.com/download/HunyuanDiT/mt5.zip)                |
 |        CLIP        |  350M   |        [CLIP](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/clip_text_encoder)        |        [CLIP](https://dit.hunyuan.tencent.com/download/HunyuanDiT/clip_text_encoder.zip)        |
