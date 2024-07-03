@@ -66,7 +66,7 @@ from diffusers import HunyuanDiTPipeline
 pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled", torch_dtype=torch.float16)
 pipe.to("cuda")
 
-# 你也可以使用英文提示，因为HunyuanDiT支持中英文提示
+# 你也可以使用英文提示，HunyuanDiT支持中英文提示
 # prompt = "An astronaut riding a horse"
 prompt = "一个宇航员在骑马"
 image = pipe(prompt, num_inference_steps=25).images[0]
@@ -99,19 +99,19 @@ python sample_t2i.py --prompt "渔舟唱晚"  --load-4bit
 
 ### 更多配置选项
 我们列出了一些更常用的配置选项方便用户使用
-|    Argument     |  Default  |                     Description                     |
+|    参数    |  默认值  |                     描述                     |
 |:---------------:|:---------:|:---------------------------------------------------:|
-|   `--prompt`    |   None    |        用于图像生成的文本提示      |
-| `--image-size`  | 1024 1024 |           生成图像的大小       |
-|    `--seed`     |    42     |        生成图像的随机种子       |
-| `--infer-steps` |    100    |         扩散步数        |
-|  `--negative`   |     -     |      用于图像生成的负面提示      |
-| `--infer-mode`  |   torch   |       推理模式（torch、fa 或 trt）      |
-|   `--sampler`   |   ddpm    |    扩散采样器（ddpm、ddim 或 dpmm）   |
-| `--no-enhance`  |   False   |     禁用提示增强模型       |
-| `--model-root`  |   ckpts   |    模型检查点的根目录   |
-|  `--load-key`   |    ema    | 加载学生模型或 EMA 模型（ema 或 module） |
-|  `--load-4bit`  |   Fasle   |     使用 4 位量化加载 DialogGen 模型    |
+|   `--prompt`    |   None    |        指定图像生成的文本提示      |
+| `--image-size`  | 1024 1024 |           指定生成图像的大小       |
+|    `--seed`     |    42     |        指定生成图像的随机种子       |
+| `--infer-steps` |    100    |         指定扩散步数        |
+|  `--negative`   |     -     |      指定图像生成的负面提示      |
+| `--infer-mode`  |   torch   |       指定推理模式（torch、fa 或 trt）      |
+|   `--sampler`   |   ddpm    |    指定扩散采样器（ddpm、ddim 或 dpmm）   |
+| `--no-enhance`  |   False   |     指定是否禁用提示增强模型       |
+| `--model-root`  |   ckpts   |    指定模型检查点的根目录   |
+|  `--load-key`   |    ema    | 指定加载学生模型或指数移动平均模型（ema 或 module） |
+|  `--load-4bit`  |   Fasle   |     指定是否使用 4 位量化加载 DialogGen 模型    |
 
 ### 使用ComfyUI
 
