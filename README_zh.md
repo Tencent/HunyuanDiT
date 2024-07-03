@@ -50,13 +50,13 @@ python -m pip install git+https://github.com/Dao-AILab/flash-attention.git@v2.1.
 ## 🧱 下载预训练模型
 为了下载模型，首先请安装huggingface-cli。(指引细节可以参考如下链接：[here](https://huggingface.co/docs/huggingface_hub/guides/cli).)
 
-```bash
+```shell
 python -m pip install "huggingface_hub[cli]"
 ```
 
 然后采用如下命令下载模型：
 
-```bash
+```shell
 # 创建一个名为'ckpts'的文件夹，该文件夹下保存模型权重，是运行该demo的先行条件
 mkdir ckpts
 # 采用 huggingface-cli工具下载模型
@@ -64,9 +64,27 @@ mkdir ckpts
 huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
 ```
 
+
+<details>
+<summary>💡使用huggingface-cli的小技巧 (网络问题)</summary>
+
+##### 1. 使用 HF 镜像
+
+如果在中国境内的下载速度较慢，你可以使用镜像加速下载过程，例如
+```shell
+HF_ENDPOINT=https://hf-mirror.com huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
+```
+
+##### 2. 重新下载
+
+`huggingface-cli` 支持重新下载。如果下载过程被中断，你只需要重新运行下载命令，恢复下载进程。
+
 注意：如果在下载过程中发生类似`No such file or directory: 'ckpts/.huggingface/.gitignore.lock'`的错误，你可以忽略这个错误，
 并重新执行以下命令： `huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts`
 
+</details>
+
+---
 
 所有的模型将会自动下载。如果想要了解更多关于模型的信息，请查阅Hugging Face的项目：[here](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT)。
 
@@ -77,4 +95,7 @@ huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
 |     DialogGen      |  7.0B  |           [DialogGen](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/dialoggen)            |
 | sdxl-vae-fp16-fix  |  83M   | [sdxl-vae-fp16-fix](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/sdxl-vae-fp16-fix)  |
 |    Hunyuan-DiT     |  1.5B  |          [Hunyuan-DiT](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/model)           |
+
+
+
 
