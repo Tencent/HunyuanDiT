@@ -300,96 +300,96 @@ HF_ENDPOINT=https://hf-mirror.com huggingface-cli download Tencent-Hunyuan/Hunyu
 |    Hunyuan-DiT-v1.1     |  1.5B   |          [Hunyuan-DiT-v1.1](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1/tree/main/t2i/model)    |          [Hunyuan-DiT-v1.1](https://dit.hunyuan.tencent.com/download/HunyuanDiT/model-v1_1.zip)            |
 |    Data demo       |  -      |                                    -                                                                    |      [Data demo](https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip)             |
 
-## :truck: Training
+## :truck: 训练
 
-### Data Preparation
+### 数据准备
 
-  Refer to the commands below to prepare the training data. 
+  请参考下面的命令来准备训练数据。
   
-  1. Install dependencies
+  1. 安装依赖项
   
-      We offer an efficient data management library, named IndexKits, supporting the management of reading hundreds of millions of data during training, see more in [docs](./IndexKits/README.md).
+      我们提供了一个名为“IndexKits”的高效数据管理库，它支持在训练过程中读取数以亿计的数据。更多详细信息见此[文档](./IndexKits/README.md)。
       ```shell
-      # 1 Install dependencies
+      # 1 安装依赖项
       cd HunyuanDiT
       pip install -e ./IndexKits
      ```
-  2. Data download 
+  2. 下载数据 
   
-     Feel free to download the [data demo](https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip).
+     欢迎随时下载数据，通过[数据演示](https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip)。
      ```shell
-     # 2 Data download
+     # 2 下载数据
      wget -O ./dataset/data_demo.zip https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip
      unzip ./dataset/data_demo.zip -d ./dataset
      mkdir ./dataset/porcelain/arrows ./dataset/porcelain/jsons
      ```
-  3. Data conversion 
+  3. 数据转换
   
-     Create a CSV file for training data with the fields listed in the table below.
+     为训练数据创建一个 CSV 文件，其中包含下表列出的字段。
     
-     |    Fields       | Required  |  Description     |   Example   |
+     |    字段       | 是否需求  |  描述     |   示例   |
      |:---------------:| :------:  |:----------------:|:-----------:|
-     |   `image_path`  | Required  |  image path               |     `./dataset/porcelain/images/0.png`        | 
-     |   `text_zh`     | Required  |    text               |  青花瓷风格，一只蓝色的鸟儿站在蓝色的花瓶上，周围点缀着白色花朵，背景是白色 | 
-     |   `md5`         | Optional  |    image md5 (Message Digest Algorithm 5)  |    `d41d8cd98f00b204e9800998ecf8427e`         | 
-     |   `width`       | Optional  |    image width    |     `1024 `       | 
-     |   `height`      | Optional  |    image height   |    ` 1024 `       | 
+     |   `image_path`  | 是  |  图像路径               |     `./dataset/porcelain/images/0.png`        | 
+     |   `text_zh`     | 是  |    描述文本              |  青花瓷风格，一只蓝色的鸟儿站在蓝色的花瓶上，周围点缀着白色花朵，背景是白色 | 
+     |   `md5`         | 可选  |    图像的信息摘要(md5)  |    `d41d8cd98f00b204e9800998ecf8427e`         | 
+     |   `width`       | 可选  |    图像宽度    |     `1024 `       | 
+     |   `height`      | 可选  |    图像高度    |    ` 1024 `       | 
      
-     > ⚠️ Optional fields like MD5, width, and height can be omitted. If omitted, the script below will automatically calculate them. This process can be time-consuming when dealing with large-scale training data.
+     > ⚠️ 图像的md5、宽度和高度等可选字段可以省略。如果省略，下面的脚本会自动计算。在处理大规模训练数据时，这一过程可能会比较耗时。
   
-     We utilize [Arrow](https://github.com/apache/arrow) for training data format, offering a standard and efficient in-memory data representation. A conversion script is provided to transform CSV files into Arrow format.
+    我们使用[Arrow](https://github.com/apache/arrow)格式作为训练数据格式，以提供标准高效的内存数据表示。同时，我们提供了将 CSV 格式转换为 Arrow 格式的转换脚本。.
      ```shell  
      # 3 Data conversion 
      python ./hydit/data_loader/csv2arrow.py ./dataset/porcelain/csvfile/image_text.csv ./dataset/porcelain/arrows 1
      ```
   
-  4. Data Selection and Configuration File Creation 
+  4. 数据筛选和配置文件创建 
      
-      We configure the training data through YAML files. In these files, you can set up standard data processing strategies for filtering, copying, deduplicating, and more regarding the training data. For more details, see [./IndexKits](IndexKits/docs/MakeDataset.md).
+      我们通过 YAML 文件配置训练数据。在这些文件中，你可以设置有关训练数据的过滤、复制、重复数据等标准数据处理策略。有关详细信息，请参见[./IndexKits](IndexKits/docs/MakeDataset.md).
   
-      For a sample file, please refer to [file](./dataset/yamls/porcelain.yaml). For a full parameter configuration file, see [file](./IndexKits/docs/MakeDataset.md).
+      有关示例文件，请参阅[文件](./dataset/yamls/porcelain.yaml).。如需完整的参数配置文件，请参阅[文件](./IndexKits/docs/MakeDataset.md)。
   
      
-  5. Create training data index file using YAML file.
+  5. 使用 YAML 文件创建训练数据索引文件。
     
      ```shell
-      # Single Resolution Data Preparation
+      # 制备单分辨率的数据集
       idk base -c dataset/yamls/porcelain.yaml -t dataset/porcelain/jsons/porcelain.json
    
-      # Multi Resolution Data Preparation     
+      # 制备多分辨率的数据集     
       idk multireso -c dataset/yamls/porcelain_mt.yaml -t dataset/porcelain/jsons/porcelain_mt.json
       ```
    
-  The directory structure for `porcelain` dataset is:
+  "瓷器"数据集的目录结构应为:
 
   ```shell
    cd ./dataset
   
    porcelain
-      ├──images/  (image files)
+      ├──images/  (图像文件)
       │  ├──0.png
       │  ├──1.png
       │  ├──......
-      ├──csvfile/  (csv files containing text-image pairs)
+      ├──csvfile/  (包含配对"文本-图片"的 csv 文件)
       │  ├──image_text.csv
-      ├──arrows/  (arrow files containing all necessary training data)
+      ├──arrows/  (包含所有必要训练数据的 arrow 文件)
       │  ├──00000.arrow
       │  ├──00001.arrow
       │  ├──......
-      ├──jsons/  (final training data index files which read data from arrow files during training)
+      ├──jsons/  (在训练期间从arrow文件中读取数据的最终训练数据索引文件)
       │  ├──porcelain.json
       │  ├──porcelain_mt.json
    ```
 
-### Full-parameter Training
+### 全量训练
  
-  To leverage DeepSpeed in training, you have the flexibility to control **single-node** / **multi-node** training by adjusting parameters such as `--hostfile` and `--master_addr`. For more details, see [link](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node).
+  要在训练中利用 DeepSpeed，您可以通过调整 '--hostfile' 和 '--master_addr' 等参数，灵活控制单节点/多节点训练。 For more details, see [link](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node).
 
   ```shell
-  # Single Resolution Training
+  # 单分辨率训练
   PYTHONPATH=./ sh hydit/train.sh --index-file dataset/porcelain/jsons/porcelain.json
   
-  # Multi Resolution Training
+  # 多分辨率训练
   PYTHONPATH=./ sh hydit/train.sh --index-file dataset/porcelain/jsons/porcelain_mt.json --multireso --reso-step 64
   ```
 
@@ -397,27 +397,27 @@ HF_ENDPOINT=https://hf-mirror.com huggingface-cli download Tencent-Hunyuan/Hunyu
 
 
 
-We provide training and inference scripts for LoRA, detailed in the [./lora](./lora/README.md). 
+我们提供了 LoRA 的训练和推理脚本, 更多细节见[./lora](./lora/README.md). 
 
   ```shell
-  # Training for porcelain LoRA.
+  # 训练"瓷器"相关的LoRA。
   PYTHONPATH=./ sh lora/train_lora.sh --index-file dataset/porcelain/jsons/porcelain.json
 
-  # Inference using trained LORA weights.
+  # 使用预训练的 LORA 权重进行推理。
   python sample_t2i.py --prompt "青花瓷风格，一只小狗"  --no-enhance --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
   ```
- We offer two types of trained LoRA weights for `porcelain` and `jade`, see details at [links](https://huggingface.co/Tencent-Hunyuan/HYDiT-LoRA)
+ 我们为'瓷器'和'玉器'提供两个预训练的 LoRA 权重, 更多细节请参阅[链接](https://huggingface.co/Tencent-Hunyuan/HYDiT-LoRA)
   ```shell
   cd HunyuanDiT
-  # Use the huggingface-cli tool to download the model.
+  # 使用 huggingface-cli 工具来下载.
   huggingface-cli download Tencent-Hunyuan/HYDiT-LoRA --local-dir ./ckpts/t2i/lora
   
-  # Quick start
+  # 快速使用
   python sample_t2i.py --prompt "青花瓷风格，一只猫在追蝴蝶"  --no-enhance --load-key ema --lora-ckpt ./ckpts/t2i/lora/porcelain
   ```
  <table>
   <tr>
-    <td colspan="4" align="center">Examples of training data</td>
+    <td colspan="4" align="center">训练数据示例</td>
   </tr>
   
   <tr>
@@ -434,7 +434,7 @@ We provide training and inference scripts for LoRA, detailed in the [./lora](./l
     <td align="center">青花瓷风格，在蓝色背景上，一只蓝色蝴蝶和白色花朵被放置在中央 （Porcelain style, on a blue background, a blue butterfly and white flowers are placed in the center.）</td>
   </tr>
   <tr>
-    <td colspan="4" align="center">Examples of inference results</td>
+    <td colspan="4" align="center">推理结果示例</td>
   </tr>
   <tr>
     <td align="center"><img src="lora/asset/porcelain/inference/0.png" alt="Image 4" width="200"/></td>
@@ -452,14 +452,14 @@ We provide training and inference scripts for LoRA, detailed in the [./lora](./l
 </table>
 
 
-## 🔑 Inference
+## 🔑 推理
 
-### 6GB GPU VRAM Inference
-Running HunyuanDiT in under 6GB GPU VRAM is available now based on [diffusers](https://huggingface.co/docs/diffusers/main/en/api/pipelines/hunyuandit). Here we provide instructions and demo for your quick start.
+### 6GB GPU VRAM 推理
+基于[diffusers](https://huggingface.co/docs/diffusers/main/en/api/pipelines/hunyuandit)，现在可以在 6GB GPU VRAM 下运行HunyuanDiT。我们将为您提供快速上手的说明和演示。
 
-> The 6GB version supports Nvidia Ampere architecture series graphics cards such as RTX 3070/3080/4080/4090, A100, and so on.
+> 6GB 版本支持 Nvidia Ampere 架构系列显卡，如 RTX 3070/3080/4080/4090，A100 等。
 
-The only thing you need do is to install the following library:
+您唯一需要做的就是安装以下库：
 
 ```bash
 pip install -U bitsandbytes
@@ -467,14 +467,14 @@ pip install git+https://github.com/huggingface/diffusers
 pip install torch==2.0.0
 ```
 
-Then you can enjoy your HunyuanDiT text-to-image journey under 6GB GPU VRAM directly!
+然后，您就可以在 6GB GPU VRAM 下直接享受 HunyuanDiT 文字转图像功能了！
 
-Here is a demo for you.
+下面为您提供一个示例。
 
 ```bash
 cd HunyuanDiT
 
-# Quick start
+# 快速使用
 model_id=Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled
 prompt=一个宇航员在骑马
 infer_steps=50
@@ -482,48 +482,48 @@ guidance_scale=6
 python3 lite/inference.py ${model_id} ${prompt} ${infer_steps} ${guidance_scale}
 ```
 
-More details can be found in [./lite](lite/README.md).
+详情见[./lite](lite/README.md)。
 
 
-### Using Gradio
+### 使用Gradio
 
-Make sure the conda environment is activated before running the following command.
+在运行以下命令前，请确保已激活 Conda 环境。
 
 ```shell
-# By default, we start a Chinese UI.
+# 默认情况下，我们使用的是中文界面。
 python app/hydit_app.py
 
-# Using Flash Attention for acceleration.
+# 使用 Flash Attention 进行加速。
 python app/hydit_app.py --infer-mode fa
 
-# You can disable the enhancement model if the GPU memory is insufficient.
-# The enhancement will be unavailable until you restart the app without the `--no-enhance` flag. 
+# 如果 GPU 内存不足，可以禁用增强模型。
+# 该增强功能将不可用，直到您重新启动应用程序时不使用'--no-enhance'。
 python app/hydit_app.py --no-enhance
 
-# Start with English UI
+# 使用英文界面。
 python app/hydit_app.py --lang en
 
-# Start a multi-turn T2I generation UI. 
-# If your GPU memory is less than 32GB, use '--load-4bit' to enable 4-bit quantization, which requires at least 22GB of memory.
+# 使用 multi-turn T2I 生成交互界面. 
+# 如果您的 GPU 显存小于 32GB，请使用"--load-4bit "启用 4 位量化，但这至少需要 22GB 显存。
 python app/multiTurnT2I_app.py
 ```
-Then the demo can be accessed through http://0.0.0.0:443. It should be noted that the 0.0.0.0 here needs to be X.X.X.X with your server IP.
+然后就可以通过 http://0.0.0.0:443 访问演示程序了。需要注意的是，这里的 0.0.0.0 需要与您的服务器 IP X.X.X.X保持一致。
 
-### Using 🤗 Diffusers
+### 使用 🤗 Diffusers
 
-Please install PyTorch version 2.0 or higher in advance to satisfy the requirements of the specified version of the diffusers library.  
+请提前安装 PyTorch 2.0 或更高版本，以满足指定版本“diffusers”库的要求。
 
-Install 🤗 diffusers, ensuring that the version is at least 0.28.1:
+安装 🤗 diffusers, 请确保其版本至少为 0.28.1:
 
 ```shell
 pip install git+https://github.com/huggingface/diffusers.git
 ```
-or
+或者
 ```shell
 pip install diffusers
 ```
 
-You can generate images with both Chinese and English prompts using the following Python script:
+您可以通过以下 Python 脚本使用中文和英文提示来生成图像：
 ```py
 import torch
 from diffusers import HunyuanDiTPipeline
@@ -531,12 +531,12 @@ from diffusers import HunyuanDiTPipeline
 pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-Diffusers", torch_dtype=torch.float16)
 pipe.to("cuda")
 
-# You may also use English prompt as HunyuanDiT supports both English and Chinese
+# 您可以使用英文提示，因为 HunyuanDiT 支持英文和中文
 # prompt = "An astronaut riding a horse"
 prompt = "一个宇航员在骑马"
 image = pipe(prompt).images[0]
 ```
-You can use our distilled model to generate images even faster:
+您可以使用我们经过蒸馏的模型更快地生成图像：
 
 ```py
 import torch
@@ -545,18 +545,18 @@ from diffusers import HunyuanDiTPipeline
 pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled", torch_dtype=torch.float16)
 pipe.to("cuda")
 
-# You may also use English prompt as HunyuanDiT supports both English and Chinese
+# 您可以使用英文提示，因为 HunyuanDiT 支持英文和中文
 # prompt = "An astronaut riding a horse"
 prompt = "一个宇航员在骑马"
 image = pipe(prompt, num_inference_steps=25).images[0]
 ```
-More details can be found in [HunyuanDiT-Diffusers-Distilled](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled)
+更多细节请参见[HunyuanDiT-Diffusers-Distilled](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled)
 
-**More functions:** For other functions like LoRA and ControlNet, please have a look at the README of [./diffusers](diffusers).
+**更多功能:** 如需了解 LoRA 和 ControlNet 等其他功能，请参阅 [./diffusers](diffusers)中的“README”文件。
 
-### Using Command Line
+### 使用命令行
 
-We provide several commands to quick start: 
+我们提供了几条快速启动的命令: 
 
 ```shell
 # Prompt Enhancement + Text-to-Image. Torch mode
@@ -576,13 +576,13 @@ python sample_t2i.py --prompt "渔舟唱晚"  --load-4bit
 
 ```
 
-More example prompts can be found in [example_prompts.txt](example_prompts.txt)
+更多提示范例请参见[example_prompts.txt](example_prompts.txt)。
 
-### More Configurations
+### 更多配置
 
-We list some more useful configurations for easy usage:
+我们列出了一些更有用的配置，以方便使用:
 
-|    Argument     |  Default  |                     Description                     |
+|    参数     |  默认  |                     描述                    |
 |:---------------:|:---------:|:---------------------------------------------------:|
 |   `--prompt`    |   None    |        The text prompt for image generation         |
 | `--image-size`  | 1024 1024 |           The size of the generated image           |
@@ -596,9 +596,9 @@ We list some more useful configurations for easy usage:
 |  `--load-key`   |    ema    | Load the student model or EMA model (ema or module) |
 |  `--load-4bit`  |   Fasle   |     Load DialogGen model with 4bit quantization     |
 
-### Using ComfyUI
+### 使用 ComfyUI
 
-We provide several commands to quick start: 
+我们提供了几条快速启动的命令：
 
 ```shell
 # Download comfyui code
@@ -635,7 +635,7 @@ python main.py --listen --port 80
 
 # Running ComfyUI successfully!
 ```
-More details can be found in [./comfyui-hydit](comfyui-hydit/README.md)
+更多详情请参见[./comfyui-hydit](comfyui-hydit/README.md)。
 
 ## :building_construction: Adapter
 
