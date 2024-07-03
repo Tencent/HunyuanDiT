@@ -89,6 +89,33 @@ python mllm/make_csv.py --img_dir "mllm/images" --input_file "mllm/images/demo.c
 python mllm/caption_demo.py --mode "caption_zh" --input_file
 ```
 
+## 加速（适用于Linux）
+
+- 我们提供了用于推理加速的HunyuanDiT的TensorRT版本（比闪电注意力更快）。详细信息请参见[Tencent-Hunyuan/TensorRT-libs](https://huggingface.co/Tencent-Hunyuan/TensorRT-libs)。
+- 我们提供了用于推理加速的HunyuanDiT的蒸馏版本。详细信息请参见[Tencent-Hunyuan/Distillation](https://huggingface.co/Tencent-Hunyuan/Distillation)。
+
+## 🔗 BibTeX
+
+如果您认为[Hunyuan-DiT](https://arxiv.org/abs/2405.08748)或[DialogGen](https://arxiv.org/abs/2403.08857)对您的研究和应用有帮助，请使用以下BibTeX引用：
+
+```
+@misc{li2024hunyuandit,
+      title={Hunyuan-DiT: A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding}, 
+      author={Zhimin Li and Jianwei Zhang and Qin Lin and Jiangfeng Xiong and Yanxin Long and Xinchi Deng and Yingfang Zhang and Xingchao Liu and Minbin Huang and Zedong Xiao and Dayou Chen and Jiajun He and Jiahao Li and Wenyue Li and Chen Zhang and Rongwei Quan and Jianxiang Lu and Jiabin Huang and Xiaoyan Yuan and Xiaoxiao Zheng and Yixuan Li and Jihong Zhang and Chao Zhang and Meng Chen and Jie Liu and Zheng Fang and Weiyan Wang and Jinbao Xue and Yangyu Tao and Jianchen Zhu and Kai Liu and Sihuan Lin and Yifu Sun and Yun Li and Dongdong Wang and Mingtao Chen and Zhichao Hu and Xiao Xiao and Yan Chen and Yuhong Liu and Wei Liu and Di Wang and Yong Yang and Jie Jiang and Qinglin Lu},
+      year={2024},
+      eprint={2405.08748},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+
+@article{huang2024dialoggen,
+  title={DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation},
+  author={Huang, Minbin and Long, Yanxin and Deng, Xinchi and Chu, Ruihang and Xiong, Jiangfeng and Liang, Xiaodan and Cheng, Hong and Lu, Qinglin and Liu, Wei},
+  journal={arXiv preprint arXiv:2403.08857},
+  year={2024}
+}
+```
+
 ## Start History
 
 <a href="https://star-history.com/#Tencent/HunyuanDiT&Date">
@@ -99,3 +126,4 @@ python mllm/caption_demo.py --mode "caption_zh" --input_file
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Tencent/HunyuanDiT&type=Date" />
  </picture>
 
+</a>
