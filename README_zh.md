@@ -102,12 +102,12 @@ or multi-turn language interactions to create the picture.
     - [Multi-turn Text2Image Generation](#multi-turn-text2image-generation)
   - [📈 Comparisons](#-comparisons)
   - [🎥 Visualization](#-visualization)
-  - [📜 Requirements](#-requirements)
-  - [🛠️ Dependencies and Installation](#️-dependencies-and-installation)
-    - [Installation Guide for Linux](#installation-guide-for-linux)
-  - [🧱 Download Pretrained Models](#-download-pretrained-models)
-        - [1. Using HF-Mirror](#1-using-hf-mirror)
-        - [2. Resume Download](#2-resume-download)
+  - [📜 配置需求](#-配置需求)
+  - [🛠️ 依赖项与安装](#️-依赖项与安装)
+    - [在 Linux 上的安装指南](#在-linux-上的安装指南)
+  - [🧱 下载预训练模型](#-下载预训练模型)
+        - [1. 使用 HF-Mirror](#1-使用-hf-mirror)
+        - [2. 断点续传](#2-断点续传)
   - [:truck: Training](#truck-training)
     - [Data Preparation](#data-preparation)
     - [Full-parameter Training](#full-parameter-training)
@@ -213,97 +213,96 @@ https://github.com/Tencent/tencent.github.io/assets/27557933/94b4dcc3-104d-44e1-
 
 ---
 
-## 📜 Requirements
+## 📜 配置需求
 
-This repo consists of DialogGen (a prompt enhancement model) and Hunyuan-DiT (a text-to-image model).
+本仓库包含 DialogGen（提示增强模型） 和 Hunyuan-DiT（文生图模型）。
 
-The following table shows the requirements for running the models (batch size = 1):
+下表为运行模型所需的配置 (batch size = 1):
 
-|          Model          | --load-4bit (DialogGen) | GPU Peak Memory |       GPU       |
-|:-----------------------:|:-----------------------:|:---------------:|:---------------:|
-| DialogGen + Hunyuan-DiT |            ✘            |       32G       |      A100       |
-| DialogGen + Hunyuan-DiT |            ✔            |       22G       |      A100       |
-|       Hunyuan-DiT       |            -            |       11G       |      A100       |
-|       Hunyuan-DiT       |            -            |       14G       | RTX3090/RTX4090 |
+|          模型           | --load-4bit (DialogGen) | GPU 显存需求 |       GPU       |
+| :---------------------: | :---------------------: | :----------: | :-------------: |
+| DialogGen + Hunyuan-DiT |            ✘            |     32G      |      A100       |
+| DialogGen + Hunyuan-DiT |            ✔            |     22G      |      A100       |
+|       Hunyuan-DiT       |            -            |     11G      |      A100       |
+|       Hunyuan-DiT       |            -            |     14G      | RTX3090/RTX4090 |
 
-* An NVIDIA GPU with CUDA support is required. 
-  * We have tested V100 and A100 GPUs.
-  * **Minimum**: The minimum GPU memory required is 11GB.
-  * **Recommended**: We recommend using a GPU with 32GB of memory for better generation quality.
-* Tested operating system: Linux
+* 需要支持 CUDA 的 NVIDA GPU。
+  * 我们已经测试了 V100 和 A100 GPU。
+  * **最低配置**: 至少需要 11GB 显存。
+  * **推荐配置**: 为了获得更好的生成质量，我们建议您使用具有 32GB 显存的 GPU。
+* 已测试的操作系统：Linux
 
-## 🛠️ Dependencies and Installation
+## 🛠️ 依赖项与安装
 
-Begin by cloning the repository:
+首先，克隆本仓库：
+
 ```shell
 git clone https://github.com/tencent/HunyuanDiT
 cd HunyuanDiT
 ```
 
-### Installation Guide for Linux
+### 在 Linux 上的安装指南
 
-We provide an `environment.yml` file for setting up a Conda environment.
-Conda's installation instructions are available [here](https://docs.anaconda.com/free/miniconda/index.html).
+我们提供了 `environment.yml` 文件用于配置 Conda 环境。
+Conda 的安装说明可以在[这里](https://docs.anaconda.com/free/miniconda/index.html)找到。
 
-We recommend CUDA versions 11.7 and 12.0+.
+我们推荐使用 CUDA 11.7 和 12.0 及以上的版本。
 
 ```shell
-# 1. Prepare conda environment
+# 1. 准备 Conda 环境
 conda env create -f environment.yml
 
-# 2. Activate the environment
+# 2. 激活环境
 conda activate HunyuanDiT
 
-# 3. Install pip dependencies
+# 3. 安装 pip 依赖项
 python -m pip install -r requirements.txt
 
-# 4. (Optional) Install flash attention v2 for acceleration (requires CUDA 11.6 or above)
+# 4.（可选）安装 flash attention v2 以加速模型（需要CUDA 11.6或更高版本）
 python -m pip install git+https://github.com/Dao-AILab/flash-attention.git@v2.1.2.post3
 ```
 
-## 🧱 Download Pretrained Models
-To download the model, first install the huggingface-cli. (Detailed instructions are available [here](https://huggingface.co/docs/huggingface_hub/guides/cli).)
+## 🧱 下载预训练模型
+要下载模型，首先需要安装 huggingface-cli。（详细说明见[此处](https://huggingface.co/docs/huggingface_hub/guides/cli)）
 
 ```shell
 python -m pip install "huggingface_hub[cli]"
 ```
 
-Then download the model using the following commands:
+然后使用下面的命令安装模型：
 
 ```shell
-# Create a directory named 'ckpts' where the model will be saved, fulfilling the prerequisites for running the demo.
+# 创建一个名为 'ckpts' 的文件夹用于储存模型，以满足运行该 demo 的先决条件
 mkdir ckpts
-# Use the huggingface-cli tool to download the model.
-# The download time may vary from 10 minutes to 1 hour depending on network conditions.
+# 使用 huggingface-cli 工具下载模型。
+# 根据您的网络状况，下载时间可能从十分钟到一小时不等
 huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
 ```
 
 <details>
-<summary>💡Tips for using huggingface-cli (network problem)</summary>
+<summary>💡使用 huggingface-cli 的技巧 (关于网络问题)</summary>
 
-##### 1. Using HF-Mirror
+##### 1. 使用 HF-Mirror
 
-If you encounter slow download speeds in China, you can try a mirror to speed up the download process. For example,
+如果您在中国遇到下载速度慢的情况，可以尝试使用镜像来加快下载速度，例如，
 
 ```shell
 HF_ENDPOINT=https://hf-mirror.com huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
 ```
 
-##### 2. Resume Download
+##### 2. 断点续传
 
-`huggingface-cli` supports resuming downloads. If the download is interrupted, you can just rerun the download 
-command to resume the download process.
+`huggingface-cli` 支持断点续传。如果下载被中断，您只需重新运行下载命令，即可恢复下载进程。
 
-Note: If an `No such file or directory: 'ckpts/.huggingface/.gitignore.lock'` like error occurs during the download 
-process, you can ignore the error and rerun the download command.
+注意：如果在下载过程中出现类似 `No such file or directory: 'ckpts/.huggingface/.gitignore.lock'` 的错误，您可以忽略此错误并重新运行下载命令。
 
 </details>
 
 ---
 
-All models will be automatically downloaded. For more information about the model, visit the Hugging Face repository [here](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT).
+所有的模型都能够自动下载。有关模型的更多信息，请访问 [Hugging Face](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT) 仓库。
 
-|       Model        | #Params |                                      Huggingface Download URL                                           |                                      Tencent Cloud Download URL                                 |
+|       模型        | 参数数量 |                                      Huggingface 下载链接                                      |                               腾讯云下载链接                               |
 |:------------------:|:-------:|:-------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
 |        mT5         |  1.6B   |               [mT5](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/mt5)                |               [mT5](https://dit.hunyuan.tencent.com/download/HunyuanDiT/mt5.zip)                |
 |        CLIP        |  350M   |        [CLIP](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/clip_text_encoder)        |        [CLIP](https://dit.hunyuan.tencent.com/download/HunyuanDiT/clip_text_encoder.zip)        |
@@ -319,7 +318,7 @@ All models will be automatically downloaded. For more information about the mode
 ### Data Preparation
 
   Refer to the commands below to prepare the training data. 
-  
+
   1. Install dependencies
   
       We offer an efficient data management library, named IndexKits, supporting the management of reading hundreds of millions of data during training, see more in [docs](./IndexKits/README.md).
@@ -340,7 +339,7 @@ All models will be automatically downloaded. For more information about the mode
   3. Data conversion 
   
      Create a CSV file for training data with the fields listed in the table below.
-    
+     
      |    Fields       | Required  |  Description     |   Example   |
      |:---------------:| :------:  |:----------------:|:-----------:|
      |   `image_path`  | Required  |  image path               |     `./dataset/porcelain/images/0.png`        | 
@@ -362,18 +361,18 @@ All models will be automatically downloaded. For more information about the mode
       We configure the training data through YAML files. In these files, you can set up standard data processing strategies for filtering, copying, deduplicating, and more regarding the training data. For more details, see [./IndexKits](IndexKits/docs/MakeDataset.md).
   
       For a sample file, please refer to [file](./dataset/yamls/porcelain.yaml). For a full parameter configuration file, see [file](./IndexKits/docs/MakeDataset.md).
-  
-     
+
+
   5. Create training data index file using YAML file.
-    
+     
      ```shell
       # Single Resolution Data Preparation
       idk base -c dataset/yamls/porcelain.yaml -t dataset/porcelain/jsons/porcelain.json
-   
+      
       # Multi Resolution Data Preparation     
       idk multireso -c dataset/yamls/porcelain_mt.yaml -t dataset/porcelain/jsons/porcelain_mt.json
-      ```
-   
+     ```
+
   The directory structure for `porcelain` dataset is:
 
   ```shell
@@ -393,10 +392,10 @@ All models will be automatically downloaded. For more information about the mode
       ├──jsons/  (final training data index files which read data from arrow files during training)
       │  ├──porcelain.json
       │  ├──porcelain_mt.json
-   ```
+  ```
 
 ### Full-parameter Training
- 
+
   To leverage DeepSpeed in training, you have the flexibility to control **single-node** / **multi-node** training by adjusting parameters such as `--hostfile` and `--master_addr`. For more details, see [link](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node).
 
   ```shell
@@ -433,7 +432,7 @@ We provide training and inference scripts for LoRA, detailed in the [./lora](./l
   <tr>
     <td colspan="4" align="center">Examples of training data</td>
   </tr>
-  
+
   <tr>
     <td align="center"><img src="lora/asset/porcelain/train/0.png" alt="Image 0" width="200"/></td>
     <td align="center"><img src="lora/asset/porcelain/train/1.png" alt="Image 1" width="200"/></td>
@@ -462,7 +461,7 @@ We provide training and inference scripts for LoRA, detailed in the [./lora](./l
     <td align="center">青花瓷风格，一只羊（Porcelain style, a sheep.）</td>
     <td align="center">青花瓷风格，一个女孩在雨中跳舞（Porcelain style, a girl dancing in the rain.）</td>
   </tr>
-  
+
 </table>
 
 
@@ -672,12 +671,12 @@ We provide training scripts for ControlNet, detailed in the [./controlnet](./con
   # Quick start
   python3 sample_controlnet.py  --no-enhance --load-key distill --infer-steps 50 --control-type canny --prompt "在夜晚的酒店门前，一座古老的中国风格的狮子雕像矗立着，它的眼睛闪烁着光芒，仿佛在守护着这座建筑。背景是夜晚的酒店前，构图方式是特写，平视，居中构图。这张照片呈现了真实摄影风格，蕴含了中国雕塑文化，同时展现了神秘氛围" --condition-image-path controlnet/asset/input/canny.jpg --control-weight 1.0
   ```
- 
+
  <table>
   <tr>
     <td colspan="3" align="center">Condition Input</td>
   </tr>
-  
+
    <tr>
     <td align="center">Canny ControlNet </td>
     <td align="center">Depth ControlNet </td>
@@ -696,7 +695,7 @@ We provide training scripts for ControlNet, detailed in the [./controlnet](./con
     <td align="center"><img src="controlnet/asset/input/pose.jpg" alt="Image 2" width="200"/></td>
     
   </tr>
-  
+
   <tr>
     <td colspan="3" align="center">ControlNet Output</td>
   </tr>
@@ -706,7 +705,7 @@ We provide training scripts for ControlNet, detailed in the [./controlnet](./con
     <td align="center"><img src="controlnet/asset/output/depth.jpg" alt="Image 4" width="200"/></td>
     <td align="center"><img src="controlnet/asset/output/pose.jpg" alt="Image 5" width="200"/></td>
   </tr>
- 
+
 </table>
 
 ## :art: Hunyuan-Captioner
@@ -737,7 +736,7 @@ Our model supports three different modes including: **directly generating Chines
 |insert_content | 根据提示词“{}”,描述这张图片                 |Caption with inserted knowledge| 
 |caption_en     | Please describe the content of this image |Caption in English                    |
 |               |                                           |                                      |
- 
+
 
 a. Single picture inference in Chinese
 
