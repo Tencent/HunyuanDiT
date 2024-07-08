@@ -1,33 +1,33 @@
-## :truck: Training
+## :truck: 训练
 
-### Data Preparation
+### 数据准备
 
-  Refer to the commands below to prepare the training data. 
+  参考以下命令来准备训练数据
   
-  1. Install dependencies
+  1. 安装依赖项
   
-      We offer an efficient data management library, named IndexKits, supporting the management of reading hundreds of millions of data during training, see more in [docs](./IndexKits/README.md).
+      我们提供了一个高效的数据管理库，名为 IndexKits，支持在训练期间进行对读取数亿个数据的管理，详细请见文档[文档](./IndexKits/README.md).
       ```shell
-      # 1 Install dependencies
+      # 1 安装依赖项
       cd HunyuanDiT
       pip install -e ./IndexKits
      ```
-  2. Data download 
+  2. 数据下载
   
-     Feel free to download the [data demo](https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip).
+     请下载 [演示数据](https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip).
      ```shell
-     # 2 Data download
+     # 2 数据下载
      wget -O ./dataset/data_demo.zip https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip
      unzip ./dataset/data_demo.zip -d ./dataset
      mkdir ./dataset/porcelain/arrows ./dataset/porcelain/jsons
      ```
-  3. Data conversion 
+  3. 数据转换
   
-     Create a CSV file for training data with the fields listed in the table below.
+     使用下表中列出的字段为训练数据创建 CSV 文件.
     
-     |    Fields       | Required  |  Description     |   Example   |
+     |      领域       |    必需   |       介绍        |    示例     |
      |:---------------:| :------:  |:----------------:|:-----------:|
-     |   `image_path`  | Required  |  image path               |     `./dataset/porcelain/images/0.png`        | 
+     |   `image_path`  |    必需   |      图像路径     |`./dataset/porcelain/images/0.png`        | 
      |   `text_zh`     | Required  |    text               |  青花瓷风格，一只蓝色的鸟儿站在蓝色的花瓶上，周围点缀着白色花朵，背景是白色 | 
      |   `md5`         | Optional  |    image md5 (Message Digest Algorithm 5)  |    `d41d8cd98f00b204e9800998ecf8427e`         | 
      |   `width`       | Optional  |    image width    |     `1024 `       | 
