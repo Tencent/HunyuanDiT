@@ -101,7 +101,7 @@
   # 训练 porcelain LoRA.
   PYTHONPATH=./ sh lora/train_lora.sh --index-file dataset/porcelain/jsons/porcelain.json
 
-  # 使用 LORA 权重来进行推断.
+  # 使用 LORA 权重来进行推理.
   python sample_t2i.py --prompt "青花瓷风格，一只小狗"  --no-enhance --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
   ```
  我们为 `porcelain` 和 `jade` 提供两种类型的训练 LoRA 权重，有关详细信息，请参阅[链接](https://huggingface.co/Tencent-Hunyuan/HYDiT-LoRA)
@@ -132,7 +132,7 @@
     <td align="center">青花瓷风格，在蓝色背景上，一只蓝色蝴蝶和白色花朵被放置在中央 （Porcelain style, on a blue background, a blue butterfly and white flowers are placed in the center.）</td>
   </tr>
   <tr>
-    <td colspan="4" align="center">推断结果示例</td>
+    <td colspan="4" align="center">推理结果示例</td>
   </tr>
   <tr>
     <td align="center"><img src="lora/asset/porcelain/inference/0.png" alt="Image 4" width="200"/></td>
@@ -150,14 +150,14 @@
 </table>
 
 
-## 🔑 Inference
+## 🔑 推理
 
-### 6GB GPU VRAM Inference
-Running HunyuanDiT in under 6GB GPU VRAM is available now based on [diffusers](https://huggingface.co/docs/diffusers/main/en/api/pipelines/hunyuandit). Here we provide instructions and demo for your quick start.
+### 6GB GPU VRAM 推理
+以[diffusers](https://huggingface.co/docs/diffusers/main/en/api/pipelines/hunyuandit)为基础在6GB以下的GPU VRAM中运行HunyuanDiT. 我们在此为您的快速入门提供了说明和演示.
 
-> The 6GB version supports Nvidia Ampere architecture series graphics cards such as RTX 3070/3080/4080/4090, A100, and so on.
+> 6GB的版本支持Nvidia Ampere架构系列显卡，如RTX 3070/3080/4080/4090、A100等.
 
-The only thing you need do is to install the following library:
+您唯一需要做的就是安装以下库：
 
 ```bash
 pip install -U bitsandbytes
@@ -165,14 +165,14 @@ pip install git+https://github.com/huggingface/diffusers
 pip install torch==2.0.0
 ```
 
-Then you can enjoy your HunyuanDiT text-to-image journey under 6GB GPU VRAM directly!
+然后，您可以直接在6GB GPU VRAM下享受HunyuanDiT从文本到图像之旅！
 
-Here is a demo for you.
+这是一个示例.
 
 ```bash
 cd HunyuanDiT
 
-# Quick start
+# 快速开始
 model_id=Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled
 prompt=一个宇航员在骑马
 infer_steps=50
@@ -180,48 +180,48 @@ guidance_scale=6
 python3 lite/inference.py ${model_id} ${prompt} ${infer_steps} ${guidance_scale}
 ```
 
-More details can be found in [./lite](lite/README.md).
+更多详细信息在[./lite](lite/README.md).
 
 
-### Using Gradio
+### 使用 Gradio
 
-Make sure the conda environment is activated before running the following command.
+在运行以下命令之前，请确保已激活 conda 环境.
 
 ```shell
-# By default, we start a Chinese UI.
+# 默认情况下, 我们开启中文用户界面.
 python app/hydit_app.py
 
-# Using Flash Attention for acceleration.
+# 使用 Flash Attention 机制来加速.
 python app/hydit_app.py --infer-mode fa
 
-# You can disable the enhancement model if the GPU memory is insufficient.
-# The enhancement will be unavailable until you restart the app without the `--no-enhance` flag. 
+# 如果 GPU 内存不足，可以禁用增强模式.
+# 增强功能将不可用，直到你在不使用"--no-enhance "标记的情况下重新启动应用程序为止. 
 python app/hydit_app.py --no-enhance
 
-# Start with English UI
+# 开启英文用户界面
 python app/hydit_app.py --lang en
 
-# Start a multi-turn T2I generation UI. 
-# If your GPU memory is less than 32GB, use '--load-4bit' to enable 4-bit quantization, which requires at least 22GB of memory.
+# 启动多轮文本到图像生成的用户界面. 
+# 如果 GPU 内存不足 32GB，请使用 '--load-4bit' 来启用 4bits 量化，这至少需要 22GB 内存.
 python app/multiTurnT2I_app.py
 ```
 Then the demo can be accessed through http://0.0.0.0:443. It should be noted that the 0.0.0.0 here needs to be X.X.X.X with your server IP.
 
-### Using 🤗 Diffusers
+### 使用 🤗 Diffusers
 
-Please install PyTorch version 2.0 or higher in advance to satisfy the requirements of the specified version of the diffusers library.  
+请提前安装 PyTorch 2.0 或更高版本，以满足指定版本的 diffusers 库的需求.  
 
-Install 🤗 diffusers, ensuring that the version is at least 0.28.1:
+安装 🤗 diffusers，确保版本至少为 0.28.1:
 
 ```shell
 pip install git+https://github.com/huggingface/diffusers.git
 ```
-or
+或
 ```shell
 pip install diffusers
 ```
 
-You can generate images with both Chinese and English prompts using the following Python script:
+您可以使用以下 Python 脚本来生成带有中文和英文提示词的图像:
 ```py
 import torch
 from diffusers import HunyuanDiTPipeline
@@ -229,12 +229,12 @@ from diffusers import HunyuanDiTPipeline
 pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-Diffusers", torch_dtype=torch.float16)
 pipe.to("cuda")
 
-# You may also use English prompt as HunyuanDiT supports both English and Chinese
+# 您也可以使用英文提示，因为 HunyuanDiT 支持中文和英文
 # prompt = "An astronaut riding a horse"
 prompt = "一个宇航员在骑马"
 image = pipe(prompt).images[0]
 ```
-You can use our distilled model to generate images even faster:
+您可以使用我们的蒸馏模型来更快地生成图像:
 
 ```py
 import torch
@@ -243,180 +243,180 @@ from diffusers import HunyuanDiTPipeline
 pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled", torch_dtype=torch.float16)
 pipe.to("cuda")
 
-# You may also use English prompt as HunyuanDiT supports both English and Chinese
+# 您也可以使用英文提示，因为 HunyuanDiT 支持中文和英文
 # prompt = "An astronaut riding a horse"
 prompt = "一个宇航员在骑马"
 image = pipe(prompt, num_inference_steps=25).images[0]
 ```
-More details can be found in [HunyuanDiT-Diffusers-Distilled](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled)
+更多细节在[HunyuanDiT-Diffusers-Distilled](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled)
 
-**More functions:** For other functions like LoRA and ControlNet, please have a look at the README of [./diffusers](diffusers).
+**更多功能:** 对于 LoRA 和 ControlNet 等其他功能，请查看[./diffusers](diffusers)的README.
 
-### Using Command Line
+### 使用命令行
 
 We provide several commands to quick start: 
 
 ```shell
-# Prompt Enhancement + Text-to-Image. Torch mode
+# 提示词增强 + 文本到图像. Torch 模式
 python sample_t2i.py --prompt "渔舟唱晚"
 
-# Only Text-to-Image. Torch mode
+# 仅文本到图像. Torch 模式
 python sample_t2i.py --prompt "渔舟唱晚" --no-enhance
 
-# Only Text-to-Image. Flash Attention mode
+# 仅文本到图像. Flash Attention 模式
 python sample_t2i.py --infer-mode fa --prompt "渔舟唱晚"
 
-# Generate an image with other image sizes.
+# 生成其他规格大小的图片.
 python sample_t2i.py --prompt "渔舟唱晚" --image-size 1280 768
 
-# Prompt Enhancement + Text-to-Image. DialogGen loads with 4-bit quantization, but it may loss performance.
+# 提示词增强 + 文本到图像. DialogGen 采用 4bits 量化加载，但这可能会降低性能.
 python sample_t2i.py --prompt "渔舟唱晚"  --load-4bit
 
 ```
 
-More example prompts can be found in [example_prompts.txt](example_prompts.txt)
+更多示例提示词在[example_prompts.txt](example_prompts.txt)
 
-### More Configurations
+### 更多配置
 
-We list some more useful configurations for easy usage:
+为了便于使用，我们列出了一些更有用的配置：
 
-|    Argument     |  Default  |                     Description                     |
+|    参数     |  默认  |                     介绍                     |
 |:---------------:|:---------:|:---------------------------------------------------:|
-|   `--prompt`    |   None    |        The text prompt for image generation         |
-| `--image-size`  | 1024 1024 |           The size of the generated image           |
-|    `--seed`     |    42     |        The random seed for generating images        |
-| `--infer-steps` |    100    |          The number of steps for sampling           |
-|  `--negative`   |     -     |      The negative prompt for image generation       |
-| `--infer-mode`  |   torch   |       The inference mode (torch, fa, or trt)        |
-|   `--sampler`   |   ddpm    |    The diffusion sampler (ddpm, ddim, or dpmms)     |
-| `--no-enhance`  |   False   |        Disable the prompt enhancement model         |
-| `--model-root`  |   ckpts   |     The root directory of the model checkpoints     |
-|  `--load-key`   |    ema    | Load the student model or EMA model (ema or module) |
-|  `--load-4bit`  |   Fasle   |     Load DialogGen model with 4bit quantization     |
+|   `--prompt`    |   None    |        用于生成图像的文本提示         |
+| `--image-size`  | 1024 1024 |           生成图像的大小           |
+|    `--seed`     |    42     |        用于生成图像的随机种子        |
+| `--infer-steps` |    100    |          采样的步数           |
+|  `--negative`   |     -     |      图像生成的负面提示       |
+| `--infer-mode`  |   torch   |       推理模式 (torch, fa, 或 trt)        |
+|   `--sampler`   |   ddpm    |    扩散采样器 (ddpm, ddim, 或 dpmms)     |
+| `--no-enhance`  |   False   |        禁用提示词增强模型         |
+| `--model-root`  |   ckpts   |     模型检验点的根目录     |
+|  `--load-key`   |    ema    | 加载学生模型或 EMA 模型 (ema 或 module) |
+|  `--load-4bit`  |   Fasle   |     加载具有 4bits 量化的 DialogGen 模型     |
 
-### Using ComfyUI
+### 使用 ComfyUI
 
-We provide several commands to quick start: 
+我们提供了几个命令来快速入门: 
 
 ```shell
-# Download comfyui code
+# 下载 comfyui 代码
 git clone https://github.com/comfyanonymous/ComfyUI.git
 
-# Install torch, torchvision, torchaudio
+# 安装 torch, torchvision, torchaudio
 pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu117
 
-# Install Comfyui essential python package.
+# 安装 Comfyui 所必需的 python package.
 cd ComfyUI
 pip install -r requirements.txt
 
-# ComfyUI has been successfully installed!
+# ComfyUI 已经被成功安装!
 
-# Download model weight as before or link the existing model folder to ComfyUI.
+# 像之前一样下载模型权重或将现有模型文件夹链接到 ComfyUI.
 python -m pip install "huggingface_hub[cli]"
 mkdir models/hunyuan
 huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./models/hunyuan/ckpts
 
-# Move to the ComfyUI custom_nodes folder and copy comfyui-hydit folder from HunyuanDiT Repo.
+# 跳转至 ComfyUI 的 custom_nodes 文件夹，并将 comfyui-hydit 文件夹从 HunyuanDiT 仓库复制到此.
 cd custom_nodes
 cp -r ${HunyuanDiT}/comfyui-hydit ./
 cd comfyui-hydit
 
-# Install some essential python Package.
+# 安装必需的 python 包.
 pip install -r requirements.txt
 
-# Our tool has been successfully installed!
+# 我们的工具已经被成功安装了!
 
-# Go to ComfyUI main folder
+# 跳转到 ComfyUI 主文件夹下
 cd ../..
 # Run the ComfyUI Lauch command
 python main.py --listen --port 80
 
-# Running ComfyUI successfully!
+# 成功运行 ComfyUI!
 ```
-More details can be found in [./comfyui-hydit](comfyui-hydit/README.md)
+更多细节在[./comfyui-hydit](comfyui-hydit/README.md)
 
-### Using Kohya
+### 使用 Kohya
 
-We provide several commands to quick start LoRA Training and DreamBooth Training with Kohya: 
+我们提供了几个命令来使用Kohya快速启动 LoRA Training 和 DreamBooth Training: 
 
 ```shell
-# Download kohya_ss GUI
+# 下载 kohya_ss 图形用户界面
 git clone https://github.com/bmaltais/kohya_ss.git
 cd kohya_ss/
 
-# Download sd-scripts training backend, use dev branch
+# 下载 sd-scripts 训练后端, 使用 dev 分支
 git clone -b dev https://github.com/kohya-ss/sd-scripts ./sd-scripts
 
-# Move the costom GUI codes to the kohya_ss GUI, and replace files with the same name
+# 将自定义的图形用户界面代码移至 kohya_ss 图形用户界面，并替换同名文件
 cp -Rf ${HunyuanDiT}/kohya_ss-hydit/* ./
 
-# Download model weights as before or link the existing model folder to kohya_ss/models.
+# 像之前一样下载模型权重或将现有模型文件夹链接到 kohya_ss/models.
 python -m pip install "huggingface_hub[cli]"
-# If you want to download the full model, use the following command
+# 如果要下载完整的模型，请使用以下命令
 huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.1 --local-dir ./models/HunyuanDiT-V1.1
 huggingface-cli download Tencent-Hunyuan/HunyuanDiT-V1.2 --local-dir ./models/HunyuanDiT-V1.2
-# Or, if you want to download the fp16 pruned model
+# 或者，如果您想下载经过剪枝的 fp16 模型
 huggingface-cli download KBlueLeaf/HunYuanDiT-V1.1-fp16-pruned --local-dir ./models/HunyuanDiT-V1.1-fp16-pruned
 
-# After the model is downloaded, you may need to modify the file name an make sure it follows the kohya standard format:
-# rename the file name in t2i/ folder as shown below:
+# 下载模型后，您可能需要修改文件名，确保其符合 kohya 标准格式:
+# 重命名 t2i/ 文件夹中的文件名，如下所示:
 # HunyuanDiT-V1.2/t2i/
 #  - model/                  -> denoiser/
 #  - clip_text_encoder/      -> clip/
 #  - mt5/                    -> mt5/
 #  - sdxl-vae-fp16-fix/      -> vae/
-# Also you may need to move tokenizer/* into clip/ folder
+# 此外，您可能需要将 tokenizer/* 移到 clip/ 文件夹中
 mv HunyuanDiT-V1.2/t2i/model/ HunyuanDiT-V1.2/t2i/denoiser/
 mv HunyuanDiT-V1.2/t2i/clip_text_encoder/ HunyuanDiT-V1.2/t2i/clip/
 mv HunyuanDiT-V1.2/t2i/mt5/ HunyuanDiT-V1.2/t2i/mt5/
 mv HunyuanDiT-V1.2/t2i/sdxl-vae-fp16-fix/ HunyuanDiT-V1.2/t2i/vae/
 mv HunyuanDiT-V1.2/t2i/tokenizer/* HunyuanDiT-V1.2/t2i/clip/ 
 
-# Install some essential python Package, 
+# 安装必需的 python 包, 
 conda create -n hydit-kohya python=3.10.12
 conda activate hydit-kohya
 
-# Install some essential packages, please make sure cuda environment is installed and python version is 3.10
-# For cuda 12:
+# 安装必须的包, 请确保已安装 cuda 环境，且 python 版本为 3.10
+# 对于 cuda 12:
 pip install torch==2.1.2 torchvision==0.16.2 xformers==0.0.23.post1
-# For cuda 11:
+# 对于 cuda 11:
 pip install torch==2.1.2+cu118 torchvision==0.16.2+cu118 xformers==0.0.23.post1+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
-# For cpu offloading to save GPU memory, we recommend to install Deepspeed as follows:
+# 为了卸载 CPU 以节省 GPU 内存，我们建议按以下步骤安装 Deepspeed:
 DS_BUILD_CPU_ADAM=1 pip install deepspeed==0.14.1
 
-# Install other python package
+# 安装其他的 python 包
 pip install -r hunyuan_requirements.txt
 
-# Run the Kohya_ss UI launch command
+# 运行 Kohya_ss 用户界面的启动命令
 python kohya_gui.py
 ```
-More details can be found in [Kohya_ss README](kohya_ss-hydit/README.md)
+更多详细信息在[Kohya_ss README](kohya_ss-hydit/README.md)
 
-## :building_construction: Adapter
+## :building_construction: 适配器
 
 ### ControlNet
 
-We provide training scripts for ControlNet, detailed in the [./controlnet](./controlnet/README.md). 
+我们提供了 ControlNet 的训练脚本，详细请见 [./controlnet](./controlnet/README.md). 
 
   ```shell
-  # Training for canny ControlNet.
+  # 训练canny ControlNet.
   PYTHONPATH=./ sh hydit/train_controlnet.sh
   ```
- We offer three types of trained ControlNet weights for `canny` `depth` and `pose`, see details at [links](https://huggingface.co/Tencent-Hunyuan/HYDiT-ControlNet)
+ 我们为 `canny` ，`depth` 和 `pose` 提供三种类型的训练 ControlNet 权重，详细请见[链接](https://huggingface.co/Tencent-Hunyuan/HYDiT-ControlNet)
   ```shell
   cd HunyuanDiT
-  # Use the huggingface-cli tool to download the model.
-  # We recommend using distilled weights as the base model for ControlNet inference, as our provided pretrained weights are trained on them.
+  # 使用 huggingface-cli 工具来下载模型.
+  # 我们建议使用蒸馏权重作为 ControlNet 推理的基础模型，因为我们提供的预训练权重是在它们上训练的.
   huggingface-cli download Tencent-Hunyuan/HYDiT-ControlNet --local-dir ./ckpts/t2i/controlnet
   huggingface-cli download Tencent-Hunyuan/Distillation-v1.1 ./pytorch_model_distill.pt --local-dir ./ckpts/t2i/model
   
-  # Quick start
+  # 快速开始
   python3 sample_controlnet.py  --no-enhance --load-key distill --infer-steps 50 --control-type canny --prompt "在夜晚的酒店门前，一座古老的中国风格的狮子雕像矗立着，它的眼睛闪烁着光芒，仿佛在守护着这座建筑。背景是夜晚的酒店前，构图方式是特写，平视，居中构图。这张照片呈现了真实摄影风格，蕴含了中国雕塑文化，同时展现了神秘氛围" --condition-image-path controlnet/asset/input/canny.jpg --control-weight 1.0
   ```
  
  <table>
   <tr>
-    <td colspan="3" align="center">Condition Input</td>
+    <td colspan="3" align="center">条件输入</td>
   </tr>
   
    <tr>
@@ -439,7 +439,7 @@ We provide training scripts for ControlNet, detailed in the [./controlnet](./con
   </tr>
   
   <tr>
-    <td colspan="3" align="center">ControlNet Output</td>
+    <td colspan="3" align="center">ControlNet 输出</td>
   </tr>
 
   <tr>
@@ -451,68 +451,68 @@ We provide training scripts for ControlNet, detailed in the [./controlnet](./con
 </table>
 
 ## :art: Hunyuan-Captioner
-Hunyuan-Captioner meets the need of text-to-image techniques by maintaining a high degree of image-text consistency. It can generate high-quality image descriptions from a variety of angles, including object description, objects relationships, background information, image style, etc. Our code is based on [LLaVA](https://github.com/haotian-liu/LLaVA) implementation.
+Hunyuan-Captioner通过保持高度的图像-文本一致性来满足文本到图像技术的需求。它可以从多个角度生成高质量的图像描述，包括对象描述、对象关系、背景信息、图像样式等。我们的代码基于[LLaVA](https://github.com/haotian-liu/LLaVA) 实现.
 
-### Examples
+### 示例
 
 <td align="center"><img src="./asset/caption_demo.jpg" alt="Image 3" width="1200"/></td>
 
-### Instructions
-a. Install dependencies
+### 教程
+a. 安装依赖项
      
-The dependencies and installation are basically the same as the [**base model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1).
+依赖项和安装流程与 [**base model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1)基本相同.
 
-b. Model download
+b. 模型下载
 ```shell
-# Use the huggingface-cli tool to download the model.
+# 使用 huggingface-cli 工具来下载模型.
 huggingface-cli download Tencent-Hunyuan/HunyuanCaptioner --local-dir ./ckpts/captioner
 ```
 
-### Inference
+### 推理
 
-Our model supports three different modes including: **directly generating Chinese caption**, **generating Chinese caption based on specific knowledge**, and **directly generating English caption**. The injected information can be either accurate cues or noisy labels (e.g., raw descriptions crawled from the internet). The model is capable of generating reliable and accurate descriptions based on both the inserted information and the image content.
+我们的模型支持三种不同的模式，包括： **直接生成中文字幕**, **基于特定知识生成中文字幕**, 和 **直接生成英文字幕**. 注入的信息可以是准确的提示，也可以是含有噪声的标签（例如，从互联网上抓取的原始描述）。该模型能够根据插入的信息和图像内容生成可靠和准确的描述。
 
-|Mode           | Prompt Template                           |Description                           | 
+|模式           | 提示词模版                           |介绍                           | 
 | ---           | ---                                       | ---                                  |
-|caption_zh     | 描述这张图片                               |Caption in Chinese                    | 
-|insert_content | 根据提示词“{}”,描述这张图片                 |Caption with inserted knowledge| 
-|caption_en     | Please describe the content of this image |Caption in English                    |
+|caption_zh     | 描述这张图片                               |中文字幕                    | 
+|insert_content | 根据提示词“{}”,描述这张图片                 |带有注入知识的字幕| 
+|caption_en     | Please describe the content of this image |英文字幕                    |
 |               |                                           |                                      |
  
 
-a. Single picture inference in Chinese
+a. 中文单张图片推理
 
 ```bash
 python mllm/caption_demo.py --mode "caption_zh" --image_file "mllm/images/demo1.png" --model_path "./ckpts/captioner"
 ```
 
-b. Insert specific knowledge into caption
+b. 在字幕中注入特定知识
 
 ```bash
 python mllm/caption_demo.py --mode "insert_content" --content "宫保鸡丁" --image_file "mllm/images/demo2.png" --model_path "./ckpts/captioner"
 ```
 
-c. Single picture inference in English
+c. 英文单张图片推理
 
 ```bash
 python mllm/caption_demo.py --mode "caption_en" --image_file "mllm/images/demo3.png" --model_path "./ckpts/captioner"
 ```
 
-d. Multiple pictures inference in Chinese
+d. 中文多图片推理
 
 ```bash
-### Convert multiple pictures to csv file. 
+### 将多张图片转化为 csv 文件. 
 python mllm/make_csv.py --img_dir "mllm/images" --input_file "mllm/images/demo.csv"
 
-### Multiple pictures inference
+### 多张图片推理
 python mllm/caption_demo.py --mode "caption_zh" --input_file "mllm/images/demo.csv" --output_file "mllm/images/demo_res.csv" --model_path "./ckpts/captioner"
 ```
 
-(Optional) To convert the output csv file to Arrow format, please refer to [Data Preparation #3](#data-preparation) for detailed instructions. 
+(可选) 要将输出 csv 文件转换为 Arrow 格式，请参阅[Data Preparation #3](#data-preparation).
 
 
 ### Gradio 
-To launch a Gradio demo locally, please run the following commands one by one. For more detailed instructions, please refer to [LLaVA](https://github.com/haotian-liu/LLaVA). 
+要在本地启动 Gradio 示例, 请逐个运行以下命令。有关更详细的说明，请参阅[LLaVA](https://github.com/haotian-liu/LLaVA). 
 ```bash
 cd mllm
 python -m llava.serve.controller --host 0.0.0.0 --port 10000
@@ -521,18 +521,16 @@ python -m llava.serve.gradio_web_server --controller http://0.0.0.0:10000 --mode
 
 python -m llava.serve.model_worker --host 0.0.0.0 --controller http://0.0.0.0:10000 --port 40000 --worker http://0.0.0.0:40000 --model-path "../ckpts/captioner" --model-name LlavaMistral
 ```
-Then the demo can be accessed through http://0.0.0.0:443. It should be noted that the 0.0.0.0 here needs to be X.X.X.X with your server IP.
+然后可以通过 http://0.0.0.0:443 访问示例. 需要注意的是，这里的 0.0.0.0 需要是带有您的服务器 IP的 X.X.X.X.
 
-## 🚀 Acceleration (for Linux)
+## 🚀 加速（适用于 Linux）
 
-- We provide TensorRT version of HunyuanDiT for inference acceleration (faster than flash attention).
-See [Tencent-Hunyuan/TensorRT-libs](https://huggingface.co/Tencent-Hunyuan/TensorRT-libs) for more details.
+- 我们提供 HunyuanDiT 的 TensorRT 版本用于推理加速（比 flash attention 更快）。详细请见[Tencent-Hunyuan/TensorRT-libs](https://huggingface.co/Tencent-Hunyuan/TensorRT-libs) for more details.
 
-- We provide Distillation version of HunyuanDiT for inference acceleration.
-See [Tencent-Hunyuan/Distillation](https://huggingface.co/Tencent-Hunyuan/Distillation) for more details.
+- 我们提供 HunyuanDiT 的蒸馏版本，用于推理加速。详细请见 [Tencent-Hunyuan/Distillation](https://huggingface.co/Tencent-Hunyuan/Distillation) for more details.
 
 ## 🔗 BibTeX
-If you find [Hunyuan-DiT](https://arxiv.org/abs/2405.08748) or [DialogGen](https://arxiv.org/abs/2403.08857) useful for your research and applications, please cite using this BibTeX:
+如果您发现[Hunyuan-DiT](https://arxiv.org/abs/2405.08748) 或 [DialogGen](https://arxiv.org/abs/2403.08857)对您的研究和应用有用，请使用此 BibTeX 进行引用:
 
 ```BibTeX
 @misc{li2024hunyuandit,
@@ -552,7 +550,7 @@ If you find [Hunyuan-DiT](https://arxiv.org/abs/2405.08748) or [DialogGen](https
 }
 ```
 
-## Start History
+## Star的历史记录
 
 <a href="https://star-history.com/#Tencent/HunyuanDiT&Date">
  <picture>
