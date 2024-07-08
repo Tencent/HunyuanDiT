@@ -674,7 +674,7 @@ python main.py --listen --port 80
 
 ### 使用 Kohya
 
-我们提供了几个命令来使用Kohya快速启动 LoRA Training 和 DreamBooth Training: 
+我们提供了几个命令来使用 Kohya 快速启动 LoRA 训练和 DreamBooth 训练: 
 
 ```shell
 # 下载 kohya_ss 图形用户界面
