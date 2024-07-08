@@ -1,3 +1,340 @@
+<!-- ## **HunyuanDiT** -->
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Tencent/HunyuanDiT/main/asset/logo.png"  height=100>
+</p>
+
+# Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding
+
+<div align="center">
+  <a href="https://github.com/Tencent/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT Code&message=Github&color=blue&logo=github-pages"></a> &ensp;
+  <a href="https://dit.hunyuan.tencent.com"><img src="https://img.shields.io/static/v1?label=Project%20Page&message=Github&color=blue&logo=github-pages"></a> &ensp;
+  <a href="https://arxiv.org/abs/2405.08748"><img src="https://img.shields.io/static/v1?label=Tech Report&message=Arxiv:HunYuan-DiT&color=red&logo=arxiv"></a> &ensp;
+  <a href="https://arxiv.org/abs/2403.08857"><img src="https://img.shields.io/static/v1?label=Paper&message=Arxiv:DialogGen&color=red&logo=arxiv"></a> &ensp;
+  <a href="https://huggingface.co/Tencent-Hunyuan/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT&message=HuggingFace&color=yellow"></a> &ensp;
+  <a href="https://hunyuan.tencent.com/bot/chat"><img src="https://img.shields.io/static/v1?label=Hunyuan Bot&message=Web&color=green"></a> &ensp;
+  <a href="https://huggingface.co/spaces/Tencent-Hunyuan/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT Demo&message=HuggingFace&color=yellow"></a> &ensp;
+</div>
+
+-----
+
+This repo contains PyTorch model definitions, pre-trained weights and inference/sampling code for our paper exploring Hunyuan-DiT. You can find more visualizations on our [project page](https://dit.hunyuan.tencent.com/).
+
+> [**Hunyuan-DiT: A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding**](https://arxiv.org/abs/2405.08748) <br>
+
+> [**DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857) <br>
+
+## 🔥🔥🔥 News!!
+* Jul 03, 2024: :tada: Kohya-hydit version now available for v1.1 and v1.2 models, with GUI for inference. Official Kohya version is under review. See [kohya](./kohya_ss-hydit) for details.
+* Jun 27, 2024: :art: Hunyuan-Captioner is released, providing fine-grained caption for training data. See [mllm](./mllm) for details.
+* Jun 27, 2024: :tada: Support LoRa and ControlNet in diffusers. See [diffusers](./diffusers) for details.
+* Jun 27, 2024: :tada: 6GB GPU VRAM Inference scripts are released. See [lite](./lite) for details.
+* Jun 19, 2024: :tada: ControlNet is released, supporting canny, pose and depth control. See [training/inference codes](#controlnet) for details.
+* Jun 13, 2024: :zap: HYDiT-v1.1 version is released, which mitigates the issue of image oversaturation and alleviates the watermark issue. Please check [HunyuanDiT-v1.1 ](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1) and 
+[Distillation-v1.1](https://huggingface.co/Tencent-Hunyuan/Distillation-v1.1) for more details.
+* Jun 13, 2024: :truck: The training code is released, offering [full-parameter training](#full-parameter-training) and [LoRA training](#lora).
+* Jun 06, 2024: :tada: Hunyuan-DiT is now available in ComfyUI. Please check [ComfyUI](#using-comfyui) for more details.
+* Jun 06, 2024: 🚀 We introduce Distillation version for Hunyuan-DiT acceleration, which achieves **50%** acceleration on NVIDIA GPUs. Please check [Distillation](https://huggingface.co/Tencent-Hunyuan/Distillation) for more details.
+* Jun 05, 2024: 🤗 Hunyuan-DiT is now available in 🤗 Diffusers! Please check the [example](#using--diffusers) below.
+* Jun 04, 2024: :globe_with_meridians: Support Tencent Cloud links to download the pretrained models! Please check the [links](#-download-pretrained-models) below.
+* May 22, 2024: 🚀 We introduce TensorRT version for Hunyuan-DiT acceleration, which achieves **47%** acceleration on NVIDIA GPUs. Please check [TensorRT-libs](https://huggingface.co/Tencent-Hunyuan/TensorRT-libs) for instructions.
+* May 22, 2024: 💬 We support demo running multi-turn text2image generation now. Please check the [script](#using-gradio) below.
+
+## 🤖 Try it on the web
+
+Welcome to our web-based [**Tencent Hunyuan Bot**](https://hunyuan.tencent.com/bot/chat), where you can explore our innovative products! Just input the suggested prompts below or any other **imaginative prompts containing drawing-related keywords** to activate the Hunyuan text-to-image generation feature.  Unleash your creativity and create any picture you desire, **all for free!**
+
+You can use simple prompts similar to natural language text
+
+> 画一只穿着西装的猪
+>
+> draw a pig in a suit
+>
+> 生成一幅画，赛博朋克风，跑车
+> 
+> generate a painting, cyberpunk style, sports car
+
+or multi-turn language interactions to create the picture. 
+
+> 画一个木制的鸟
+>
+> draw a wooden bird
+>
+> 变成玻璃的
+>
+> turn into glass
+
+## 📑 Open-source Plan
+
+- Hunyuan-DiT (Text-to-Image Model)
+  - [x] Inference 
+  - [x] Checkpoints 
+  - [x] Distillation Version
+  - [x] TensorRT Version
+  - [x] Training
+  - [x] Lora
+  - [x] Controlnet (Pose, Canny, Depth)
+  - [x] 6GB GPU VRAM Inference 
+  - [ ] IP-adapter
+  - [ ] Hunyuan-DiT-S checkpoints (0.7B model)
+- Mllm
+  - Hunyuan-Captioner (Re-caption the raw image-text pairs)
+    - [x] Inference
+  - [Hunyuan-DialogGen](https://github.com/Centaurusalpha/DialogGen) (Prompt Enhancement Model)
+    - [x] Inference
+- [X] Web Demo (Gradio) 
+- [x] Multi-turn T2I Demo (Gradio)
+- [X] Cli Demo 
+- [X] ComfyUI
+- [X] Diffusers
+- [X] Kohya
+- [ ] WebUI
+
+
+## Contents
+- [Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding](#hunyuan-dit--a-powerful-multi-resolution-diffusion-transformer-with-fine-grained-chinese-understanding)
+  - [🔥🔥🔥 News!!](#-news)
+  - [🤖 Try it on the web](#-try-it-on-the-web)
+  - [📑 Open-source Plan](#-open-source-plan)
+  - [Contents](#contents)
+  - [**Abstract**](#abstract)
+  - [🎉 **Hunyuan-DiT Key Features**](#-hunyuan-dit-key-features)
+    - [**Chinese-English Bilingual DiT Architecture**](#chinese-english-bilingual-dit-architecture)
+    - [Multi-turn Text2Image Generation](#multi-turn-text2image-generation)
+  - [📈 Comparisons](#-comparisons)
+  - [🎥 Visualization](#-visualization)
+  - [📜 Requirements](#-requirements)
+  - [🛠️ Dependencies and Installation](#️-dependencies-and-installation)
+    - [Installation Guide for Linux](#installation-guide-for-linux)
+        - [1. Using HF-Mirror](#1-using-hf-mirror)
+        - [2. Resume Download](#2-resume-download)
+  - [:truck: Training](#truck-training)
+    - [Data Preparation](#data-preparation)
+    - [Full-parameter Training](#full-parameter-training)
+    - [LoRA](#lora)
+  - [🔑 Inference](#-inference)
+    - [6GB GPU VRAM Inference](#6gb-gpu-vram-inference)
+    - [Using Gradio](#using-gradio)
+    - [Using 🤗 Diffusers](#using--diffusers)
+    - [Using Command Line](#using-command-line)
+    - [More Configurations](#more-configurations)
+    - [Using ComfyUI](#using-comfyui)
+    - [Using Kohya](#using-kohya)
+  - [:building\_construction: Adapter](#building_construction-adapter)
+    - [ControlNet](#controlnet)
+  - [:art: Hunyuan-Captioner](#art-hunyuan-captioner)
+    - [Examples](#examples)
+    - [Instructions](#instructions)
+    - [Inference](#inference)
+    - [Gradio](#gradio)
+  - [🚀 Acceleration (for Linux)](#-acceleration-for-linux)
+  - [🔗 BibTeX](#-bibtex)
+  - [Start History](#start-history)
+
+## **Abstract**
+
+We present Hunyuan-DiT, a text-to-image diffusion transformer with fine-grained understanding of both English and Chinese. To construct Hunyuan-DiT, we carefully designed the transformer structure, text encoder, and positional encoding. We also build from scratch a whole data pipeline to update and evaluate data for iterative model optimization. For fine-grained language understanding, we train a Multimodal Large Language Model to refine the captions of the images. Finally, Hunyuan-DiT can perform multi-round multi-modal dialogue with users, generating and refining images according to the context.
+Through our carefully designed holistic human evaluation protocol with more than 50 professional human evaluators, Hunyuan-DiT sets a new state-of-the-art in Chinese-to-image generation compared with other open-source models.
+
+
+## 🎉 **Hunyuan-DiT Key Features**
+### **Chinese-English Bilingual DiT Architecture**
+Hunyuan-DiT is a diffusion model in the latent space, as depicted in figure below. Following the Latent Diffusion Model, we use a pre-trained Variational Autoencoder (VAE) to compress the images into low-dimensional latent spaces and train a diffusion model to learn the data distribution with diffusion models. Our diffusion model is parameterized with a transformer. To encode the text prompts, we leverage a combination of pre-trained bilingual (English and Chinese) CLIP and multilingual T5 encoder.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Tencent/HunyuanDiT/main/asset/framework.png"  height=450>
+</p>
+
+### Multi-turn Text2Image Generation
+Understanding natural language instructions and performing multi-turn interaction with users are important for a
+text-to-image system. It can help build a dynamic and iterative creation process that bring the user’s idea into reality
+step by step. In this section, we will detail how we empower Hunyuan-DiT with the ability to perform multi-round
+conversations and image generation. We train MLLM to understand the multi-round user dialogue
+and output the new text prompt for image generation.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Tencent/HunyuanDiT/main/asset/mllm.png"  height=300>
+</p>
+
+## 📈 Comparisons
+In order to comprehensively compare the generation capabilities of HunyuanDiT and other models, we constructed a 4-dimensional test set, including Text-Image Consistency, Excluding AI Artifacts, Subject Clarity, Aesthetic. More than 50 professional evaluators performs the evaluation.
+
+<p align="center">
+<table> 
+<thead> 
+<tr> 
+    <th rowspan="2">Model</th> <th rowspan="2">Open Source</th> <th>Text-Image Consistency (%)</th> <th>Excluding AI Artifacts (%)</th> <th>Subject Clarity (%)</th> <th rowspan="2">Aesthetics (%)</th> <th rowspan="2">Overall (%)</th> 
+</tr> 
+</thead> 
+<tbody> 
+<tr> 
+    <td>SDXL</td> <td> ✔ </td> <td>64.3</td> <td>60.6</td> <td>91.1</td> <td>76.3</td> <td>42.7</td> 
+</tr> 
+<tr> 
+    <td>PixArt-α</td> <td> ✔</td> <td>68.3</td> <td>60.9</td> <td>93.2</td> <td>77.5</td> <td>45.5</td> 
+</tr> 
+<tr> 
+    <td>Playground 2.5</td> <td>✔</td> <td>71.9</td> <td>70.8</td> <td>94.9</td> <td>83.3</td> <td>54.3</td> 
+</tr> 
+
+<tr> 
+    <td>SD 3</td> <td>&#10008</td> <td>77.1</td> <td>69.3</td> <td>94.6</td> <td>82.5</td> <td>56.7</td> 
+    
+</tr> 
+<tr> 
+    <td>MidJourney v6</td><td>&#10008</td> <td>73.5</td> <td>80.2</td> <td>93.5</td> <td>87.2</td> <td>63.3</td> 
+</tr> 
+<tr> 
+    <td>DALL-E 3</td><td>&#10008</td> <td>83.9</td> <td>80.3</td> <td>96.5</td> <td>89.4</td> <td>71.0</td> 
+</tr> 
+<tr style="font-weight: bold; background-color: #f2f2f2;"> 
+    <td>Hunyuan-DiT</td><td>✔</td> <td>74.2</td> <td>74.3</td> <td>95.4</td> <td>86.6</td> <td>59.0</td> 
+</tr>
+</tbody>
+</table>
+</p>
+
+## 🎥 Visualization
+
+* **Chinese Elements**
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Tencent/HunyuanDiT/main/asset/chinese elements understanding.png"  height=220>
+</p>
+
+* **Long Text Input**
+
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Tencent/HunyuanDiT/main/asset/long text understanding.png"  height=310>
+</p>
+
+* **Multi-turn Text2Image Generation**
+
+https://github.com/Tencent/tencent.github.io/assets/27557933/94b4dcc3-104d-44e1-8bb2-dc55108763d1
+
+
+
+---
+
+## 📜 Requirements
+
+This repo consists of DialogGen (a prompt enhancement model) and Hunyuan-DiT (a text-to-image model).
+
+The following table shows the requirements for running the models (batch size = 1):
+
+|          Model          | --load-4bit (DialogGen) | GPU Peak Memory |       GPU       |
+|:-----------------------:|:-----------------------:|:---------------:|:---------------:|
+| DialogGen + Hunyuan-DiT |            ✘            |       32G       |      A100       |
+| DialogGen + Hunyuan-DiT |            ✔            |       22G       |      A100       |
+|       Hunyuan-DiT       |            -            |       11G       |      A100       |
+|       Hunyuan-DiT       |            -            |       14G       | RTX3090/RTX4090 |
+
+* An NVIDIA GPU with CUDA support is required. 
+  * We have tested V100 and A100 GPUs.
+  * **Minimum**: The minimum GPU memory required is 11GB.
+  * **Recommended**: We recommend using a GPU with 32GB of memory for better generation quality.
+* Tested operating system: Linux
+
+## 🛠️ Dependencies and Installation
+
+Begin by cloning the repository:
+```shell
+git clone https://github.com/tencent/HunyuanDiT
+cd HunyuanDiT
+```
+
+### Installation Guide for Linux
+
+We provide an `environment.yml` file for setting up a Conda environment.
+Conda's installation instructions are available [here](https://docs.anaconda.com/free/miniconda/index.html).
+
+We recommend CUDA versions 11.7 and 12.0+.
+
+```shell
+# 1. Prepare conda environment
+conda env create -f environment.yml
+
+# 2. Activate the environment
+conda activate HunyuanDiT
+
+# 3. Install pip dependencies
+python -m pip install -r requirements.txt
+
+# 4. (Optional) Install flash attention v2 for acceleration (requires CUDA 11.6 or above)
+python -m pip install git+https://github.com/Dao-AILab/flash-attention.git@v2.1.2.post3
+```
+
+Additionally, you can also use docker to set up the environment.
+```shell
+# 1. Use the following link to download the docker image tar file.
+# For CUDA 12
+wget https://dit.hunyuan.tencent.com/download/HunyuanDiT/hunyuan_dit_cu12.tar
+# For CUDA 11
+wget https://dit.hunyuan.tencent.com/download/HunyuanDiT/hunyuan_dit_cu11.tar
+
+# 2. Import the docker tar file and show the image meta information
+# For CUDA 12
+docker load -i hunyuan_dit_cu12.tar
+# For CUDA 11
+docker load -i hunyuan_dit_cu11.tar  
+
+docker image ls
+
+# 3. Run the container based on the image
+docker run -dit --gpus all --init --net=host --uts=host --ipc=host --name hunyuandit --security-opt=seccomp=unconfined --ulimit=stack=67108864 --ulimit=memlock=-1 --privileged  docker_image_tag
+```
+
+## 🧱 Download Pretrained Models
+To download the model, first install the huggingface-cli. (Detailed instructions are available [here](https://huggingface.co/docs/huggingface_hub/guides/cli).)
+
+```shell
+python -m pip install "huggingface_hub[cli]"
+```
+
+Then download the model using the following commands:
+
+```shell
+# Create a directory named 'ckpts' where the model will be saved, fulfilling the prerequisites for running the demo.
+mkdir ckpts
+# Use the huggingface-cli tool to download the model.
+# The download time may vary from 10 minutes to 1 hour depending on network conditions.
+huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
+```
+
+<details>
+<summary>💡Tips for using huggingface-cli (network problem)</summary>
+
+##### 1. Using HF-Mirror
+
+If you encounter slow download speeds in China, you can try a mirror to speed up the download process. For example,
+
+```shell
+HF_ENDPOINT=https://hf-mirror.com huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./ckpts
+```
+
+##### 2. Resume Download
+
+`huggingface-cli` supports resuming downloads. If the download is interrupted, you can just rerun the download 
+command to resume the download process.
+
+Note: If an `No such file or directory: 'ckpts/.huggingface/.gitignore.lock'` like error occurs during the download 
+process, you can ignore the error and rerun the download command.
+
+</details>
+
+---
+
+All models will be automatically downloaded. For more information about the model, visit the Hugging Face repository [here](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT).
+
+|       Model        | #Params |                                      Huggingface Download URL                                           |                                      Tencent Cloud Download URL                                 |
+|:------------------:|:-------:|:-------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
+|        mT5         |  1.6B   |               [mT5](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/mt5)                |               [mT5](https://dit.hunyuan.tencent.com/download/HunyuanDiT/mt5.zip)                |
+|        CLIP        |  350M   |        [CLIP](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/clip_text_encoder)        |        [CLIP](https://dit.hunyuan.tencent.com/download/HunyuanDiT/clip_text_encoder.zip)        |
+|      Tokenizer     |  -      |     [Tokenizer](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/tokenizer)              |      [Tokenizer](https://dit.hunyuan.tencent.com/download/HunyuanDiT/tokenizer.zip)             |
+|     DialogGen      |  7.0B   |           [DialogGen](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/dialoggen)            |           [DialogGen](https://dit.hunyuan.tencent.com/download/HunyuanDiT/dialoggen.zip)        |
+| sdxl-vae-fp16-fix  |   83M   | [sdxl-vae-fp16-fix](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/sdxl-vae-fp16-fix)  | [sdxl-vae-fp16-fix](https://dit.hunyuan.tencent.com/download/HunyuanDiT/sdxl-vae-fp16-fix.zip)  |
+|    Hunyuan-DiT-v1.0     |  1.5B   |          [Hunyuan-DiT](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT/tree/main/t2i/model)           |          [Hunyuan-DiT-v1.0](https://dit.hunyuan.tencent.com/download/HunyuanDiT/model.zip)           |
+|    Hunyuan-DiT-v1.1     |  1.5B   |          [Hunyuan-DiT-v1.1](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1/tree/main/t2i/model)    |          [Hunyuan-DiT-v1.1](https://dit.hunyuan.tencent.com/download/HunyuanDiT/model-v1_1.zip)            |
+|    Data demo       |  -      |                                    -                                                                    |      [Data demo](https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip)             |
+
 ## :truck: 训练
 
 ### 数据准备
