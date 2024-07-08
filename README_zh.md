@@ -79,15 +79,15 @@
       │  ├──porcelain_mt.json
    ```
 
-### Full-parameter Training
+### 全参数训练
  
-  To leverage DeepSpeed in training, you have the flexibility to control **single-node** / **multi-node** training by adjusting parameters such as `--hostfile` and `--master_addr`. For more details, see [link](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node).
+  要在训练中利用 DeepSpeed，您可以通过调整`--hostfile`和`--master_addr` 等参数来灵活地控制**单节点** / **多节点**训练，有关详细信息，请参阅[链接](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node).
 
   ```shell
-  # Single Resolution Training
+  # 单分辨率训练
   PYTHONPATH=./ sh hydit/train.sh --index-file dataset/porcelain/jsons/porcelain.json
   
-  # Multi Resolution Training
+  # 多分辨率训练
   PYTHONPATH=./ sh hydit/train.sh --index-file dataset/porcelain/jsons/porcelain_mt.json --multireso --reso-step 64
   ```
 
@@ -95,27 +95,27 @@
 
 
 
-We provide training and inference scripts for LoRA, detailed in the [./lora](./lora/README.md). 
+我们提供了 LoRA 的训练和推理脚本，详细请见[./lora](./lora/README.md). 
 
   ```shell
-  # Training for porcelain LoRA.
+  # 训练 porcelain LoRA.
   PYTHONPATH=./ sh lora/train_lora.sh --index-file dataset/porcelain/jsons/porcelain.json
 
-  # Inference using trained LORA weights.
+  # 使用 LORA 权重来进行推断.
   python sample_t2i.py --prompt "青花瓷风格，一只小狗"  --no-enhance --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
   ```
- We offer two types of trained LoRA weights for `porcelain` and `jade`, see details at [links](https://huggingface.co/Tencent-Hunyuan/HYDiT-LoRA)
+ 我们为 `porcelain` 和 `jade` 提供两种类型的训练 LoRA 权重，有关详细信息，请参阅[链接](https://huggingface.co/Tencent-Hunyuan/HYDiT-LoRA)
   ```shell
   cd HunyuanDiT
-  # Use the huggingface-cli tool to download the model.
+  # 使用 huggingface-cli 工具来下载模型.
   huggingface-cli download Tencent-Hunyuan/HYDiT-LoRA --local-dir ./ckpts/t2i/lora
   
-  # Quick start
+  # 快速开始
   python sample_t2i.py --prompt "青花瓷风格，一只猫在追蝴蝶"  --no-enhance --load-key ema --lora-ckpt ./ckpts/t2i/lora/porcelain
   ```
  <table>
   <tr>
-    <td colspan="4" align="center">Examples of training data</td>
+    <td colspan="4" align="center">训练数据示例</td>
   </tr>
   
   <tr>
@@ -132,7 +132,7 @@ We provide training and inference scripts for LoRA, detailed in the [./lora](./l
     <td align="center">青花瓷风格，在蓝色背景上，一只蓝色蝴蝶和白色花朵被放置在中央 （Porcelain style, on a blue background, a blue butterfly and white flowers are placed in the center.）</td>
   </tr>
   <tr>
-    <td colspan="4" align="center">Examples of inference results</td>
+    <td colspan="4" align="center">推断结果示例</td>
   </tr>
   <tr>
     <td align="center"><img src="lora/asset/porcelain/inference/0.png" alt="Image 4" width="200"/></td>
