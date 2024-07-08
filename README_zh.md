@@ -797,7 +797,7 @@ Hunyuan-Captioner通过保持高度的图像-文本一致性来满足文本到�
 ### 教程
 a. 安装依赖项
      
-依赖项和安装流程与 [**基础模型**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1)基本相同.
+依赖项和安装流程与[**基础模型**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1)基本相同.
 
 b. 模型下载
 ```shell
