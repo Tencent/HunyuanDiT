@@ -862,9 +862,9 @@ python -m llava.serve.model_worker --host 0.0.0.0 --controller http://0.0.0.0:10
 
 ## 🚀 加速（适用于 Linux）
 
-- 我们提供 HunyuanDiT 的 TensorRT 版本用于推理加速（比 flash attention 更快）。详细请见[Tencent-Hunyuan/TensorRT-libs](https://huggingface.co/Tencent-Hunyuan/TensorRT-libs) for more details.
+- 我们提供 HunyuanDiT 的 TensorRT 版本用于推理加速（比 flash attention 更快）。详细请见[Tencent-Hunyuan/TensorRT-libs](https://huggingface.co/Tencent-Hunyuan/TensorRT-libs)
 
-- 我们提供 HunyuanDiT 的蒸馏版本，用于推理加速。详细请见 [Tencent-Hunyuan/Distillation](https://huggingface.co/Tencent-Hunyuan/Distillation) for more details.
+- 我们提供 HunyuanDiT 的蒸馏版本，用于推理加速。详细请见 [Tencent-Hunyuan/Distillation](https://huggingface.co/Tencent-Hunyuan/Distillation)
 
 ## 🔗 BibTeX
 如果您发现[Hunyuan-DiT](https://arxiv.org/abs/2405.08748) 或 [DialogGen](https://arxiv.org/abs/2403.08857)对您的研究和应用有用，请使用此 BibTeX 进行引用:
