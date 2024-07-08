@@ -343,7 +343,7 @@ All models will be automatically downloaded. For more information about the mode
   
   1. 安装依赖项
   
-      我们提供了一个高效的数据管理库，名为 IndexKits，支持在训练期间进行对读取数亿个数据的管理，详细请见文档[文档](./IndexKits/README.md)
+      我们提供了一个高效的数据管理库，名为 IndexKits，支持在训练期间进行对读取数亿个数据的管理，详细请见[文档](./IndexKits/README.md)
       ```shell
       # 1 安装依赖项
       cd HunyuanDiT
