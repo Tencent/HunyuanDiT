@@ -6,7 +6,7 @@
   
   1. 安装依赖项
   
-      我们提供了一个高效的数据管理库，名为 IndexKits，支持在训练期间进行对读取数亿个数据的管理，详细请见文档[文档](./IndexKits/README.md).
+      我们提供了一个高效的数据管理库，名为 IndexKits，支持在训练期间进行对读取数亿个数据的管理，详细请见文档[文档](./IndexKits/README.md)
       ```shell
       # 1 安装依赖项
       cd HunyuanDiT
@@ -14,7 +14,7 @@
      ```
   2. 数据下载
   
-     请下载 [演示数据](https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip).
+     请下载[演示数据](https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip)
      ```shell
      # 2 数据下载
      wget -O ./dataset/data_demo.zip https://dit.hunyuan.tencent.com/download/HunyuanDiT/data_demo.zip
@@ -23,7 +23,7 @@
      ```
   3. 数据转换
   
-     使用下表中列出的字段为训练数据创建 CSV 文件.
+     使用下表中列出的字段为训练数据创建 CSV 文件。
     
      |      领域       |    必需   |       介绍        |    示例     |
      |:---------------:| :------:  |:----------------:|:-----------:|
@@ -33,9 +33,9 @@
      |   `width`       | 可选  |    图片宽度    |     `1024 `       | 
      |   `height`      | 可选  |    图片高度   |    ` 1024 `       | 
      
-     > ⚠️ 可以省略 MD5、宽度和高度等可选字段。如果省略，下面的脚本将自动计算它们。在处理大规模训练数据时，此过程可能非常耗时.
+     > ⚠️ 可以省略 MD5、宽度和高度等可选字段。如果省略，下面的脚本将自动计算它们。在处理大规模训练数据时，此过程可能非常耗时。
   
-     我们可以利用[Arrow](https://github.com/apache/arrow) 来训练数据的格式，它提供标准高效的内存数据表示。同时提供了一个转换脚本，用于将 CSV 文件转换为Arrow格式.
+     我们可以利用[Arrow](https://github.com/apache/arrow) 来训练数据的格式，它提供标准高效的内存数据表示。同时提供了一个转换脚本，用于将 CSV 文件转换为Arrow格式。
      ```shell  
      # 3 数据转换
      python ./hydit/data_loader/csv2arrow.py ./dataset/porcelain/csvfile/image_text.csv ./dataset/porcelain/arrows 1
@@ -43,9 +43,9 @@
   
   4. 数据选择和配置文件创建 
      
-      我们通过 YAML 文件配置训练数据。在这些文件中，您可以设置标准数据处理策略，用于筛选、复制、重复数据删除等有关训练数据。有关详细信息，请参见[./IndexKits](IndexKits/docs/MakeDataset.md).
+      我们通过 YAML 文件配置训练数据。在这些文件中，您可以设置标准数据处理策略，用于筛选、复制、重复数据删除等有关训练数据。有关详细信息，请参见[./IndexKits](IndexKits/docs/MakeDataset.md)
   
-      有关示例文件，请参阅[文件](./dataset/yamls/porcelain.yaml). 有关完整参数配置文件，请参阅[文件](./IndexKits/docs/MakeDataset.md).
+      有关示例文件，请参阅[文件](./dataset/yamls/porcelain.yaml) 有关完整参数配置文件，请参阅[文件](./IndexKits/docs/MakeDataset.md)
   
      
   5. 使用 YAML 文件创建训练数据索引文件
@@ -81,7 +81,7 @@
 
 ### 全参数训练
  
-  要在训练中利用 DeepSpeed，您可以通过调整`--hostfile`和`--master_addr` 等参数来灵活地控制**单节点** / **多节点**训练，有关详细信息，请参阅[链接](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node).
+  要在训练中利用 DeepSpeed，您可以通过调整`--hostfile`和`--master_addr` 等参数来灵活地控制**单节点** / **多节点**训练，有关详细信息，请参阅[链接](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node)
 
   ```shell
   # 单分辨率训练
@@ -95,7 +95,7 @@
 
 
 
-我们提供了 LoRA 的训练和推理脚本，详细请见[./lora](./lora/README.md). 
+我们提供了 LoRA 的训练和推理脚本，详细请见[./lora](./lora/README.md)
 
   ```shell
   # 训练 porcelain LoRA.
@@ -153,9 +153,9 @@
 ## 🔑 推理
 
 ### 6GB GPU VRAM 推理
-以[diffusers](https://huggingface.co/docs/diffusers/main/en/api/pipelines/hunyuandit)为基础在6GB以下的GPU VRAM中运行HunyuanDiT. 我们在此为您的快速入门提供了说明和演示.
+以[diffusers](https://huggingface.co/docs/diffusers/main/en/api/pipelines/hunyuandit)为基础在6GB以下的GPU VRAM中运行HunyuanDiT。我们在此为您的快速入门提供了说明和演示。
 
-> 6GB的版本支持Nvidia Ampere架构系列显卡，如RTX 3070/3080/4080/4090、A100等.
+> 6GB的版本支持Nvidia Ampere架构系列显卡，如RTX 3070/3080/4080/4090、A100等。
 
 您唯一需要做的就是安装以下库：
 
@@ -167,7 +167,7 @@ pip install torch==2.0.0
 
 然后，您可以直接在6GB GPU VRAM下享受HunyuanDiT从文本到图像之旅！
 
-这是一个示例.
+这是一个示例。
 
 ```bash
 cd HunyuanDiT
@@ -180,36 +180,36 @@ guidance_scale=6
 python3 lite/inference.py ${model_id} ${prompt} ${infer_steps} ${guidance_scale}
 ```
 
-更多详细信息在[./lite](lite/README.md).
+更多详细信息在[./lite](lite/README.md)
 
 
 ### 使用 Gradio
 
-在运行以下命令之前，请确保已激活 conda 环境.
+在运行以下命令之前，请确保已激活 conda 环境。
 
 ```shell
-# 默认情况下, 我们开启中文用户界面.
+# 默认情况下, 我们开启中文用户界面
 python app/hydit_app.py
 
-# 使用 Flash Attention 机制来加速.
+# 使用 Flash Attention 机制来加速
 python app/hydit_app.py --infer-mode fa
 
-# 如果 GPU 内存不足，可以禁用增强模式.
-# 增强功能将不可用，直到你在不使用"--no-enhance "标记的情况下重新启动应用程序为止. 
+# 如果 GPU 内存不足，可以禁用增强模式
+# 增强功能将不可用，直到你在不使用"--no-enhance "标记的情况下重新启动应用程序为止
 python app/hydit_app.py --no-enhance
 
 # 开启英文用户界面
 python app/hydit_app.py --lang en
 
-# 启动多轮文本到图像生成的用户界面. 
-# 如果 GPU 内存不足 32GB，请使用 '--load-4bit' 来启用 4bits 量化，这至少需要 22GB 内存.
+# 启动多轮文本到图像生成的用户界面
+# 如果 GPU 内存不足 32GB，请使用 '--load-4bit' 来启用 4bits 量化，这至少需要 22GB 内存
 python app/multiTurnT2I_app.py
 ```
-Then the demo can be accessed through http://0.0.0.0:443. It should be noted that the 0.0.0.0 here needs to be X.X.X.X with your server IP.
+然后可以通过 http://0.0.0.0:443 访问示例. 需要注意的是，这里的 0.0.0.0 需要是带有您的服务器 IP的 X.X.X.X。
 
 ### 使用 🤗 Diffusers
 
-请提前安装 PyTorch 2.0 或更高版本，以满足指定版本的 diffusers 库的需求.  
+请提前安装 PyTorch 2.0 或更高版本，以满足指定版本的 diffusers 库的需求。
 
 安装 🤗 diffusers，确保版本至少为 0.28.1:
 
@@ -316,12 +316,12 @@ python -m pip install "huggingface_hub[cli]"
 mkdir models/hunyuan
 huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./models/hunyuan/ckpts
 
-# 跳转至 ComfyUI 的 custom_nodes 文件夹，并将 comfyui-hydit 文件夹从 HunyuanDiT 仓库复制到此.
+# 跳转至 ComfyUI 的 custom_nodes 文件夹，并将 comfyui-hydit 文件夹从 HunyuanDiT 仓库复制到此
 cd custom_nodes
 cp -r ${HunyuanDiT}/comfyui-hydit ./
 cd comfyui-hydit
 
-# 安装必需的 python 包.
+# 安装必需的 python 包
 pip install -r requirements.txt
 
 # 我们的工具已经被成功安装了!
@@ -350,7 +350,7 @@ git clone -b dev https://github.com/kohya-ss/sd-scripts ./sd-scripts
 # 将自定义的图形用户界面代码移至 kohya_ss 图形用户界面，并替换同名文件
 cp -Rf ${HunyuanDiT}/kohya_ss-hydit/* ./
 
-# 像之前一样下载模型权重或将现有模型文件夹链接到 kohya_ss/models.
+# 像之前一样下载模型权重或将现有模型文件夹链接到 kohya_ss/models
 python -m pip install "huggingface_hub[cli]"
 # 如果要下载完整的模型，请使用以下命令
 huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.1 --local-dir ./models/HunyuanDiT-V1.1
@@ -372,7 +372,7 @@ mv HunyuanDiT-V1.2/t2i/mt5/ HunyuanDiT-V1.2/t2i/mt5/
 mv HunyuanDiT-V1.2/t2i/sdxl-vae-fp16-fix/ HunyuanDiT-V1.2/t2i/vae/
 mv HunyuanDiT-V1.2/t2i/tokenizer/* HunyuanDiT-V1.2/t2i/clip/ 
 
-# 安装必需的 python 包, 
+# 安装必需的 python 包
 conda create -n hydit-kohya python=3.10.12
 conda activate hydit-kohya
 
@@ -390,13 +390,13 @@ pip install -r hunyuan_requirements.txt
 # 运行 Kohya_ss 用户界面的启动命令
 python kohya_gui.py
 ```
-更多详细信息在[Kohya_ss README](kohya_ss-hydit/README.md)
+更多详细信息在[Kohya_ss](kohya_ss-hydit/README.md)的README。
 
 ## :building_construction: 适配器
 
 ### ControlNet
 
-我们提供了 ControlNet 的训练脚本，详细请见 [./controlnet](./controlnet/README.md). 
+我们提供了 ControlNet 的训练脚本，详细请见 [./controlnet](./controlnet/README.md)
 
   ```shell
   # 训练canny ControlNet.
@@ -405,8 +405,8 @@ python kohya_gui.py
  我们为 `canny` ，`depth` 和 `pose` 提供三种类型的训练 ControlNet 权重，详细请见[链接](https://huggingface.co/Tencent-Hunyuan/HYDiT-ControlNet)
   ```shell
   cd HunyuanDiT
-  # 使用 huggingface-cli 工具来下载模型.
-  # 我们建议使用蒸馏权重作为 ControlNet 推理的基础模型，因为我们提供的预训练权重是在它们上训练的.
+  # 使用 huggingface-cli 工具来下载模型
+  # 我们建议使用蒸馏权重作为 ControlNet 推理的基础模型，因为我们提供的预训练权重是在它们上训练的
   huggingface-cli download Tencent-Hunyuan/HYDiT-ControlNet --local-dir ./ckpts/t2i/controlnet
   huggingface-cli download Tencent-Hunyuan/Distillation-v1.1 ./pytorch_model_distill.pt --local-dir ./ckpts/t2i/model
   
@@ -460,7 +460,7 @@ Hunyuan-Captioner通过保持高度的图像-文本一致性来满足文本到�
 ### 教程
 a. 安装依赖项
      
-依赖项和安装流程与 [**base model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1)基本相同.
+依赖项和安装流程与 [**基础模型**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1)基本相同.
 
 b. 模型下载
 ```shell
