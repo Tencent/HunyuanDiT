@@ -27,38 +27,38 @@
     
      |      领域       |    必需   |       介绍        |    示例     |
      |:---------------:| :------:  |:----------------:|:-----------:|
-     |   `image_path`  |    必需   |      图像路径     |`./dataset/porcelain/images/0.png`        | 
-     |   `text_zh`     | Required  |    text               |  青花瓷风格，一只蓝色的鸟儿站在蓝色的花瓶上，周围点缀着白色花朵，背景是白色 | 
-     |   `md5`         | Optional  |    image md5 (Message Digest Algorithm 5)  |    `d41d8cd98f00b204e9800998ecf8427e`         | 
-     |   `width`       | Optional  |    image width    |     `1024 `       | 
-     |   `height`      | Optional  |    image height   |    ` 1024 `       | 
+     |   `image_path`  |    必需   |      图片路径     |`./dataset/porcelain/images/0.png`        | 
+     |   `text_zh`     | 必需  |    文字描述               |  青花瓷风格，一只蓝色的鸟儿站在蓝色的花瓶上，周围点缀着白色花朵，背景是白色 | 
+     |   `md5`         | 可选  |    图片 md5 (讯息摘要5)  |    `d41d8cd98f00b204e9800998ecf8427e`         | 
+     |   `width`       | 可选  |    图片宽度    |     `1024 `       | 
+     |   `height`      | 可选  |    图片高度   |    ` 1024 `       | 
      
-     > ⚠️ Optional fields like MD5, width, and height can be omitted. If omitted, the script below will automatically calculate them. This process can be time-consuming when dealing with large-scale training data.
+     > ⚠️ 可以省略 MD5、宽度和高度等可选字段。如果省略，下面的脚本将自动计算它们。在处理大规模训练数据时，此过程可能非常耗时.
   
-     We utilize [Arrow](https://github.com/apache/arrow) for training data format, offering a standard and efficient in-memory data representation. A conversion script is provided to transform CSV files into Arrow format.
+     我们可以利用[Arrow](https://github.com/apache/arrow) 来训练数据的格式，它提供标准高效的内存数据表示。同时提供了一个转换脚本，用于将 CSV 文件转换为Arrow格式.
      ```shell  
-     # 3 Data conversion 
+     # 3 数据转换
      python ./hydit/data_loader/csv2arrow.py ./dataset/porcelain/csvfile/image_text.csv ./dataset/porcelain/arrows 1
      ```
   
-  4. Data Selection and Configuration File Creation 
+  4. 数据选择和配置文件创建 
      
-      We configure the training data through YAML files. In these files, you can set up standard data processing strategies for filtering, copying, deduplicating, and more regarding the training data. For more details, see [./IndexKits](IndexKits/docs/MakeDataset.md).
+      我们通过 YAML 文件配置训练数据。在这些文件中，您可以设置标准数据处理策略，用于筛选、复制、重复数据删除等有关训练数据。有关详细信息，请参见[./IndexKits](IndexKits/docs/MakeDataset.md).
   
-      For a sample file, please refer to [file](./dataset/yamls/porcelain.yaml). For a full parameter configuration file, see [file](./IndexKits/docs/MakeDataset.md).
+      有关示例文件，请参阅[文件](./dataset/yamls/porcelain.yaml). 有关完整参数配置文件，请参阅[文件](./IndexKits/docs/MakeDataset.md).
   
      
-  5. Create training data index file using YAML file.
+  5. 使用 YAML 文件创建训练数据索引文件
     
      ```shell
-      # Single Resolution Data Preparation
+      # 单分辨率数据准备
       idk base -c dataset/yamls/porcelain.yaml -t dataset/porcelain/jsons/porcelain.json
    
-      # Multi Resolution Data Preparation     
+      # 多分辨率数据准备     
       idk multireso -c dataset/yamls/porcelain_mt.yaml -t dataset/porcelain/jsons/porcelain_mt.json
       ```
    
-  The directory structure for `porcelain` dataset is:
+  数据集 `porcelain` 的目录结构为:
 
   ```shell
    cd ./dataset
