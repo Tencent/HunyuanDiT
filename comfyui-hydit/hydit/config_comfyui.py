@@ -87,7 +87,7 @@ def get_args(default_args=None):
     parser.add_argument("--negative", type=str, default=None, help="Negative prompt.")
 
     # Acceleration
-    parser.add_argument("--infer-mode", type=str, choices=["fa", "torch", "trt"], default="torch", help="Inference mode")
+    parser.add_argument("--infer-mode", type=str, choices=["fa", "torch", "trt"], default="fa", help="Inference mode")
     parser.add_argument("--onnx-workdir", type=str, default="onnx_model", help="Path to save ONNX model")
 
     # Sampling
