@@ -38,4 +38,5 @@ sh $(dirname "$0")/run_g.sh \
     --deepspeed \
     --deepspeed-optimizer \
     --use-zero-stage 2 \
+    --use_t5 True \
     "$@"

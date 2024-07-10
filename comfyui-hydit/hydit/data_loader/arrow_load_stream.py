@@ -37,6 +37,7 @@ class TextImageArrowStream(Dataset):
                  uncond_p_t5=0.0,
                  text_ctx_len_t5=256,
                  tokenizer_t5=None,
+                 use_t5=False
                  ):
         self.args = args
         self.resolution = resolution
@@ -59,6 +60,7 @@ class TextImageArrowStream(Dataset):
         self.tokenizer = tokenizer
 
         # t5 params
+        self.use_t5 = use_t5
         self.uncond_p_t5 = uncond_p_t5
         self.text_ctx_len_t5 = text_ctx_len_t5
         self.tokenizer_t5 = tokenizer_t5
@@ -230,26 +232,36 @@ class TextImageArrowStream(Dataset):
         else:
             description = self.get_text(ind)
 
-        # Get text for t5
-        if random.random() < self.uncond_p_t5:
-            description_t5 = ""
-        else:
-            description_t5 = self.get_text(ind)
+        if self.use_t5:
+            # Get text for t5
+            if random.random() < self.uncond_p_t5:
+                description_t5 = ""
+            else:
+                description_t5 = self.get_text(ind)
+
+            # Use encoder to embed tokens online
+            text, text_embedding, text_embedding_mask = self.get_text_info_with_encoder(description)
+
+            text_t5, text_embedding_t5, text_embedding_mask_t5 = self.get_text_info_with_encoder_t5(description_t5)
 
         original_pil_image, kwargs = self.get_image_with_hwxy(ind)
 
-        # Use encoder to embed tokens online
-        text, text_embedding, text_embedding_mask = self.get_text_info_with_encoder(description)
-
-        text_t5, text_embedding_t5, text_embedding_mask_t5 = self.get_text_info_with_encoder_t5(description_t5)
-        return (
-            original_pil_image,
-            text_embedding.clone().detach(),
-            text_embedding_mask.clone().detach(),
-            text_embedding_t5.clone().detach(),
-            text_embedding_mask_t5.clone().detach(),
-            {k: torch.tensor(np.array(v)).clone().detach() for k, v in kwargs.items()},
-        )
+        if self.use_t5:
+            return (
+                original_pil_image,
+                text_embedding.clone().detach(),
+                text_embedding_mask.clone().detach(),
+                text_embedding_t5.clone().detach(),
+                text_embedding_mask_t5.clone().detach(),
+                {k: torch.tensor(np.array(v)).clone().detach() for k, v in kwargs.items()},
+            )
+        else:
+            return (
+                original_pil_image,
+                text_embedding.clone().detach(),
+                text_embedding_mask.clone().detach(),
+                {k: torch.tensor(np.array(v)).clone().detach() for k, v in kwargs.items()},
+            )
 
     def __len__(self):
         return len(self.index_manager)
