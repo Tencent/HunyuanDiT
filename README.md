@@ -25,6 +25,7 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 > [**DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857) <br>
 
 ## 🔥🔥🔥 News!!
+* Jul 15, 2024: :tada: Update ComfyUI to support standardized workflows and compatibility with weights from t2i module and Lora training for versions 1.1/1.2, as well as those trained by Kohya or the official script. See [ComfyUI](./comfyui-hydit) for details.
 * Jul 08, 2024: :tada: HYDiT-v1.2 version is released. Please check [HunyuanDiT-v1.2](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2) and [Distillation-v1.2](https://huggingface.co/Tencent-Hunyuan/Distillation-v1.2) for more details.
 * Jul 03, 2024: :tada: Kohya-hydit version now available for v1.1 and v1.2 models, with GUI for inference. Official Kohya version is under review. See [kohya](./kohya_ss-hydit) for details.
 * Jun 27, 2024: :art: Hunyuan-Captioner is released, providing fine-grained caption for training data. See [mllm](./mllm) for details.
@@ -648,43 +649,13 @@ We list some more useful configurations for easy usage:
 
 ### Using ComfyUI
 
-We provide several commands to quick start: 
+- Support two workflows: Standard ComfyUI and Diffusers Wrapper, with the former being recommended.
+- Support HunyuanDiT-v1.1 and v1.2.
+- Support module, lora and clip lora models trained by Kohya.
+- Support module, lora models trained by HunyunDiT official training scripts.
+- ControlNet is coming soon.
 
-```shell
-# Download comfyui code
-git clone https://github.com/comfyanonymous/ComfyUI.git
-
-# Install torch, torchvision, torchaudio
-pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu117
-
-# Install Comfyui essential python package.
-cd ComfyUI
-pip install -r requirements.txt
-
-# ComfyUI has been successfully installed!
-
-# Download model weight as before or link the existing model folder to ComfyUI.
-python -m pip install "huggingface_hub[cli]"
-mkdir models/hunyuan
-huggingface-cli download Tencent-Hunyuan/HunyuanDiT --local-dir ./models/hunyuan/ckpts
-
-# Move to the ComfyUI custom_nodes folder and copy comfyui-hydit folder from HunyuanDiT Repo.
-cd custom_nodes
-cp -r ${HunyuanDiT}/comfyui-hydit ./
-cd comfyui-hydit
-
-# Install some essential python Package.
-pip install -r requirements.txt
-
-# Our tool has been successfully installed!
-
-# Go to ComfyUI main folder
-cd ../..
-# Run the ComfyUI Lauch command
-python main.py --listen --port 80
-
-# Running ComfyUI successfully!
-```
+![Workflow](comfyui-hydit/img/workflow_v1.2_lora.png)
 More details can be found in [./comfyui-hydit](comfyui-hydit/README.md)
 
 ### Using Kohya

@@ -1,60 +1,26 @@
 {
-  "last_node_id": 33,
-  "last_link_id": 9,
+  "last_node_id": 34,
+  "last_link_id": 14,
   "nodes": [
-    {
-      "id": 33,
-      "type": "DiffusersCLIPLoader",
-      "pos": [
-        -77,
-        221
-      ],
-      "size": {
-        "0": 315,
-        "1": 82
-      },
-      "flags": {},
-      "order": 0,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "CLIP",
-          "type": "CLIP",
-          "links": [
-            8,
-            9
-          ],
-          "shape": 3,
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "DiffusersCLIPLoader"
-      },
-      "widgets_values": [
-        "pytorch_model.bin",
-        "pytorch_model.bin"
-      ]
-    },
     {
       "id": 25,
       "type": "CLIPTextEncode",
       "pos": [
-        260,
-        108
+        -416,
+        43
       ],
       "size": {
         "0": 400,
         "1": 200
       },
       "flags": {},
-      "order": 4,
+      "order": 6,
       "mode": 0,
       "inputs": [
         {
           "name": "clip",
           "type": "CLIP",
-          "link": 8
+          "link": 14
         }
       ],
       "outputs": [
@@ -71,92 +37,78 @@
         "Node name for S&R": "CLIPTextEncode"
       },
       "widgets_values": [
-        "描绘的风格是写实，画面主要描述一双泥泞的靴子在雨天里，靴子颜色是棕色，泥沙溅在 Boot 的表面，背景是湿漉漉的地板，泥泞的环境，天气是阴沉的雨天，镜头是近景"
+        "玉石风格，画面主要描述一只猫咪在捉蝴蝶"
       ]
     },
     {
-      "id": 32,
-      "type": "DiffusersVAELoader",
+      "id": 34,
+      "type": "LoraLoader",
       "pos": [
-        359,
-        498
+        94,
+        125
       ],
       "size": {
-        "0": 303.9019775390625,
-        "1": 58
+        "0": 315,
+        "1": 126
       },
       "flags": {},
-      "order": 1,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "VAE",
-          "type": "VAE",
-          "links": [
-            7
-          ],
-          "shape": 3,
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "DiffusersVAELoader"
-      },
-      "widgets_values": [
-        "diffusion_pytorch_model.bin"
-      ]
-    },
-    {
-      "id": 26,
-      "type": "CLIPTextEncode",
-      "pos": [
-        -80,
-        356
-      ],
-      "size": {
-        "0": 400,
-        "1": 200
-      },
-      "flags": {},
-      "order": 5,
+      "order": 4,
       "mode": 0,
       "inputs": [
         {
+          "name": "model",
+          "type": "MODEL",
+          "link": 10
+        },
+        {
           "name": "clip",
           "type": "CLIP",
-          "link": 9
+          "link": 11
         }
       ],
       "outputs": [
         {
-          "name": "CONDITIONING",
-          "type": "CONDITIONING",
+          "name": "MODEL",
+          "type": "MODEL",
           "links": [
-            2
+            12
           ],
-          "shape": 3
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            13,
+            14
+          ],
+          "shape": 3,
+          "slot_index": 1
         }
       ],
       "properties": {
-        "Node name for S&R": "CLIPTextEncode"
+        "Node name for S&R": "LoraLoader"
       },
       "widgets_values": [
-        "错误的眼睛，糟糕的人脸，毁容，糟糕的艺术，变形，多余的肢体，模糊的颜色，模糊，重复，病态，残缺，"
+        "last-step00000950.safetensors",
+        1,
+        1
       ]
     },
     {
       "id": 28,
       "type": "VAEDecode",
       "pos": [
-        731,
-        159
+        287,
+        387
       ],
       "size": {
         "0": 210,
         "1": 46
       },
       "flags": {},
-      "order": 7,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {
@@ -185,24 +137,62 @@
       }
     },
     {
+      "id": 26,
+      "type": "CLIPTextEncode",
+      "pos": [
+        -479,
+        574
+      ],
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            2
+          ],
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "错误的眼睛，糟糕的人脸，毁容，糟糕的艺术，变形，多余的肢体，模糊的颜色，模糊，重复，病态，残缺，"
+      ]
+    },
+    {
       "id": 24,
       "type": "KSampler",
       "pos": [
-        681,
-        290
+        160,
+        515
       ],
       "size": {
         "0": 315,
         "1": 262
       },
       "flags": {},
-      "order": 6,
+      "order": 7,
       "mode": 0,
       "inputs": [
         {
           "name": "model",
           "type": "MODEL",
-          "link": 6,
+          "link": 12,
           "slot_index": 0
         },
         {
@@ -245,50 +235,50 @@
       ]
     },
     {
-      "id": 31,
-      "type": "DiffusersCheckpointLoader",
+      "id": 32,
+      "type": "DiffusersVAELoader",
       "pos": [
-        -79,
-        107
+        -123,
+        463
       ],
       "size": {
-        "0": 315,
+        "0": 303.9019775390625,
         "1": 58
       },
       "flags": {},
-      "order": 2,
+      "order": 0,
       "mode": 0,
       "outputs": [
         {
-          "name": "MODEL",
-          "type": "MODEL",
+          "name": "VAE",
+          "type": "VAE",
           "links": [
-            6
+            7
           ],
           "shape": 3,
           "slot_index": 0
         }
       ],
       "properties": {
-        "Node name for S&R": "DiffusersCheckpointLoader"
+        "Node name for S&R": "DiffusersVAELoader"
       },
       "widgets_values": [
-        "pytorch_model_distill.pt"
+        "diffusion_pytorch_model.bin"
       ]
     },
     {
       "id": 27,
       "type": "EmptyLatentImage",
       "pos": [
-        351,
-        350
+        -147,
+        310
       ],
       "size": {
         "0": 315,
         "1": 106
       },
       "flags": {},
-      "order": 3,
+      "order": 1,
       "mode": 0,
       "outputs": [
         {
@@ -305,23 +295,89 @@
       },
       "widgets_values": [
         1024,
-        1280,
-        2
+        1024,
+        1
+      ]
+    },
+    {
+      "id": 31,
+      "type": "DiffusersCheckpointLoader",
+      "pos": [
+        -474,
+        433
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            10
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DiffusersCheckpointLoader"
+      },
+      "widgets_values": [
+        "pytorch_model_ema.pt",
+        "v1.1"
+      ]
+    },
+    {
+      "id": 33,
+      "type": "DiffusersCLIPLoader",
+      "pos": [
+        -501,
+        311
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            11
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DiffusersCLIPLoader"
+      },
+      "widgets_values": [
+        "pytorch_model.bin",
+        "pytorch_model.bin"
       ]
     },
     {
       "id": 29,
       "type": "PreviewImage",
       "pos": [
-        1031,
-        175
+        560,
+        200
       ],
       "size": [
-        357.9370410924005,
-        264.0938661488955
+        539.4452795867064,
+        385.47475190101954
       ],
       "flags": {},
-      "order": 8,
+      "order": 9,
       "mode": 0,
       "inputs": [
         {
@@ -377,14 +433,6 @@
       "IMAGE"
     ],
     [
-      6,
-      31,
-      0,
-      24,
-      0,
-      "MODEL"
-    ],
-    [
       7,
       32,
       0,
@@ -393,18 +441,42 @@
       "VAE"
     ],
     [
-      8,
+      10,
+      31,
+      0,
+      34,
+      0,
+      "MODEL"
+    ],
+    [
+      11,
       33,
       0,
-      25,
+      34,
+      1,
+      "CLIP"
+    ],
+    [
+      12,
+      34,
+      0,
+      24,
+      0,
+      "MODEL"
+    ],
+    [
+      13,
+      34,
+      1,
+      26,
       0,
       "CLIP"
     ],
     [
-      9,
-      33,
-      0,
-      26,
+      14,
+      34,
+      1,
+      25,
       0,
       "CLIP"
     ]
@@ -413,10 +485,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.8954302432552415,
+      "scale": 0.7400249944258199,
       "offset": [
-        370.7466007037628,
-        90.3483300454219
+        832.36141362718,
+        217.38501351498996
       ]
     }
   },

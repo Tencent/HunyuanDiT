@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from typing import Tuple, Union, Optional
-from comfy.ldm.modules.attention import optimized_attention
 
 try:
     import flash_attn
@@ -305,27 +304,17 @@ class CrossAttention(nn.Module):
             assert qq.shape == q.shape, f'qq: {qq.shape}, q: {q.shape}'
             q = qq
 
-
-        q = q.transpose(-2, -3).contiguous()        # q ->  B, L1, H, C - B, H, L1, C
-        k = k.transpose(-2, -3).contiguous()      # k ->  B, L2, H, C - B, H, C, L2
-        v = v.transpose(-2, -3).contiguous() 
-
-        """
         q = q * self.scale
-        attn = q @ k.transpose(-2, -1)                                # attn -> B, H, L1, L2
+        q = q.transpose(-2, -3).contiguous()        # q ->  B, L1, H, C - B, H, L1, C
+        k = k.permute(0, 2, 3, 1).contiguous()      # k ->  B, L2, H, C - B, H, C, L2
+        attn = q @ k                                # attn -> B, H, L1, L2
         attn = attn.softmax(dim=-1)                 # attn -> B, H, L1, L2
         attn = self.attn_drop(attn)
-        x = attn @ v             # v -> B, L2, H, C - B, H, L2, C    x-> B, H, L1, C
-
+        x = attn @ v.transpose(-2, -3)              # v -> B, L2, H, C - B, H, L2, C    x-> B, H, L1, C
         context = x.transpose(1, 2)                 # context -> B, H, L1, C - B, L1, H, C
+
         context = context.contiguous().view(b, s1, -1)
-        """
-      
 
-        context = optimized_attention(q, k, v, self.num_heads, skip_reshape=True)
-  
-
-      
         out = self.out_proj(context)  # context.reshape - B, L1, -1
         out = self.proj_drop(out)
 
@@ -373,28 +362,15 @@ class Attention(nn.Module):
                 f'qq: {qq.shape}, q: {q.shape}, kk: {kk.shape}, k: {k.shape}'
             q, k = qq, kk
 
-        x = optimized_attention(q, k, v, self.num_heads, skip_reshape=True)
-        """
-        import pdb
-        pdb.set_trace()
-        
-        q = q * self.scale 
+        q = q * self.scale
         attn = q @ k.transpose(-2, -1)              # [b, h, s, d] @ [b, h, d, s]
         attn = attn.softmax(dim=-1)                 # [b, h, s, s]
         attn = self.attn_drop(attn)
         x = attn @ v                                # [b, h, s, d]
 
         x = x.transpose(1, 2).reshape(B, N, C)      # [b, s, h, d]
-
-        x_comfyui = optimized_attention(q, k, v, self.num_heads, skip_reshape=True)
-        """
-
-
-        
-
         x = self.out_proj(x)
         x = self.proj_drop(x)
-        
 
         out_tuple = (x,)
 

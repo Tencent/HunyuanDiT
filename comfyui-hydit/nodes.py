@@ -4,18 +4,18 @@ import torch
 from .utils import convert_images_to_tensors
 from comfy.model_management import get_torch_device
 import folder_paths
-from .hydit.diffusion.pipeline import StableDiffusionPipeline
-from .hydit.diffusion.pipeline_controlnet import StableDiffusionControlNetPipeline
-from .hydit.config_comfyui import get_args
-from .hydit.inference_comfyui import End2End
+from .hydit_v1_1.diffusion.pipeline import StableDiffusionPipeline
+from .hydit_v1_1.diffusion.pipeline_controlnet import StableDiffusionControlNetPipeline
+from .hydit_v1_1.config_comfyui import get_args
+from .hydit_v1_1.inference_comfyui import End2End
 from pathlib import Path
-from .hydit.constants import SAMPLER_FACTORY
+from .hydit_v1_1.constants import SAMPLER_FACTORY
 from diffusers import schedulers
 from .constant import HUNYUAN_PATH, SCHEDULERS_hunyuan, T5_PATH, LORA_PATH
-from .dit import load_dit, load_checkpoint, load_vae
+from .dit import  load_checkpoint, load_vae
 from .clip import CLIP
-from .hydit.modules.controlnet import HunYuanControlNet
-from .hydit.modules.models import HUNYUAN_DIT_CONFIG
+from .hydit_v1_1.modules.controlnet import HunYuanControlNet
+from .hydit_v1_1.modules.models import HUNYUAN_DIT_CONFIG
 from loguru import logger
 import numpy as np
 from torchvision import transforms as T
@@ -45,42 +45,6 @@ def _to_tuple(val):
     return val
 
 
-class DiffusersPipelineLoader_old:
-    def __init__(self):
-        self.tmp_dir = folder_paths.get_temp_directory()
-        self.dtype = torch.float32
-
-    @classmethod
-    def INPUT_TYPES(s):
-        return {"required": {"pipeline_folder_name": (os.listdir(HUNYUAN_PATH),),
-                             "model_name": (["disable"] + folder_paths.get_filename_list("checkpoints"),),
-                             "vae_name": (["disable"] + folder_paths.get_filename_list("vae"),),
-                             "backend": (["ksampler", "diffusers"],), }}
-
-    RETURN_TYPES = ("PIPELINE", "MODEL", "CLIP", "VAE")
-
-    FUNCTION = "create_pipeline"
-
-    CATEGORY = "Diffusers"
-
-    def create_pipeline(self, pipeline_folder_name, model_name, vae_name, backend):
-        if model_name != "disable":
-            MODEL_PATH = folder_paths.get_full_path("checkpoints", model_name)
-        else:
-            MODEL_PATH = None
-        if vae_name != "disable":
-            VAE_PATH = folder_paths.get_full_path("vae", vae_name)
-        else:
-            VAE_PATH = None
-
-        if backend == "diffusers":
-            args_hunyuan = get_args()
-            gen = End2End(args_hunyuan[0], Path(os.path.join(HUNYUAN_PATH, pipeline_folder_name)), MODEL_PATH, VAE_PATH)
-            return (gen, None, None, None)
-        elif backend == "ksampler":
-            out = load_dit(model_path=os.path.join(HUNYUAN_PATH, pipeline_folder_name), MODEL_PATH=MODEL_PATH,
-                           VAE_PATH=VAE_PATH)
-            return (None,) + out[:3]
 
 
 class DiffusersPipelineLoader:
@@ -118,7 +82,8 @@ class DiffusersCheckpointLoader:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-            "model_name": (folder_paths.get_filename_list("checkpoints"),), }}
+            "model_name": (folder_paths.get_filename_list("checkpoints"),), 
+            "version": (list(["v1.1", "v1.2"]),), }}
 
     RETURN_TYPES = ("MODEL",)
 
@@ -126,9 +91,9 @@ class DiffusersCheckpointLoader:
 
     CATEGORY = "Diffusers"
 
-    def load_checkpoint(self, model_name):
+    def load_checkpoint(self, model_name, version):
         MODEL_PATH = folder_paths.get_full_path("checkpoints", model_name)
-        out = load_checkpoint(MODEL_PATH)
+        out = load_checkpoint(MODEL_PATH, version)
         return out
 
 
@@ -195,7 +160,7 @@ class DiffusersCLIPLoader:
         CLIP_PATH = folder_paths.get_full_path("clip", text_encoder_path)
         t5_file = os.path.join(T5_PATH, t5_text_encoder_path)
         root = None
-        out = CLIP(root, CLIP_PATH, t5_file)
+        out = CLIP(False, root, CLIP_PATH, t5_file)
         return (out,)
 
 

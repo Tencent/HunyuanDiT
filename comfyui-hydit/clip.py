@@ -3,16 +3,20 @@ import comfy.latent_formats
 import comfy.model_patcher
 import comfy.model_base
 import comfy.utils
-from .hydit.modules.text_encoder import MT5Embedder
+from .hydit_v1_1.modules.text_encoder import MT5Embedder
 from transformers import BertModel, BertTokenizer, AutoTokenizer
 import torch
 import os
 from transformers import T5Config, T5EncoderModel, BertConfig, BertModel
 from transformers import AutoTokenizer, modeling_utils
+from comfy import model_management
 #import pdb
 
 class CLIP:
-    def __init__(self, root, text_encoder_path = None, t5_text_encoder_path = None):
+    def __init__(self,no_init=False, root = None, text_encoder_path = None, t5_text_encoder_path = None):
+        if no_init:
+            return
+
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         if text_encoder_path == None:
             text_encoder_path = os.path.join(root,"clip_text_encoder")
@@ -53,7 +57,10 @@ class CLIP:
         
 
         self.cond_stage_model = clip_text_encoder
-        
+        load_device = model_management.text_encoder_device()
+        offload_device = model_management.text_encoder_offload_device()
+        self.patcher = comfy.model_patcher.ModelPatcher(self.cond_stage_model, load_device=load_device, offload_device=offload_device)
+        self.layer_idx = None
 
     def tokenize(self, text):
         tokens = self.tokenizer.tokenize(text)
@@ -64,7 +71,9 @@ class CLIP:
     def tokenize_t5(self, text):
         return self.tokenizer_t5.tokenize(text)
 
-    def encode_from_tokens(self, tokens, return_pooled=False):
+    def encode_from_tokens(self, tokens, return_pooled=False, return_dict=False):
+        #self.cond_stage_model.reset_clip_options()
+        self.load_model()
         attention_mask = tokens['attention_mask'].to(self.device)
         with torch.no_grad():
             prompt_embeds = self.cond_stage_model(
@@ -83,7 +92,7 @@ class CLIP:
         addit_embeds = {
                 "t5_embeds": t5_embeds,
                 "attention_mask": attention_mask.float(),
-                "t5_attention_mask": t5_attention_mask.float()
+                "t5_attention_mask": t5_attention_mask.float() 
             }
         prompt_embeds.addit_embeds = addit_embeds
 
@@ -91,6 +100,36 @@ class CLIP:
             return prompt_embeds, None
         else:
             return prompt_embeds
+        
+    def clone(self):
+        n = CLIP(no_init=True)
+        n.patcher = self.patcher.clone()
+        n.cond_stage_model = self.cond_stage_model
+        n.tokenizer = self.tokenizer
+        n.layer_idx = self.layer_idx
+        n.tokenizer_t5 = self.tokenizer_t5
+        n.embedder_t5 = self.embedder_t5
+        n.device = self.device 
+        return n
+    
+    def add_patches(self, patches, strength_patch=1.0, strength_model=1.0):
+        #import pdb
+        #pdb.set_trace()
+        return self.patcher.add_patches(patches, strength_patch, strength_model)
+    
+    def load_sd(self, sd):
+        return self.cond_stage_model.load_sd(sd)
+
+    def get_sd(self):
+        return self.cond_stage_model.state_dict()
+
+    def load_model(self):
+        #if self.load_device != "cpu":
+        model_management.load_model_gpu(self.patcher)
+        return self.patcher
+
+    def get_key_patches(self):
+        return self.patcher.get_key_patches()
 
 class HyBertTokenizer:
     def __init__(self, tokenizer_path=None, max_length=77, truncation=True, return_attention_mask=True, device='cpu'):

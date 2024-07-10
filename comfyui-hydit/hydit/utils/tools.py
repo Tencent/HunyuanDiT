@@ -114,34 +114,77 @@ def model_resume(args, model, ema, logger, len_loader):
     start_epoch = 0
     start_epoch_step = 0
     train_steps = 0
+    resume_path = args.resume
+    if not Path(resume_path).exists():
+        raise FileNotFoundError(f"    Cannot find checkpoint from {resume_path}")
 
-    # Resume model
-    if args.resume:
-        resume_path = args.resume_module_root
-        if not Path(resume_path).exists():
-            raise FileNotFoundError(f"    Cannot find model checkpoint from {resume_path}")
-        logger.info(f"    Resume from checkpoint {resume_path}")
-        resume_ckpt = torch.load(resume_path, map_location=lambda storage, loc: storage)
-        if 'module' in resume_ckpt.keys():
+    logger.info(f"    Resume deepspeed={args.resume_deepspeed}, "
+                f"Resume split={args.resume_split}, "
+                f"Resume from checkpoint {resume_path}")
+    # Resume model and ema states (not include optimizer states) from a checkpoint saved by Deepspeed version of DIT.
+    if args.resume_deepspeed:
+        assert 'mp_rank_00_model_states.pt' in os.listdir(resume_path), f'    Cannot find dp chkpt from {resume_path}'
+        resume_ckpt = torch.load(os.path.join(resume_path, 'mp_rank_00_model_states.pt'),
+                                 map_location=lambda storage, loc: storage)
+        # Resume main model
+        if args.ema_to_module:
+            logger.info("    Resume main model from the ema states.")
+            model.load_state_dict(resume_ckpt['ema'], strict=args.strict)
+        else:
+            logger.info("    Resume main model from the main states.")
             model.load_state_dict(resume_ckpt['module'], strict=args.strict)
+        # Resume EMA model
+        if args.use_ema:
+            if args.module_to_ema:
+                logger.info("    Resume EMA model from the main states.")
+                ema.load_state_dict(resume_ckpt['module'], strict=args.strict)
+            else:
+                logger.info("    Resume EMA model from the EMA states.")
+                ema.load_state_dict(resume_ckpt['ema'], strict=args.strict)
+        if not args.reset_loader:
+            start_epoch, start_epoch_step, train_steps = get_start_epoch(args.resume, resume_ckpt, len_loader)
+    # Resume model and ema states (not include optimizer states) from two checkpoints separated from DeepSpeed ckpt.
+    elif args.resume_split:
+        # Resume main model
+        if args.ema_to_module:
+            assert 'pytorch_model_ema.pt' in os.listdir(
+                resume_path), f'    Cannot find pytorch_model_ema.pt from {resume_path}'
+            logger.info(f"    Resume main model from ema states.")
+            resume_ckpt_ema = torch.load(os.path.join(resume_path, 'pytorch_model_ema.pt'),
+                                         map_location=lambda storage, loc: storage)
+            model.load_state_dict(resume_ckpt_ema, strict=args.strict)
         else:
-            model.load_state_dict(resume_ckpt, strict=args.strict)
-
-    # Resume EMA model
-    if args.use_ema:
-        resume_ema_path = args.resume_ema_root
-        if not Path(resume_ema_path).exists():
-            raise FileNotFoundError(f"    Cannot find ema checkpoint from {resume_ema_path}")
-        logger.info(f"    Resume from ema checkpoint {resume_path}")
-        resume_ema_ckpt = torch.load(resume_ema_path, map_location=lambda storage, loc: storage)
-        if 'ema' in resume_ema_ckpt.keys():
-            ema.load_state_dict(resume_ema_ckpt['ema'], strict=args.strict)
-        elif 'module' in resume_ema_ckpt.keys():
-            ema.load_state_dict(resume_ema_ckpt['module'], strict=args.strict)
-        else:
-            ema.load_state_dict(resume_ema_ckpt, strict=args.strict)
-
-    if not args.reset_loader:
-        start_epoch, start_epoch_step, train_steps = get_start_epoch(args.resume, resume_ckpt, len_loader)
+            assert 'pytorch_model_module.pt' in os.listdir(
+                resume_path), f'    Cannot find pytorch_model_module.pt from {resume_path}'
+            logger.info(f"    Resume main model from main states.")
+            resume_ckpt_module = torch.load(os.path.join(resume_path, 'pytorch_model_module.pt'),
+                                            map_location=lambda storage, loc: storage)
+            model.load_state_dict(resume_ckpt_module, strict=args.strict)
+        # Resume ema model
+        if args.use_ema:
+            if args.module_to_ema:
+                if "resume_ckpt_module" in locals():
+                    logger.info(f"    Resume ema model from main states.")
+                    ema.load_state_dict(resume_ckpt_module, strict=args.strict)
+                else:
+                    assert 'pytorch_model_module.pt' in os.listdir(
+                        resume_path), f'    Cannot find pytorch_model_module.pt from {resume_path}'
+                    logger.info(f"    Resume ema model from module states.")
+                    resume_ckpt_module = torch.load(os.path.join(resume_path, 'pytorch_model_module.pt'),
+                                                    map_location=lambda storage, loc: storage)
+                    ema.load_state_dict(resume_ckpt_module, strict=args.strict)
+            else:
+                if "resume_ckpt_ema" in locals():
+                    logger.info(f"    Resume ema model from EMA states.")
+                    ema.load_state_dict(resume_ckpt_ema, strict=args.strict)
+                else:
+                    assert 'pytorch_model_ema.pt' in os.listdir(
+                        resume_path), f'    Cannot find pytorch_model_ema.pt from {resume_path}'
+                    logger.info(f"    Resume ema model from EMA states.")
+                    resume_ckpt_ema = torch.load(os.path.join(resume_path, 'pytorch_model_ema.pt'),
+                                                 map_location=lambda storage, loc: storage)
+                    ema.load_state_dict(resume_ckpt_ema, strict=args.strict)
+    else:
+        raise ValueError("    “If `resume` is True, then either `resume_split` or `resume_deepspeed` must be true.”")
 
     return model, ema, start_epoch, start_epoch_step, train_steps

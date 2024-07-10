@@ -1,11 +1,11 @@
 
 import argparse
-#import deepspeed
 
 from .constants import *
+from .modules.models import HUNYUAN_DIT_CONFIG, HUNYUAN_DIT_MODELS
 from .diffusion.gaussian_diffusion import ModelVarType
-from .modules.models import HUNYUAN_DIT_CONFIG
 
+#import deepspeed
 
 def model_var_type(value):
     try:
@@ -31,8 +31,7 @@ def get_args(default_args=None):
     parser.add_argument("--image-size", type=int, nargs='+', default=[1024, 1024],
                         help='Image size (h, w). If a single value is provided, the image will be treated to '
                              '(value, value).')
-    parser.add_argument("--qk-norm", action="store_true",
-                        help="Query Key normalization. See http://arxiv.org/abs/2302.05442 for details.")
+    parser.add_argument("--qk-norm", action="store_true", help="Query Key normalization. See http://arxiv.org/abs/2302.05442 for details.")
     parser.set_defaults(qk_norm=True)
     parser.add_argument("--norm", type=str, choices=["rms", "laryer"], default="layer", help="Normalization layer type")
     parser.add_argument("--text-states-dim", type=int, default=1024, help="Hidden size of CLIP text encoder.")
@@ -49,12 +48,8 @@ def get_args(default_args=None):
     parser.add_argument("--output-merge-path", type=str, default=None, help="Output path for merged model")
 
     # controlnet config
-    parser.add_argument("--control-type", type=str, default='canny', choices=['canny', 'depth', 'pose'],
-                        help="Controlnet condition type")
-    parser.add_argument("--control-weight", type=str, default=1.0,
-                        help="Controlnet weight, You can use a float to specify the weight for all layers, "
-                             "or use a list to separately specify the weight for each layer, for example, "
-                             "'[1.0 * (0.825 ** float(19 - i)) for i in range(19)]'")
+    parser.add_argument("--control-type", type=str, default='canny', choices=['canny', 'depth', 'pose'], help="Controlnet condition type")
+    parser.add_argument("--control-weight", type=float, default=1.0, help="Controlnet weight")
     parser.add_argument("--condition-image-path", type=str, default=None, help="Inference condition image path")
 
     # Diffusion
@@ -66,11 +61,10 @@ def get_args(default_args=None):
     parser.add_argument("--noise-schedule", type=str, choices=list(NOISE_SCHEDULES), default="scaled_linear",
                         help="Noise schedule")
     parser.add_argument("--beta-start", type=float, default=0.00085, help="Beta start value")
-    parser.add_argument("--beta-end", type=float, default=0.02, help="Beta end value")
+    parser.add_argument("--beta-end", type=float, default=0.03, help="Beta end value")
     parser.add_argument("--sigma-small", action="store_true")
     parser.add_argument("--mse-loss-weight-type", type=str, default="constant",
-                        help="Min-SNR-gamma. Can be constant or min_snr_<gamma> where gamma is a integer. "
-                             "5 is recommended in the paper.")
+                        help="Min-SNR-gamma. Can be constant or min_snr_<gamma> where gamma is a integer. 5 is recommended in the paper.")
     parser.add_argument("--model-var-type", type=model_var_type, default=None, help="Specify the model variable type.")
     parser.add_argument("--noise-offset", type=float, default=0.0, help="Add extra noise to the input image.")
 
@@ -80,35 +74,20 @@ def get_args(default_args=None):
 
     # Basic Setting
     parser.add_argument("--prompt", type=str, default="一只小猫", help="The prompt for generating images.")
-    parser.add_argument("--model-root", type=str, default="ckpts",
-                        help="Root path of all the models, including t2i model and dialoggen model.")
-    parser.add_argument("--dit-weight", type=str, default=None,
-                        help="Path to the HunYuan-DiT model. If None, search the model in the args.model_root."
-                             "1. If it is a directory, search the model in the directory. Support two types of models: "
-                             "1) named `pytorch_model_*.pt`, where * is specified by the --load-key. "
-                             "2) named `*_model_states.pt`, where * can be `mp_rank_00`. *_model_states.pt contains "
-                             "both 'module' and 'ema' weights. Therefore, you still use --load-key to specify the "
-                             "weights to load. By default, load 'ema' weights. "
-                             "2. If it is a file, load the model directly. In this case, the --load-key is ignored."
-                        )
+    parser.add_argument("--model-root", type=str, default="ckpts", help="Model root path.")
 
     # Model setting
-    parser.add_argument("--load-key", type=str, choices=["ema", "module", "distill", 'merge'], default="ema",
-                        help="Load model key for HunYuanDiT checkpoint.")
-    parser.add_argument('--use-style-cond', action="store_true",
-                        help="Use style condition in hydit. Only for hydit version <= 1.1")
-    parser.add_argument('--size-cond', type=int, nargs='+', default=None,
+    parser.add_argument("--load-key", type=str, choices=["ema", "module", "distill", 'merge'], default="distill", help="Load model key for HunYuanDiT checkpoint.")
+    parser.add_argument('--size-cond', type=int, nargs='+', default=[1024, 1024],
                         help="Size condition used in sampling. 2 values are required for height and width. "
-                             "If a single value is provided, the image will be treated to (value, value)."
-                             "Recommended values are [1024, 1024]. Only for hydit version <= 1.1")
+                             "If a single value is provided, the image will be treated to (value, value).")
     parser.add_argument('--target-ratios', type=str, nargs='+', default=None,
                         help="Target ratios for multi-resolution training.")
     parser.add_argument("--cfg-scale", type=float, default=6.0, help="Guidance scale for classifier-free.")
     parser.add_argument("--negative", type=str, default=None, help="Negative prompt.")
 
     # Acceleration
-    parser.add_argument("--infer-mode", type=str, choices=["fa", "torch", "trt"], default="fa",
-                        help="Inference mode")
+    parser.add_argument("--infer-mode", type=str, choices=["fa", "torch", "trt"], default="torch", help="Inference mode")
     parser.add_argument("--onnx-workdir", type=str, default="onnx_model", help="Path to save ONNX model")
 
     # Sampling
@@ -116,7 +95,7 @@ def get_args(default_args=None):
     parser.add_argument("--infer-steps", type=int, default=100, help="Inference steps")
 
     # Prompt enhancement
-    parser.add_argument("--enhance", action="store_true", help="Enhance prompt with mllm.")
+    parser.add_argument("--enhance", action="store_true", help="Enhance prompt with dialoggen.")
     parser.add_argument("--no-enhance", dest="enhance", action="store_false")
     parser.add_argument("--load-4bit", help="load DialogGen model with 4bit quantization.", action="store_true")
     parser.set_defaults(enhance=True)
@@ -138,10 +117,7 @@ def get_args(default_args=None):
                              ' memory fragments are reclaimed here by invoking the gc.collect() function.')
     parser.add_argument("--log-every", type=int, default=100)
     parser.add_argument("--ckpt-every", type=int, default=100_000, help="Create a ckpt every a few steps.")
-    parser.add_argument("--ckpt-latest-every", type=int, default=10_000,
-                        help="Create a ckpt named `latest.pt` every a few steps.")
-    parser.add_argument("--ckpt-every-n-epoch", type=int, default=0,
-                        help="Create a ckpt every a few epochs. If 0, do not create ckpt based on epoch. Default is 0.")
+    parser.add_argument("--ckpt-latest-every", type=int, default=10_000, help="Create a ckpt named `latest.pt` every a few steps.")
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--global-seed", type=int, default=1234)
     parser.add_argument("--warmup-min-lr", type=float, default=1e-6)
@@ -167,12 +143,10 @@ def get_args(default_args=None):
     parser.set_defaults(strict=True)
 
     # Dataset
-    parser.add_argument("--index-file", type=str, nargs='+', help="During training, provide a JSON file with data "
-                                                                  "indices.")
+    parser.add_argument("--index-file", type=str, nargs='+', help="During training, provide a JSON file with data indices.")
     parser.add_argument("--random-flip", action="store_true", help="Random flip image")
     parser.add_argument("--reset-loader", action="store_true",
-                        help="Reset the data loader. It is useful when resuming from a checkpoint but switch to a new "
-                             "dataset.")
+                        help="Reset the data loader. It is useful when resuming from a checkpoint but switch to a new dataset.")
     parser.add_argument("--multireso", action="store_true", help="Use multi-resolution training.")
     parser.add_argument("--reso-step", type=int, default=None, help="Step size for multi-resolution training.")
 
@@ -197,12 +171,10 @@ def get_args(default_args=None):
     # Acceleration
     parser.add_argument("--use-flash-attn", action="store_true", help="During training, "
                                                                       "flash attention is used to accelerate training.")
-    parser.add_argument("--no-flash-attn", dest="use_flash_attn", action="store_false",
-                        help="During training, flash attention is not used to accelerate training.")
+    parser.add_argument("--no-flash-attn", dest="use_flash_attn",
+                        action="store_false", help="During training, flash attention is not used to accelerate training.")
     parser.add_argument("--use-zero-stage", type=int, default=1, help="Use AngelPTM zero stage. Support 2 and 3")
     parser.add_argument("--grad-accu-steps", type=int, default=1, help="Gradient accumulation steps.")
-    parser.add_argument("--gradient-checkpointing", action="store_true", help="Use gradient checkpointing.")
-    parser.add_argument("--save-optimizer-state", action="store_true", help="Save optimizer state in the checkpoint.")
 
     # ========================================================================================================
     # Deepspeed config
@@ -215,6 +187,7 @@ def get_args(default_args=None):
     parser.add_argument('--remote-device', type=str, default='none', choices=['none', 'cpu', 'nvme'],
                         help='Remote device for ZeRO-3 initialized parameters.')
     parser.add_argument('--zero-stage', type=int, default=1)
+    parser.add_argument("--async-ema", action="store_true", help="Whether to use multi stream to excut EMA.")
 
     args = parser.parse_known_args()
 

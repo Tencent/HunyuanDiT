@@ -135,7 +135,7 @@ def get_args(default_args=None):
 
     # Basic Setting
     parser.add_argument("--lr", type=float, default=1e-4)
-    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--max-training-steps", type=int, default=10_000_000)
     parser.add_argument("--gc-interval", type=int, default=40,
                         help='To address the memory bottleneck encountered during the preprocessing of the dataset,'
