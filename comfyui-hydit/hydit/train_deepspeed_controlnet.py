@@ -139,8 +139,13 @@ def get_pose(np_img):
     return pose_detector(np_img)[0]
 
 @torch.no_grad()
-def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5, freqs_cis_img):
-    image, text_embedding, text_embedding_mask, text_embedding_t5, text_embedding_mask_t5, kwargs = batch
+def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5, freqs_cis_img, use_t5):
+
+    # image, text_embedding, text_embedding_mask, text_embedding_t5, text_embedding_mask_t5, kwargs = batch
+    if use_t5:
+        image, text_embedding, text_embedding_mask, text_embedding_t5, text_embedding_mask_t5, kwargs = batch
+    else:
+        image, text_embedding, text_embedding_mask,  kwargs = batch
 
     # clip & mT5 text embedding
     text_embedding = text_embedding.to(device)
@@ -149,15 +154,16 @@ def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5
         text_embedding.to(device),
         attention_mask=text_embedding_mask.to(device),
     )[0]
-    text_embedding_t5 = text_embedding_t5.to(device).squeeze(1)
-    text_embedding_mask_t5 = text_embedding_mask_t5.to(device).squeeze(1)
-    with torch.no_grad():
-        output_t5 = text_encoder_t5(
-            input_ids=text_embedding_t5,
-            attention_mask=text_embedding_mask_t5 if T5_ENCODER['attention_mask'] else None,
-            output_hidden_states=True
-        )
-        encoder_hidden_states_t5 = output_t5['hidden_states'][T5_ENCODER['layer_index']].detach()
+    if use_t5:
+        text_embedding_t5 = text_embedding_t5.to(device).squeeze(1)
+        text_embedding_mask_t5 = text_embedding_mask_t5.to(device).squeeze(1)
+        with torch.no_grad():
+            output_t5 = text_encoder_t5(
+                input_ids=text_embedding_t5,
+                attention_mask=text_embedding_mask_t5 if T5_ENCODER['attention_mask'] else None,
+                output_hidden_states=True
+            )
+            encoder_hidden_states_t5 = output_t5['hidden_states'][T5_ENCODER['layer_index']].detach()
 
     # additional condition
     image_meta_size = kwargs['image_meta_size'].to(device)
@@ -172,7 +178,7 @@ def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5
         condition = get_pose(np_img)
     else:
         raise NotImplementedError
-    condtion = Image.fromarray(condition)
+    condition = Image.fromarray(condition)
     condition = TF.to_tensor(condition)
     condition = TF.normalize(condition, [0.5], [0.5])
     condition = condition.unsqueeze(0).to(device)
@@ -193,17 +199,27 @@ def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5
     cos_cis_img, sin_cis_img = freqs_cis_img[reso]
 
     # Model conditions
-    model_kwargs = dict(
-        encoder_hidden_states=encoder_hidden_states,
-        text_embedding_mask=text_embedding_mask,
-        encoder_hidden_states_t5=encoder_hidden_states_t5,
-        text_embedding_mask_t5=text_embedding_mask_t5,
-        image_meta_size=image_meta_size,
-        style=style,
-        cos_cis_img=cos_cis_img,
-        sin_cis_img=sin_cis_img,
-        condition=condition,
-    )
+    if use_t5:
+        # Model conditions
+        model_kwargs = dict(
+            encoder_hidden_states=encoder_hidden_states,
+            text_embedding_mask=text_embedding_mask,
+            encoder_hidden_states_t5=encoder_hidden_states_t5,
+            text_embedding_mask_t5=text_embedding_mask_t5,
+            image_meta_size=image_meta_size,
+            style=style,
+            cos_cis_img=cos_cis_img,
+            sin_cis_img=sin_cis_img,
+        )
+    else:
+        model_kwargs = dict(
+            encoder_hidden_states=encoder_hidden_states,
+            text_embedding_mask=text_embedding_mask,
+            image_meta_size=image_meta_size,
+            style=style,
+            cos_cis_img=cos_cis_img,
+            sin_cis_img=sin_cis_img,
+        )
 
     return latents, model_kwargs
 
@@ -215,6 +231,7 @@ def main(args):
     assert torch.cuda.is_available(), "Training currently requires at least one GPU."
 
     dist.init_process_group("nccl")
+    use_t5 = args.use_t5  # new add
     world_size = dist.get_world_size()
     batch_size = args.batch_size
     grad_accu_steps = args.grad_accu_steps
@@ -334,22 +351,25 @@ def main(args):
     # Setup BERT tokenizer:
     logger.info(f"    Loading Bert tokenizer from {TOKENIZER}")
     tokenizer = BertTokenizer.from_pretrained(TOKENIZER)
-    # Setup T5 text encoder
-    from hydit.modules.text_encoder import MT5Embedder
-    mt5_path = T5_ENCODER['MT5']
-    embedder_t5 = MT5Embedder(mt5_path, torch_dtype=T5_ENCODER['torch_dtype'], max_length=args.text_len_t5)
-    tokenizer_t5 = embedder_t5.tokenizer
-    text_encoder_t5 = embedder_t5.model
+    if use_t5:
+        # Setup T5 text encoder
+        from hydit.modules.text_encoder import MT5Embedder
+        mt5_path = T5_ENCODER['MT5']
+        embedder_t5 = MT5Embedder(mt5_path, torch_dtype=T5_ENCODER['torch_dtype'], max_length=args.text_len_t5)
+        tokenizer_t5 = embedder_t5.tokenizer
+        text_encoder_t5 = embedder_t5.model
 
     if args.extra_fp16:
         logger.info(f"    Using fp16 for extra modules: vae, text_encoder")
         vae = vae.half().to(device)
         text_encoder = text_encoder.half().to(device)
-        text_encoder_t5 = text_encoder_t5.half().to(device)
+        if use_t5:
+            text_encoder_t5 = text_encoder_t5.half().to(device)
     else:
         vae = vae.to(device)
         text_encoder = text_encoder.to(device)
-        text_encoder_t5 = text_encoder_t5.to(device)
+        if use_t5:
+            text_encoder_t5 = text_encoder_t5.to(device)
 
     logger.info(f"    Optimizer parameters: lr={args.lr}, weight_decay={args.weight_decay}")
     logger.info("    Using deepspeed optimizer")
@@ -362,23 +382,40 @@ def main(args):
     logger.info(f"Building Streaming Dataset.")
     logger.info(f"    Loading index file {args.index_file} (v2)")
 
-    dataset = TextImageArrowStream(args=args,
-                                   resolution=image_size[0],
-                                   random_flip=args.random_flip,
-                                   log_fn=logger.info,
-                                   index_file=args.index_file,
-                                   multireso=args.multireso,
-                                   batch_size=batch_size,
-                                   world_size=world_size,
-                                   random_shrink_size_cond=args.random_shrink_size_cond,
-                                   merge_src_cond=args.merge_src_cond,
-                                   uncond_p=args.uncond_p,
-                                   text_ctx_len=args.text_len,
-                                   tokenizer=tokenizer,
-                                   uncond_p_t5=args.uncond_p_t5,
-                                   text_ctx_len_t5=args.text_len_t5,
-                                   tokenizer_t5=tokenizer_t5,
-                                   )
+    if use_t5:
+        dataset = TextImageArrowStream(args=args,
+                                       resolution=image_size[0],
+                                       random_flip=args.random_flip,
+                                       log_fn=logger.info,
+                                       index_file=args.index_file,
+                                       multireso=args.multireso,
+                                       batch_size=batch_size,
+                                       world_size=world_size,
+                                       random_shrink_size_cond=args.random_shrink_size_cond,
+                                       merge_src_cond=args.merge_src_cond,
+                                       uncond_p=args.uncond_p,
+                                       text_ctx_len=args.text_len,
+                                       tokenizer=tokenizer,
+                                       uncond_p_t5=args.uncond_p_t5,
+                                       text_ctx_len_t5=args.text_len_t5,
+                                       tokenizer_t5=tokenizer_t5,
+                                       use_t5=use_t5
+                                       )
+    else:
+        dataset = TextImageArrowStream(args=args,
+                                       resolution=image_size[0],
+                                       random_flip=args.random_flip,
+                                       log_fn=logger.info,
+                                       index_file=args.index_file,
+                                       multireso=args.multireso,
+                                       batch_size=batch_size,
+                                       world_size=world_size,
+                                       random_shrink_size_cond=args.random_shrink_size_cond,
+                                       merge_src_cond=args.merge_src_cond,
+                                       uncond_p=args.uncond_p,
+                                       text_ctx_len=args.text_len,
+                                       tokenizer=tokenizer
+                                       )
     if args.multireso:
         sampler = BlockDistributedSampler(dataset, num_replicas=world_size, rank=rank, seed=args.global_seed,
                                           shuffle=False, drop_last=True, batch_size=batch_size)
@@ -512,8 +549,17 @@ def main(args):
         for batch in loader:
             step += 1
 
-            latents, model_kwargs = prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5, freqs_cis_img)
-
+            # latents, model_kwargs = prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5, freqs_cis_img)
+            if use_t5:
+                latents, model_kwargs = prepare_model_inputs(args=args, batch=batch, device=device, vae=vae,
+                                                             text_encoder=text_encoder,
+                                                             text_encoder_t5=text_encoder_t5,
+                                                             freqs_cis_img=freqs_cis_img, use_t5=use_t5)
+            else:
+                latents, model_kwargs = prepare_model_inputs(args=args, batch=batch, device=device, vae=vae,
+                                                             text_encoder=text_encoder,
+                                                             text_encoder_t5=None,
+                                                             freqs_cis_img=freqs_cis_img)
             # training model by deepspeed while use fp16
             if args.use_fp16:
                 if args.use_ema and args.async_ema:
