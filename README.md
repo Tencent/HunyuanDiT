@@ -107,6 +107,7 @@ or multi-turn language interactions to create the picture.
   - [📜 Requirements](#-requirements)
   - [🛠️ Dependencies and Installation](#️-dependencies-and-installation)
     - [Installation Guide for Linux](#installation-guide-for-linux)
+  - [🧱 Download Pretrained Models](#-download-pretrained-models)
         - [1. Using HF-Mirror](#1-using-hf-mirror)
         - [2. Resume Download](#2-resume-download)
   - [:truck: Training](#truck-training)
@@ -121,6 +122,7 @@ or multi-turn language interactions to create the picture.
     - [More Configurations](#more-configurations)
     - [Using ComfyUI](#using-comfyui)
     - [Using Kohya](#using-kohya)
+    - [Using Previous versions](#using-previous-versions)
   - [:building\_construction: Adapter](#building_construction-adapter)
     - [ControlNet](#controlnet)
   - [:art: Hunyuan-Captioner](#art-hunyuan-captioner)
@@ -420,11 +422,13 @@ All models will be automatically downloaded. For more information about the mode
 
 ### Full-parameter Training
   
-  **Requirement:** Two GPUs (each with >27GB GPU memory) are required for full-parameter training. (Single GPU with 80GB 
-  GPU memory should be also OK.) 
-  **Notice:** We are working on supporting full-parameter training with a single GPU with <=16GB GPU memory.
+  **Requirement:** The minimum requriment is a single GPU with at least 20GB memory, but we recommend to use a GPU with about 30 GB memory to avoid host memory offloading. 
+  Additionally, we encourage users to leverage the multiple GPUs across different nodes to speed up training on large datasets. 
+  **Notice:**
+   (1)Personal users can also use the light-weight Kohya to finetune the model with about 16 GB memory. Currently, we are trying to further reduce the memory usage of our industry-level framework for personal users. 
+   (2) If you have enough GPU memory, please try to remove  --cpu-offloading or --gradient-checkpointing for less time costs.
 
-  To leverage DeepSpeed in training, you have the flexibility to control **single-node** / **multi-node** training by adjusting parameters such as `--hostfile` and `--master_addr`. For more details, see [link](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node).
+  Specifically for distributed training, you have the flexibility to control **single-node** / **multi-node** training by adjusting parameters such as `--hostfile` and `--master_addr`. For more details, see [link](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node).
 
   ```shell
   # Single Resolution Training
