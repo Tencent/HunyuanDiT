@@ -1,18 +1,7 @@
-import os
 import argparse
 import importlib.util
+import os
 
-from .constants import *
-from .modules.models import HUNYUAN_DIT_CONFIG, HUNYUAN_DIT_MODELS
-from .diffusion.gaussian_diffusion import ModelVarType
-
-import deepspeed
-
-def model_var_type(value):
-    try:
-        return ModelVarType[value]
-    except KeyError:
-        raise ValueError(f"Invalid choice '{value}', valid choices are {[v.name for v in ModelVarType]}")
 
 def load_config(training_type):
     config_path = "./hydit/config/train_config.py" if training_type == 'full' \
@@ -22,7 +11,6 @@ def load_config(training_type):
     config = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(config)
     return config.train_config
-
 
 def merge_args_with_config(args, config, parser):
     def is_default_or_none_value(parser, key, value):
@@ -34,13 +22,12 @@ def merge_args_with_config(args, config, parser):
     for key, value in config.items():
         if isinstance(value, dict):
             for sub_key, sub_value in value.items():
-                if is_default_or_none_value(parser, sub_key, getattr(args, key, None)):
+                if is_default_or_none_value(parser, sub_key, getattr(args, sub_key, None)):
                     setattr(args, sub_key, sub_value)
         else:
             if is_default_or_none_value(parser, key, getattr(args, key, None)):
                 setattr(args, key, value)
     return args
-
 
 def get_args(default_args=None):
     parser = argparse.ArgumentParser()
@@ -55,7 +42,7 @@ def get_args(default_args=None):
     parser.add_argument("--extra-fp16", action="store_true", help="Use extra fp16 for vae and text_encoder.")
 
     # HunYuan-DiT
-    parser.add_argument("--model", type=str, choices=list(HUNYUAN_DIT_CONFIG.keys()), default='DiT-g/2')
+    parser.add_argument("--model", type=str, choices=["DiT-g/2", "DiT-XL/2"], default='DiT-g/2')
     parser.add_argument("--image-size", type=int, nargs='+', default=[1024, 1024],
                         help='Image size (h, w). If a single value is provided, the image will be treated to '
                              '(value, value).')
@@ -84,16 +71,16 @@ def get_args(default_args=None):
     parser.add_argument("--learn-sigma", action="store_true", help="Learn extra channels for sigma.")
     parser.add_argument("--no-learn-sigma", dest="learn_sigma", action="store_false")
     parser.set_defaults(learn_sigma=True)
-    parser.add_argument("--predict-type", type=str, choices=list(PREDICT_TYPE), default="v_prediction",
+    parser.add_argument("--predict-type", type=str, choices=["epsilon", "sample", "v_prediction"], default="v_prediction",
                         help="Diffusion predict type")
-    parser.add_argument("--noise-schedule", type=str, choices=list(NOISE_SCHEDULES), default="scaled_linear",
+    parser.add_argument("--noise-schedule", type=str, choices=["linear", "scaled_linear", "squaredcos_cap_v2"], default="scaled_linear",
                         help="Noise schedule")
     parser.add_argument("--beta-start", type=float, default=0.00085, help="Beta start value")
     parser.add_argument("--beta-end", type=float, default=0.03, help="Beta end value")
     parser.add_argument("--sigma-small", action="store_true")
     parser.add_argument("--mse-loss-weight-type", type=str, default="constant",
                         help="Min-SNR-gamma. Can be constant or min_snr_<gamma> where gamma is a integer. 5 is recommended in the paper.")
-    parser.add_argument("--model-var-type", type=model_var_type, default=None, help="Specify the model variable type.")
+    parser.add_argument("--model-var-type", type=str, default=None, help="Specify the model variable type.")
     parser.add_argument("--noise-offset", type=float, default=0.0, help="Add extra noise to the input image.")
 
     # ========================================================================================================
@@ -119,7 +106,7 @@ def get_args(default_args=None):
     parser.add_argument("--onnx-workdir", type=str, default="onnx_model", help="Path to save ONNX model")
 
     # Sampling
-    parser.add_argument("--sampler", type=str, choices=SAMPLER_FACTORY, default="ddpm", help="Diffusion sampler")
+    #parser.add_argument("--sampler", type=str, choices=SAMPLER_FACTORY, default="ddpm", help="Diffusion sampler")
     parser.add_argument("--infer-steps", type=int, default=100, help="Inference steps")
 
     # Prompt enhancement
@@ -213,7 +200,7 @@ def get_args(default_args=None):
     # ========================================================================================================
     # Deepspeed config
     # ========================================================================================================
-    parser = deepspeed.add_config_arguments(parser)
+    # parser = deepspeed.add_config_arguments(parser)
     parser.add_argument('--local_rank', type=int, default=None,
                         help='local rank passed from distributed launcher.')
     parser.add_argument('--deepspeed-optimizer', action='store_true',
@@ -231,3 +218,9 @@ def get_args(default_args=None):
     args = merge_args_with_config(args, config, parser)
 
     return args
+
+
+if __name__ == '__main__':
+    args = get_args()
+    for arg in vars(args):
+        print(arg, getattr(args, arg))
