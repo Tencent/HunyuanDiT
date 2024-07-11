@@ -1,4 +1,6 @@
+import os
 import argparse
+import importlib.util
 
 from .constants import *
 from .modules.models import HUNYUAN_DIT_CONFIG, HUNYUAN_DIT_MODELS
@@ -11,6 +13,33 @@ def model_var_type(value):
         return ModelVarType[value]
     except KeyError:
         raise ValueError(f"Invalid choice '{value}', valid choices are {[v.name for v in ModelVarType]}")
+
+def load_config(training_type):
+    config_path = "./hydit/config/train_config.py" if training_type == 'full' \
+        else f"./hydit/config/train_{training_type}_config.py"
+    config_path = os.path.normpath(config_path)
+    spec = importlib.util.spec_from_file_location("train_config", config_path)
+    config = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config)
+    return config.train_config
+
+
+def merge_args_with_config(args, config, parser):
+    def is_default_or_none_value(parser, key, value):
+        for action in parser._actions:
+            if action.dest == key:
+                return value is None or action.default == value
+        return False
+
+    for key, value in config.items():
+        if isinstance(value, dict):
+            for sub_key, sub_value in value.items():
+                if is_default_or_none_value(parser, sub_key, getattr(args, key, None)):
+                    setattr(args, sub_key, sub_value)
+        else:
+            if is_default_or_none_value(parser, key, getattr(args, key, None)):
+                setattr(args, key, value)
+    return args
 
 
 def get_args(default_args=None):
@@ -32,7 +61,7 @@ def get_args(default_args=None):
                              '(value, value).')
     parser.add_argument("--qk-norm", action="store_true", help="Query Key normalization. See http://arxiv.org/abs/2302.05442 for details.")
     parser.set_defaults(qk_norm=True)
-    parser.add_argument("--norm", type=str, choices=["rms", "laryer"], default="layer", help="Normalization layer type")
+    parser.add_argument("--norm", type=str, choices=["rms", "layer"], default="layer", help="Normalization layer type")
     parser.add_argument("--text-states-dim", type=int, default=1024, help="Hidden size of CLIP text encoder.")
     parser.add_argument("--text-len", type=int, default=77, help="Token length of CLIP text encoder output.")
     parser.add_argument("--text-states-dim-t5", type=int, default=2048, help="Hidden size of CLIP text encoder.")
@@ -194,6 +223,11 @@ def get_args(default_args=None):
     parser.add_argument('--zero-stage', type=int, default=1)
     parser.add_argument("--async-ema", action="store_true", help="Whether to use multi stream to excut EMA.")
 
+    parser.add_argument("--training-type", type=str, required=True, default='full', choices=['full', 'controlnet', 'lora'],
+                        help="Specify the type of training")
     args = parser.parse_args(default_args)
+
+    config = load_config(args.training_type)
+    args = merge_args_with_config(args, config, parser)
 
     return args
