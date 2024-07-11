@@ -33,7 +33,6 @@ sh $(dirname "$0")/run_g.sh \
     --extra-fp16 \
     --results-dir ${results_dir} \
     --resume \
-    --use-ema \
     --resume-module-root ${resume_module_root} \
     --resume-ema-root ${resume_ema_root} \
     --epochs ${epochs} \
@@ -44,4 +43,5 @@ sh $(dirname "$0")/run_g.sh \
     --deepspeed \
     --use-zero-stage 2 \
     --gradient-checkpointing \
+    --cpu-offloading \
     "$@"

@@ -45,7 +45,10 @@ def deepspeed_config_from_args(args, global_batch_size):
 
             "wall_clock_breakdown": False
         }
-
+        if args.cpu_offloading == True:
+            deepspeed_config["zero_optimization"]["offload_optimizer"] = {"device": "cpu", "pin_memory": True}
+            deepspeed_config["zero_optimization"]["offload_parameter"] = {"device": "cpu", "pin_memory": True}
+            
     elif args.use_zero_stage == 3:
         deepspeed_config = {
             "train_batch_size": args.global_batch_size,
@@ -87,14 +90,6 @@ def deepspeed_config_from_args(args, global_batch_size):
                 "is_communication_time_profiling": False,
                 "save_large_model_multi_slice": True,
                 "use_fused_op_with_grad_norm_overflow": False,
-                "offload_optimizer": {
-                    "device": "cpu",
-                    "pin_memory": True
-                },
-                "offload_param": {
-                    "device": "cpu",
-                    "pin_memory": True
-                }
             },
 
             "gradient_clipping": 1.0,
@@ -133,8 +128,13 @@ def deepspeed_config_from_args(args, global_batch_size):
                 }
             }
         }
+        if args.cpu_offloading == True:
+            deepspeed_config["zero_optimization"]["offload_optimizer"] = {"device": "cpu", "pin_memory": True}
+            deepspeed_config["zero_optimization"]["offload_parameter"] = {"device": "cpu", "pin_memory": True}
+    
     else:
         raise ValueError
+    
     return deepspeed_config
 
 

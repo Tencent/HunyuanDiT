@@ -205,6 +205,7 @@ def get_args(default_args=None):
     parser.add_argument("--use-zero-stage", type=int, default=1, help="Use AngelPTM zero stage. Support 2 and 3")
     parser.add_argument("--grad-accu-steps", type=int, default=1, help="Gradient accumulation steps.")
     parser.add_argument("--gradient-checkpointing", action="store_true", help="Use gradient checkpointing.")
+    parser.add_argument("--cpu-offloading", action="store_true", help="Use cpu offloading for parameters and optimizer states.")
     parser.add_argument("--save-optimizer-state", action="store_true", help="Save optimizer state in the checkpoint.")
 
     # ========================================================================================================
