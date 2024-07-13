@@ -64,7 +64,7 @@ class CLIP:
     def tokenize_t5(self, text):
         return self.tokenizer_t5.tokenize(text)
 
-    def encode_from_tokens(self, tokens, return_pooled=False):
+    def encode_from_tokens(self, tokens, return_pooled=False, return_dict=False):
         attention_mask = tokens['attention_mask'].to(self.device)
         with torch.no_grad():
             prompt_embeds = self.cond_stage_model(
@@ -86,6 +86,10 @@ class CLIP:
                 "t5_attention_mask": t5_attention_mask.float()
             }
         prompt_embeds.addit_embeds = addit_embeds
+
+        if return_dict:
+            out = {"cond": prompt_embeds, "pooled_output": None}
+            return out
 
         if return_pooled:
             return prompt_embeds, None
