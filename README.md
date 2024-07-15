@@ -25,7 +25,9 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 > [**DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857) <br>
 
 ## 🔥🔥🔥 News!!
+* Jul 15, 2024: 🚀 HunYuanDiT and Shakker.Ai have jointly launched a fine-tuning event based on the HunYuanDiT 1.2 model. By publishing a lora or fine-tuned model based on HunYuanDiT, you can earn up to $230 bonus from Shakker.Ai. See [Shakker.Ai](https://www.shakker.ai/activitys/shaker-the-world-hunyuan) for more details.
 * Jul 15, 2024: :tada: Update ComfyUI to support standardized workflows and compatibility with weights from t2i module and Lora training for versions 1.1/1.2, as well as those trained by Kohya or the official script. See [ComfyUI](./comfyui-hydit) for details.
+* Jul 15, 2024: :zap: We offer Docker environments for CUDA 11/12, allowing you to bypass complex installations and play with a single click! See [dockers](#installation-guide-for-linux) for details. 
 * Jul 08, 2024: :tada: HYDiT-v1.2 version is released. Please check [HunyuanDiT-v1.2](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2) and [Distillation-v1.2](https://huggingface.co/Tencent-Hunyuan/Distillation-v1.2) for more details.
 * Jul 03, 2024: :tada: Kohya-hydit version now available for v1.1 and v1.2 models, with GUI for inference. Official Kohya version is under review. See [kohya](./kohya_ss-hydit) for details.
 * Jun 27, 2024: :art: Hunyuan-Captioner is released, providing fine-grained caption for training data. See [mllm](./mllm) for details.
@@ -423,11 +425,13 @@ All models will be automatically downloaded. For more information about the mode
 
 ### Full-parameter Training
   
-  **Requirement:** The minimum requriment is a single GPU with at least 20GB memory, but we recommend to use a GPU with about 30 GB memory to avoid host memory offloading. 
-  Additionally, we encourage users to leverage the multiple GPUs across different nodes to speed up training on large datasets. 
+  **Requirement:** 
+  1. The minimum requriment is a single GPU with at least 20GB memory, but we recommend to use a GPU with about 30 GB memory to avoid host memory offloading. 
+  2. Additionally, we encourage users to leverage the multiple GPUs across different nodes to speed up training on large datasets. 
+  
   **Notice:**
-   (1)Personal users can also use the light-weight Kohya to finetune the model with about 16 GB memory. Currently, we are trying to further reduce the memory usage of our industry-level framework for personal users. 
-   (2) If you have enough GPU memory, please try to remove  --cpu-offloading or --gradient-checkpointing for less time costs.
+  1. Personal users can also use the light-weight Kohya to finetune the model with about 16 GB memory. Currently, we are trying to further reduce the memory usage of our industry-level framework for personal users. 
+  2. If you have enough GPU memory, please try to remove  `--cpu-offloading` or `--gradient-checkpointing` for less time costs.
 
   Specifically for distributed training, you have the flexibility to control **single-node** / **multi-node** training by adjusting parameters such as `--hostfile` and `--master_addr`. For more details, see [link](https://www.deepspeed.ai/getting-started/#resource-configuration-multi-node).
 
@@ -660,60 +664,9 @@ More details can be found in [./comfyui-hydit](comfyui-hydit/README.md)
 
 ### Using Kohya
 
-We provide several commands to quick start LoRA Training and DreamBooth Training with Kohya: 
-
-```shell
-# Download kohya_ss GUI
-git clone https://github.com/bmaltais/kohya_ss.git
-cd kohya_ss/
-
-# Download sd-scripts training backend, use dev branch
-git clone -b dev https://github.com/kohya-ss/sd-scripts ./sd-scripts
-
-# Move the costom GUI codes to the kohya_ss GUI, and replace files with the same name
-cp -Rf ${HunyuanDiT}/kohya_ss-hydit/* ./
-
-# Download model weights as before or link the existing model folder to kohya_ss/models.
-python -m pip install "huggingface_hub[cli]"
-# If you want to download the full model, use the following command
-huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.1 --local-dir ./models/HunyuanDiT-V1.1
-huggingface-cli download Tencent-Hunyuan/HunyuanDiT-V1.2 --local-dir ./models/HunyuanDiT-V1.2
-# Or, if you want to download the fp16 pruned model
-huggingface-cli download KBlueLeaf/HunYuanDiT-V1.1-fp16-pruned --local-dir ./models/HunyuanDiT-V1.1-fp16-pruned
-
-# After the model is downloaded, you may need to modify the file name an make sure it follows the kohya standard format:
-# rename the file name in t2i/ folder as shown below:
-# HunyuanDiT-V1.2/t2i/
-#  - model/                  -> denoiser/
-#  - clip_text_encoder/      -> clip/
-#  - mt5/                    -> mt5/
-#  - sdxl-vae-fp16-fix/      -> vae/
-# Also you may need to move tokenizer/* into clip/ folder
-mv HunyuanDiT-V1.2/t2i/model/ HunyuanDiT-V1.2/t2i/denoiser/
-mv HunyuanDiT-V1.2/t2i/clip_text_encoder/ HunyuanDiT-V1.2/t2i/clip/
-mv HunyuanDiT-V1.2/t2i/mt5/ HunyuanDiT-V1.2/t2i/mt5/
-mv HunyuanDiT-V1.2/t2i/sdxl-vae-fp16-fix/ HunyuanDiT-V1.2/t2i/vae/
-mv HunyuanDiT-V1.2/t2i/tokenizer/* HunyuanDiT-V1.2/t2i/clip/ 
-
-# Install some essential python Package, 
-conda create -n hydit-kohya python=3.10.12
-conda activate hydit-kohya
-
-# Install some essential packages, please make sure cuda environment is installed and python version is 3.10
-# For cuda 12:
-pip install torch==2.1.2 torchvision==0.16.2 xformers==0.0.23.post1
-# For cuda 11:
-pip install torch==2.1.2+cu118 torchvision==0.16.2+cu118 xformers==0.0.23.post1+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
-# For cpu offloading to save GPU memory, we recommend to install Deepspeed as follows:
-DS_BUILD_CPU_ADAM=1 pip install deepspeed==0.14.1
-
-# Install other python package
-pip install -r hunyuan_requirements.txt
-
-# Run the Kohya_ss UI launch command
-python kohya_gui.py
-```
-More details can be found in [Kohya_ss README](kohya_ss-hydit/README.md)
+We support custom codes for kohya_ss GUI, and sd-scripts training codes for HunyuanDiT.
+![dreambooth](kohya_ss-hydit/img/dreambooth.png)
+More details can be found in [./kohya_ss-hydit](kohya_ss-hydit/README.md)
 
 ### Using Previous versions
 

@@ -77,62 +77,64 @@ python main.py --listen --port 80
 
 ### Standard workflow (Recommended)
 
-1. Preparing Model Weights
+1. Preparing Model Weights 
 
-Use the command below to download the file to the specified folder. If already downloaded, create a symbolic link to that folder.
-```shell
-# clip encoder
-wget -O ${ComfyUI}/models/clip/pytorch_model.bin https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2/blob/main/t2i/clip_text_encoder/pytorch_model.bin
-# mt5
-mkdir ${ComfyUI}/models/t5
-wget -O ${ComfyUI}/models/t5/pytorch_model.bin https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2/blob/main/t2i/mt5/pytorch_model.bin
-# vae
-wget -O ${ComfyUI}/models/vae/diffusion_pytorch_model.bin https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2/blob/main/t2i/sdxl-vae-fp16-fix/diffusion_pytorch_model.bin
-# base model
-wget -O ${ComfyUI}/models/checkpoints/pytorch_model_ema.pt https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2/blob/main/t2i/model/pytorch_model_ema.pt
-```
-Put module weights trained through Kohya or the official script in `${ComfyUI}/models/checkpoints/` to switch model weights in ComfyUI.
+    Download the file to the specified folder using the command below. For additional download links, visit [doc](https://github.com/Tencent/HunyuanDiT?tab=readme-ov-file#-download-pretrained-models). 
+    ```shell
+    # (Optional) download pretrain-weight
+    huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.2 --local-dir ${HunyuanDiT}/ckpts
+    # clip
+    ln -s ${HunyuanDiT}/ckpts/t2i/clip_text_encoder/pytorch_model.bin ${ComfyUI}/models/clip/pytorch_model.bin
+    # mt5
+    mkdir ${ComfyUI}/models/t5
+    ln -s ${HunyuanDiT}/ckpts/t2i/mt5/pytorch_model.bin ${ComfyUI}/models/t5/pytorch_model.bin
+    # vae
+    ln -s ${HunyuanDiT}/ckpts/t2i/sdxl-vae-fp16-fix/diffusion_pytorch_model.bin ${ComfyUI}/models/vae/diffusion_pytorch_model.bin
+    # base model
+    huggingface-cli download Tencent-Hunyuan/Distillation-v1.2 pytorch_model_distill.pt --local-dir ${ComfyUI}/models/checkpoints/
+    ```
+    Put module weights trained through Kohya or the official script in `${ComfyUI}/models/checkpoints/` to switch model weights in ComfyUI.
 
 2. Preparing LoRa Weights
 
-```shell
-# Put LoRa weights trained by Kohya in ComfyUI/models/loras
-cp ${HunyuanDiT}/kohya_ss/outputs/last-step{xxxx}.safetensors ${ComfyUI}/models/loras
-
-# (Optional) Put LoRa weights trained by official scripts in ComfyUI/models/loras
-python convert_hunyuan_to_coimfyui_lora.py \
-      --lora_path ${HunyuanDiT}/log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0000100.pt/adapter_model.safetensors \
-      --save_lora_path ${ComfyUI}/models/loras/adapter_model_convert.safetensors
-
-# update the `lora.py` file
-cp ${ComfyUI}/custom_nodes/comfyui-hydit/lora.py ${ComfyUI}/comfy/lora.py
-```
+    ```shell
+    # Put LoRa weights trained by Kohya in ComfyUI/models/loras
+    cp ${HunyuanDiT}/kohya_ss/outputs/last-step{xxxx}.safetensors ${ComfyUI}/models/loras
+    
+    # (Optional) Put LoRa weights trained by official scripts in ComfyUI/models/loras
+    python custom_nodes/comfyui-hydit/convert_hunyuan_to_comfyui_lora.py \
+          --lora_path ${HunyuanDiT}/log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0000100.pt/adapter_model.safetensors \
+          --save_lora_path ${ComfyUI}/models/loras/adapter_model_convert.safetensors
+    
+    # update the `lora.py` file
+    cp ${ComfyUI}/custom_nodes/comfyui-hydit/lora.py ${ComfyUI}/comfy/lora.py
+    ```
 
 ### Diffusers Wrapper
 1. Preparing Model Weights
 
-```shell
-python -m pip install "huggingface_hub[cli]"
-mkdir models/hunyuan
-huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.2 --local-dir ./models/hunyuan/ckpts
-huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.2 t2i/model/pytorch_model_ema.pt --local-dir ./models/hunyuan/ckpts/t2i/model
-```
+    ```shell
+    python -m pip install "huggingface_hub[cli]"
+    mkdir models/hunyuan
+    huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.2 --local-dir ./models/hunyuan/ckpts
+    huggingface-cli download Tencent-Hunyuan/HunyuanDiT-v1.2 t2i/model/pytorch_model_ema.pt --local-dir ./models/hunyuan/ckpts/t2i/model
+    ```
 
 2. Preparing LoRa Weights
 
-```shell
-# Put LoRa weights trained by Kohya in ComfyUI/models/loras
-cp ${HunyuanDiT}/kohya_ss/outputs/adapter_model.safetensors ${ComfyUI}/models/loras
-
-# (Optional) Put LoRa weights trained by official scripts in ComfyUI/models/loras
-# The PEFT diffuser format needs to be converted into the standard ComfyUI format
-python convert_hunyuan_to_coimfyui_lora.py \
-      --lora_path ${HunyuanDiT}/log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0000100.pt/adapter_model.safetensors \
-      --save_lora_path ${ComfyUI}/models/loras/adapter_model_convert.safetensors
-
-# update the `lora.py` file
-cp ${ComfyUI}/custom_nodes/comfyui-hydit/lora.py ${ComfyUI}/comfy/lora.py
-```
+    ```shell
+    # Put LoRa weights trained by Kohya in ComfyUI/models/loras
+    cp ${HunyuanDiT}/kohya_ss/outputs/adapter_model.safetensors ${ComfyUI}/models/loras
+    
+    # (Optional) Put LoRa weights trained by official scripts in ComfyUI/models/loras
+    # The PEFT diffuser format needs to be converted into the standard ComfyUI format
+    python custom_nodes/comfyui-hydit/convert_hunyuan_to_comfyui_lora.py \
+          --lora_path ${HunyuanDiT}/log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0000100.pt/adapter_model.safetensors \
+          --save_lora_path ${ComfyUI}/models/loras/adapter_model_convert.safetensors
+    
+    # update the `lora.py` file
+    cp ${ComfyUI}/custom_nodes/comfyui-hydit/lora.py ${ComfyUI}/comfy/lora.py
+    ```
 
 ## Custom Node
 Below I'm trying to document all the nodes, thanks for some good work[[1]](#1)[[2]](#2).
