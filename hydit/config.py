@@ -114,6 +114,8 @@ def get_args(default_args=None):
     parser.add_argument("--infer-mode", type=str, choices=["fa", "torch", "trt"], default="fa",
                         help="Inference mode")
     parser.add_argument("--onnx-workdir", type=str, default="onnx_model", help="Path to save ONNX model")
+    parser.add_argument("--plugin-tag", type=str, default="others", choices=["others", "hopper"], help="Plugin architecture tag for choosing plugin package")
+
 
     # Sampling
     parser.add_argument("--sampler", type=str, choices=SAMPLER_FACTORY, default="ddpm", help="Diffusion sampler")

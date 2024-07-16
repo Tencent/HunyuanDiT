@@ -18,6 +18,20 @@ else
   export MODEL_ROOT=$(cd "$1"; pwd)
 fi
 
+if [ $# -ge 2 ]; then 
+    PLUGIN_SUFFIX="$2"
+else
+    PLUGIN_SUFFIX=""
+fi
+PLUGIN_PATH=${MODEL_ROOT}/t2i/model_trt/fmha_plugins/9.2_plugin_cuda11/fMHAPlugin${PLUGIN_SUFFIX}.so
+
+if [ -e "$PLUGIN_PATH" ]; then
+    echo "Plugin exists."
+else
+    echo "Invalid PLUGIN_SUFFIX or MODEL_ROOT"
+    exit 1
+fi
+
 export ONNX_WORKDIR=${MODEL_ROOT}/onnx_model
 echo "MODEL_ROOT=${MODEL_ROOT}"
 echo "ONNX_WORKDIR=${ONNX_WORKDIR}"
@@ -55,7 +69,7 @@ echo "Building TensorRT engine..."
 ENGINE_DIR="${MODEL_ROOT}/t2i/model_trt/engine"
 mkdir -p ${ENGINE_DIR}
 ENGINE_PATH=${ENGINE_DIR}/model_onnx.plan
-PLUGIN_PATH=${MODEL_ROOT}/t2i/model_trt/fmha_plugins/9.2_plugin_cuda11/fMHAPlugin.so
+
 
 trtexec \
   --onnx=${ONNX_WORKDIR}/export_modified_fmha/model.onnx \
