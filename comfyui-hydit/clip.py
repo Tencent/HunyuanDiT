@@ -96,6 +96,10 @@ class CLIP:
             }
         prompt_embeds.addit_embeds = addit_embeds
 
+        if return_dict:
+            out = {"cond": prompt_embeds, "pooled_output": None}
+            return out
+
         if return_pooled:
             return prompt_embeds, None
         else:
