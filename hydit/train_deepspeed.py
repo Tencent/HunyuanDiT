@@ -6,34 +6,30 @@ import sys
 import time
 from functools import partial
 from glob import glob
-from pathlib import Path
-import numpy as np
 
 import deepspeed
+import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torch.distributed as dist
-from torch.utils.data import DataLoader
-from torch.distributed.optim import ZeroRedundancyOptimizer
-from torchvision.transforms import functional as TF
 from diffusers.models import AutoencoderKL
+from peft import LoraConfig, get_peft_model
+from torch.utils.data import DataLoader
 from transformers import BertModel, BertTokenizer, logging as tf_logging
 
+from IndexKits.index_kits import ResolutionGroup
+from IndexKits.index_kits.sampler import DistributedSamplerWithStartIndex, BlockDistributedSampler
 from hydit.config import get_args
 from hydit.constants import VAE_EMA_PATH, TEXT_ENCODER, TOKENIZER, T5_ENCODER
-from hydit.lr_scheduler import WarmupLR
 from hydit.data_loader.arrow_load_stream import TextImageArrowStream
 from hydit.diffusion import create_diffusion
 from hydit.ds_config import deepspeed_config_from_args
+from hydit.lr_scheduler import WarmupLR
 from hydit.modules.ema import EMA
 from hydit.modules.fp16_layers import Float16Module
-from hydit.modules.models import HUNYUAN_DIT_MODELS
+from hydit.modules.models import HUNYUAN_DIT_MODELS, HunYuanDiT
+from hydit.modules.text_encoder import MT5Embedder
 from hydit.modules.posemb_layers import init_image_posemb
-from hydit.utils.tools import create_logger, set_seeds, create_exp_folder, model_resume, get_trainable_params
-from IndexKits.index_kits import ResolutionGroup
-from IndexKits.index_kits.sampler import DistributedSamplerWithStartIndex, BlockDistributedSampler
-from peft import LoraConfig, get_peft_model
+from hydit.utils.tools import create_exp_folder, model_resume, get_trainable_params
 
 
 def deepspeed_initialize(args, logger, model, opt, deepspeed_config):
@@ -53,7 +49,7 @@ def deepspeed_initialize(args, logger, model, opt, deepspeed_config):
     )
     return model, opt, scheduler
 
-def save_checkpoint(args, rank, logger, model, ema, epoch, train_steps, checkpoint_dir):
+def save_checkpoint(args, rank, logger, model, ema, epoch, train_steps, checkpoint_dir, by='step'):
     def save_lora_weight(checkpoint_dir, client_state, tag=f"{train_steps:07d}.pt"):
         cur_ckpt_save_dir = f"{checkpoint_dir}/{tag}"
         if rank == 0:
@@ -62,7 +58,18 @@ def save_checkpoint(args, rank, logger, model, ema, epoch, train_steps, checkpoi
             else:
                 model.module.save_pretrained(cur_ckpt_save_dir)
 
-    checkpoint_path = "[Not rank 0. Disabled output.]"
+    def save_model_weight(client_state, tag):
+        checkpoint_path = f"{checkpoint_dir}/{tag}"
+        try:
+            if args.training_parts == "lora":
+                save_lora_weight(checkpoint_dir, client_state, tag=tag)
+            else:
+                model.save_checkpoint(checkpoint_dir, client_state=client_state, tag=tag)
+            logger.info(f"Saved checkpoint to {checkpoint_path}")
+        except Exception as e:
+            logger.error(f"Saved failed to {checkpoint_path}. {type(e)}: {e}")
+            return False, ''
+        return True, checkpoint_path
 
     client_state = {
         "steps": train_steps,
@@ -72,40 +79,39 @@ def save_checkpoint(args, rank, logger, model, ema, epoch, train_steps, checkpoi
     if ema is not None:
         client_state['ema'] = ema.state_dict()
 
+    # Save model weights by epoch or step
     dst_paths = []
-    if train_steps % args.ckpt_every == 0:
-        checkpoint_path = f"{checkpoint_dir}/{train_steps:07d}.pt"
-        try:
-            if args.training_parts == "lora":
-                save_lora_weight(checkpoint_dir, client_state, tag=f"{train_steps:07d}.pt")
-            else:
-                model.save_checkpoint(checkpoint_dir, client_state=client_state, tag=f"{train_steps:07d}.pt")
-            dst_paths.append(checkpoint_path)
-            logger.info(f"Saved checkpoint to {checkpoint_path}")
-        except:
-            logger.error(f"Saved failed to {checkpoint_path}")
+    if by == 'epoch':
+        tag = f"e{epoch:04d}.pt"
+        dst_paths.append(save_model_weight(client_state, tag))
+    elif by == 'step':
+        if train_steps % args.ckpt_every == 0:
+            tag = f"{train_steps:07d}.pt"
+            dst_paths.append(save_model_weight(client_state, tag))
+        if train_steps % args.ckpt_latest_every == 0 or train_steps == args.max_training_steps:
+            tag = "latest.pt"
+            dst_paths.append(save_model_weight(client_state, tag))
+    elif by == 'final':
+        tag = "final.pt"
+        dst_paths.append(save_model_weight(client_state, tag))
+    else:
+        raise ValueError(f"Unknown save checkpoint method: {by}")
 
-    if train_steps % args.ckpt_latest_every == 0 or train_steps == args.max_training_steps:
-        save_name = "latest.pt"
-        checkpoint_path = f"{checkpoint_dir}/{save_name}"
-        try:
-            if args.training_parts == "lora":
-                save_lora_weight(checkpoint_dir, client_state, tag=f"{save_name}")
-            else:
-                model.save_checkpoint(checkpoint_dir, client_state=client_state, tag=f"{save_name}")
-            dst_paths.append(checkpoint_path)
-            logger.info(f"Saved checkpoint to {checkpoint_path}")
-        except:
-            logger.error(f"Saved failed to {checkpoint_path}")
+    saved = any([state for state, _ in dst_paths])
+    if not saved:
+        return False
 
-    dist.barrier()
-    if rank == 0 and len(dst_paths) > 0:
-        # Delete optimizer states to avoid occupying too much disk space.
-        for dst_path in dst_paths:
-            for opt_state_path in glob(f"{dst_path}/zero_dp_rank_*_tp_rank_00_pp_rank_00_optim_states.pt"):
-                os.remove(opt_state_path)
+    # Maybe clear optimizer states
+    if not args.save_optimizer_state:
+        dist.barrier()
+        if rank == 0 and len(dst_paths) > 0:
+            # Delete optimizer states to avoid occupying too much disk space.
+            for dst_path in dst_paths:
+                for opt_state_path in glob(f"{dst_path}/zero_*_optim_states.pt"):
+                    os.remove(opt_state_path)
 
-    return checkpoint_path
+    return True
+
 
 @torch.no_grad()
 def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5, freqs_cis_img):
@@ -129,12 +135,17 @@ def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5
         encoder_hidden_states_t5 = output_t5['hidden_states'][T5_ENCODER['layer_index']].detach()
 
     # additional condition
-    image_meta_size = kwargs['image_meta_size'].to(device)
-    style = kwargs['style'].to(device)
+    if args.size_cond:
+        image_meta_size = kwargs['image_meta_size'].to(device)
+    else:
+        image_meta_size = None
+    if args.use_style_cond:
+        style = kwargs['style'].to(device)
+    else:
+        style = None
 
     if args.extra_fp16:
         image = image.half()
-        image_meta_size = image_meta_size.half() if image_meta_size is not None else None
 
     # Map input images to latent space + normalize latents:
     image = image.to(device)
@@ -228,9 +239,9 @@ def main(args):
                              mpu=None,
                              enabled=args.zero_stage == 3):
         model = HUNYUAN_DIT_MODELS[args.model](args,
-                                       input_size=latent_size,
-                                       log_fn=logger.info,
-                                        )
+                                               input_size=latent_size,
+                                               log_fn=logger.info,
+                                               )
     # Multi-resolution / Single-resolution training.
     if args.multireso:
         resolutions = ResolutionGroup(image_size[0],
@@ -255,6 +266,10 @@ def main(args):
     ema = None
     if args.use_ema:
         ema = EMA(args, model, device, logger)
+
+    # Setup gradient checkpointing
+    if args.gradient_checkpointing:
+        model.enable_gradient_checkpointing()
 
     # Setup FP16 main model:
     if args.use_fp16:
@@ -281,7 +296,6 @@ def main(args):
     logger.info(f"    Loading Bert tokenizer from {TOKENIZER}")
     tokenizer = BertTokenizer.from_pretrained(TOKENIZER)
     # Setup T5 text encoder
-    from hydit.modules.text_encoder import MT5Embedder
     mt5_path = T5_ENCODER['MT5']
     embedder_t5 = MT5Embedder(mt5_path, torch_dtype=T5_ENCODER['torch_dtype'], max_length=args.text_len_t5)
     tokenizer_t5 = embedder_t5.tokenizer
@@ -349,7 +363,7 @@ def main(args):
     start_epoch_step = 0
     train_steps = 0
     # Resume checkpoint if needed
-    if args.resume is not None or len(args.resume) > 0:
+    if args.resume:
         model, ema, start_epoch, start_epoch_step, train_steps = model_resume(args, model, ema, logger, len(loader))
 
     if args.training_parts == "lora":
@@ -421,14 +435,14 @@ def main(args):
     running_loss = 0
     start_time = time.time()
 
-    if args.async_ema:
-        ema_stream = torch.cuda.Stream()
-
     # Training loop
-    for epoch in range(start_epoch, args.epochs):
-        logger.info(f"    Start random shuffle with seed={seed}")
+    epoch = start_epoch
+    while epoch < args.epochs:
+        # Random shuffle dataset
+        shuffle_seed = args.global_seed + epoch
+        logger.info(f"    Start random shuffle with seed={shuffle_seed}")
         # Makesure all processors use the same seed to shuffle dataset.
-        dataset.shuffle(seed=args.global_seed + epoch, fast=True)
+        dataset.shuffle(seed=shuffle_seed, fast=True)
         logger.info(f"    End of random shuffle")
 
         # Move sampler to start_index
@@ -441,18 +455,8 @@ def main(args):
                 logger.info(f"      Iters left this epoch: {len(loader):,}")
 
         logger.info(f"    Beginning epoch {epoch}...")
-        step = 0
         for batch in loader:
-            step += 1
-
             latents, model_kwargs = prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5, freqs_cis_img)
-
-            # training model by deepspeed while use fp16
-            if args.use_fp16:
-                if args.use_ema and args.async_ema:
-                    with torch.cuda.stream(ema_stream):
-                        ema.update(model.module.module, step=step)
-                    torch.cuda.current_stream().wait_stream(ema_stream)
 
             loss_dict = diffusion.training_losses(model=model, x_start=latents, model_kwargs=model_kwargs)
             loss = loss_dict["loss"].mean()
@@ -460,11 +464,11 @@ def main(args):
             last_batch_iteration = (train_steps + 1) // (global_batch_size // (batch_size * world_size))
             model.step(lr_kwargs={'last_batch_iteration': last_batch_iteration})
 
-            if args.use_ema and not args.async_ema or (args.async_ema and step == len(loader)-1):
+            if args.use_ema:
                 if args.use_fp16:
-                    ema.update(model.module.module, step=step)
+                    ema.update(model.module.module, step=train_steps)
                 else:
-                    ema.update(model.module, step=step)
+                    ema.update(model.module, step=train_steps)
 
             # ===========================================================================
             # Log loss values:
@@ -494,20 +498,28 @@ def main(args):
                 start_time = time.time()
 
             # collect gc:
-            if args.gc_interval > 0 and (step % args.gc_interval == 0):
+            if args.gc_interval > 0 and (train_steps % args.gc_interval == 0):
                 gc.collect()
 
-            if (train_steps % args.ckpt_every == 0 or train_steps % args.ckpt_latest_every == 0  # or train_steps == args.max_training_steps
+            if (train_steps % args.ckpt_every == 0 or train_steps % args.ckpt_latest_every == 0
                 ) and train_steps > 0:
-                save_checkpoint(args, rank, logger, model, ema, epoch, train_steps, checkpoint_dir)
+                save_checkpoint(args, rank, logger, model, ema, epoch, train_steps, checkpoint_dir, by='step')
 
             if train_steps >= args.max_training_steps:
-                logger.info(f"Breaking step loop at {train_steps}.")
+                logger.info(f"Breaking step loop at train_steps={train_steps}.")
                 break
 
         if train_steps >= args.max_training_steps:
-            logger.info(f"Breaking epoch loop at {epoch}.")
+            logger.info(f"Breaking epoch loop at epoch={epoch}.")
             break
+
+        # Finish an epoch
+        if args.ckpt_every_n_epoch > 0 and epoch % args.ckpt_every_n_epoch == 0:
+            save_checkpoint(args, rank, logger, model, ema, epoch, train_steps, checkpoint_dir, by='epoch')
+
+        epoch += 1
+
+    save_checkpoint(args, rank, logger, model, ema, epoch, train_steps, checkpoint_dir, by='final')
 
     dist.destroy_process_group()
 

@@ -22,7 +22,7 @@ Hunyuan-Captioner meets the need of text-to-image techniques by maintaining a hi
 ### Instructions
 a. Install dependencies
      
-The dependencies and installation are basically the same as the [**base model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1).
+The dependencies and installation are basically the same as the [**base model**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2).
 
 b. Model download
 ```shell

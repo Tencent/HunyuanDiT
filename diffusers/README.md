@@ -12,7 +12,7 @@ You can generate images with both Chinese and English prompts using the followin
 import torch
 from diffusers import HunyuanDiTPipeline
 
-pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers", torch_dtype=torch.float16)
+pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers", torch_dtype=torch.float16)
 pipe.to("cuda")
 
 # You may also use English prompt as HunyuanDiT supports both English and Chinese
@@ -26,7 +26,7 @@ You can use our distilled model to generate images even faster:
 import torch
 from diffusers import HunyuanDiTPipeline
 
-pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled", torch_dtype=torch.float16)
+pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled", torch_dtype=torch.float16)
 pipe.to("cuda")
 
 # You may also use English prompt as HunyuanDiT supports both English and Chinese
@@ -34,7 +34,7 @@ pipe.to("cuda")
 prompt = "一个宇航员在骑马"
 image = pipe(prompt, num_inference_steps=25).images[0]
 ```
-More details can be found in [HunyuanDiT-Diffusers-Distilled](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-Diffusers-Distilled)
+More details can be found in [HunyuanDiT-v1.2-Diffusers-Distilled](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled)
 
 ## LoRA
 LoRA can be integrated with Hunyuan-DiT inside the 🤗 Diffusers framework. 
@@ -77,7 +77,7 @@ def load_hunyuan_dit_lora(transformer_state_dict, lora_state_dict, lora_scale):
     return transformer_state_dict
 
 ### use the diffusers pipeline with lora
-pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers", torch_dtype=torch.float16)
+pipe = HunyuanDiTPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers", torch_dtype=torch.float16)
 pipe.to("cuda")
 
 from safetensors import safe_open
@@ -107,13 +107,13 @@ Hunyuan-DiT + ControlNet is supported in 🤗 Diffusers. The following example s
 ```py
 from diffusers import HunyuanDiT2DControlNetModel, HunyuanDiTControlNetPipeline
 import torch
-controlnet = HunyuanDiT2DControlNetModel.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.1-ControlNet-Diffusers-Canny", torch_dtype=torch.float16)
+controlnet = HunyuanDiT2DControlNetModel.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny", torch_dtype=torch.float16)
 
-pipe = HunyuanDiTControlNetPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers", controlnet=controlnet, torch_dtype=torch.float16)
+pipe = HunyuanDiTControlNetPipeline.from_pretrained("Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers", controlnet=controlnet, torch_dtype=torch.float16)
 pipe.to("cuda")
 
 from diffusers.utils import load_image
-cond_image = load_image('https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1-ControlNet-Diffusers-Canny/resolve/main/canny.jpg?download=true')
+cond_image = load_image('https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny/resolve/main/canny.jpg?download=true')
 
 ## You may also use English prompt as HunyuanDiT supports both English and Chinese
 prompt="在夜晚的酒店门前，一座古老的中国风格的狮子雕像矗立着，它的眼睛闪烁着光芒，仿佛在守护着这座建筑。背景是夜晚的酒店前，构图方式是特写，平视，居中构图。这张照片呈现了真实摄影风格，蕴含了中国雕塑文化，同时展现了神秘氛围"

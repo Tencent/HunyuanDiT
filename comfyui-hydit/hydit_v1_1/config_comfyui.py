@@ -5,7 +5,7 @@ from .constants import *
 from .modules.models import HUNYUAN_DIT_CONFIG, HUNYUAN_DIT_MODELS
 from .diffusion.gaussian_diffusion import ModelVarType
 
-import deepspeed
+#import deepspeed
 
 def model_var_type(value):
     try:
@@ -77,7 +77,7 @@ def get_args(default_args=None):
     parser.add_argument("--model-root", type=str, default="ckpts", help="Model root path.")
 
     # Model setting
-    parser.add_argument("--load-key", type=str, choices=["ema", "module", "distill", 'merge'], default="ema", help="Load model key for HunYuanDiT checkpoint.")
+    parser.add_argument("--load-key", type=str, choices=["ema", "module", "distill", 'merge'], default="distill", help="Load model key for HunYuanDiT checkpoint.")
     parser.add_argument('--size-cond', type=int, nargs='+', default=[1024, 1024],
                         help="Size condition used in sampling. 2 values are required for height and width. "
                              "If a single value is provided, the image will be treated to (value, value).")
@@ -136,17 +136,11 @@ def get_args(default_args=None):
 
     # Directory
     parser.add_argument("--results-dir", type=str, default="results")
-    parser.add_argument("--resume", type=str, default=None, help="Resume experiment from a checkpoint")
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--resume-module-root", type=str, default=None, help="Resume model states.")
+    parser.add_argument("--resume-ema-root", type=str, default=None, help="Resume ema states.")
     parser.add_argument("--no-strict", dest="strict", action="store_false", help="Strict loading of checkpoint")
     parser.set_defaults(strict=True)
-    parser.add_argument("--resume-deepspeed", action="store_true",
-                        help="Resume model and ema states from a checkpoint saved by Deepspeed version of DIT.")
-    parser.add_argument("--resume-split", action="store_true",
-                        help="Resume model and ema states from two checkpoint separated from DeepSpeed ckpt.")
-    parser.add_argument("--ema-to-module", action="store_true",
-                        help="If true, initialize the module with EMA weights.")
-    parser.add_argument("--module-to-ema", action="store_true",
-                        help="if true, initialize the ema with Module weights.")
 
     # Dataset
     parser.add_argument("--index-file", type=str, nargs='+', help="During training, provide a JSON file with data indices.")
@@ -185,7 +179,7 @@ def get_args(default_args=None):
     # ========================================================================================================
     # Deepspeed config
     # ========================================================================================================
-    parser = deepspeed.add_config_arguments(parser)
+    #parser = deepspeed.add_config_arguments(parser)
     parser.add_argument('--local_rank', type=int, default=None,
                         help='local rank passed from distributed launcher.')
     parser.add_argument('--deepspeed-optimizer', action='store_true',
@@ -195,6 +189,6 @@ def get_args(default_args=None):
     parser.add_argument('--zero-stage', type=int, default=1)
     parser.add_argument("--async-ema", action="store_true", help="Whether to use multi stream to excut EMA.")
 
-    args = parser.parse_args(default_args)
+    args = parser.parse_known_args()
 
     return args

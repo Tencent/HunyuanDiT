@@ -49,7 +49,7 @@ SAMPLER_FACTORY = {
             'clip_sample_range': 1.0,
             'beta_schedule': 'scaled_linear',
             'beta_start': 0.00085,
-            'beta_end': 0.03,
+            'beta_end': 0.02,
             'prediction_type': 'v_prediction',
         }
     },
@@ -62,7 +62,7 @@ SAMPLER_FACTORY = {
             'clip_sample_range': 1.0,
             'beta_schedule': 'scaled_linear',
             'beta_start': 0.00085,
-            'beta_end': 0.03,
+            'beta_end': 0.02,
             'prediction_type': 'v_prediction',
         }
     },
@@ -72,7 +72,7 @@ SAMPLER_FACTORY = {
         'kwargs': {
             'beta_schedule': 'scaled_linear',
             'beta_start': 0.00085,
-            'beta_end': 0.03,
+            'beta_end': 0.02,
             'prediction_type': 'v_prediction',
             'trained_betas': None,
             'solver_order': 2,

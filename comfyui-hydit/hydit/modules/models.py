@@ -1,22 +1,24 @@
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from diffusers.configuration_utils import ConfigMixin, register_to_config
-from diffusers.models import ModelMixin
+#from diffusers.configuration_utils import ConfigMixin, register_to_config
+#from diffusers.models import ModelMixin
+#from peft.utils import (
+#    ModulesToSaveWrapper,
+#    _get_submodules,
+#)
 from timm.models.vision_transformer import Mlp
+from torch.utils import checkpoint
+from tqdm import tqdm
+#from transformers.integrations import PeftAdapterMixin
 
-from .attn_layers import Attention, FlashCrossMHAModified, FlashSelfMHAModified, CrossAttention
+from .attn_layers import Attention, CrossAttention
 from .embedders import TimestepEmbedder, PatchEmbed, timestep_embedding
 from .norm_layers import RMSNorm
 from .poolers import AttentionPool
-
-from transformers.integrations import PeftAdapterMixin
-from typing import Any, Optional, Union
-from tqdm import tqdm
-from peft.utils import (
-    ModulesToSaveWrapper,
-    _get_submodules,
-)
+#from .posemb_layers import get_2d_rotary_pos_embed, get_fill_resize_and_crop
 
 
 def modulate(x, shift, scale):
@@ -97,7 +99,9 @@ class HunYuanDiTBlock(nn.Module):
         else:
             self.skip_linear = None
 
-    def forward(self, x, c=None, text_states=None, freq_cis_img=None, skip=None):
+        self.gradient_checkpointing = False
+
+    def _forward(self, x, c=None, text_states=None, freq_cis_img=None, skip=None):
         # Long Skip Connection
         if self.skip_linear is not None:
             cat = torch.cat([x, skip], dim=-1)
@@ -123,6 +127,11 @@ class HunYuanDiTBlock(nn.Module):
 
         return x
 
+    def forward(self, x, c=None, text_states=None, freq_cis_img=None, skip=None):
+        if self.gradient_checkpointing and self.training:
+            return checkpoint.checkpoint(self._forward, x, c, text_states, freq_cis_img, skip)
+        return self._forward(x, c, text_states, freq_cis_img, skip)
+
 
 class FinalLayer(nn.Module):
     """
@@ -144,7 +153,7 @@ class FinalLayer(nn.Module):
         return x
 
 
-class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
+class HunYuanDiT(nn.Module):
     """
     HunYuanDiT: Diffusion model with a Transformer backbone.
 
@@ -173,17 +182,18 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
     log_fn: callable
         The logging function.
     """
-    @register_to_config
-    def __init__(
-            self, args,
-            input_size=(32, 32),
-            patch_size=2,
-            in_channels=4,
-            hidden_size=1152,
-            depth=28,
-            num_heads=16,
-            mlp_ratio=4.0,
-            log_fn=print,
+    #@register_to_config
+    def __init__(self,
+                 args: Any,
+                 input_size: tuple = (32, 32),
+                 patch_size: int = 2,
+                 in_channels: int = 4,
+                 hidden_size: int = 1152,
+                 depth: int = 28,
+                 num_heads: int = 16,
+                 mlp_ratio: float = 4.0,
+                 log_fn: callable = print,
+                    **kwargs,
     ):
         super().__init__()
         self.args = args
@@ -200,6 +210,9 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
         self.text_len = args.text_len
         self.text_len_t5 = args.text_len_t5
         self.norm = args.norm
+        self.dtype = torch.float16
+        #import pdb
+        #pdb.set_trace()
 
         use_flash_attn = args.infer_mode == 'fa' or args.use_flash_attn
         if use_flash_attn:
@@ -216,18 +229,24 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
             torch.randn(self.text_len + self.text_len_t5, self.text_states_dim, dtype=torch.float32))
 
         # Attention pooling
-        self.pooler = AttentionPool(self.text_len_t5, self.text_states_dim_t5, num_heads=8, output_dim=1024)
+        pooler_out_dim = 1024
+        self.pooler = AttentionPool(self.text_len_t5, self.text_states_dim_t5, num_heads=8, output_dim=pooler_out_dim)
 
-        # Here we use a default learned embedder layer for future extension.
-        self.style_embedder = nn.Embedding(1, hidden_size)
+        # Dimension of the extra input vectors
+        self.extra_in_dim = pooler_out_dim
 
-        # Image size and crop size conditions
-        self.extra_in_dim = 256 * 6 + hidden_size
+        if args.size_cond:
+            # Image size and crop size conditions
+            self.extra_in_dim += 6 * 256
+
+        if args.use_style_cond:
+            # Here we use a default learned embedder layer for future extension.
+            self.style_embedder = nn.Embedding(1, hidden_size)
+            self.extra_in_dim += hidden_size
 
         # Text embedding for `add`
         self.x_embedder = PatchEmbed(input_size, patch_size, in_channels, hidden_size)
         self.t_embedder = TimestepEmbedder(hidden_size)
-        self.extra_in_dim += 1024
         self.extra_embedder = nn.Sequential(
             nn.Linear(self.extra_in_dim, hidden_size * 4),
             FP32_SiLU(),
@@ -257,6 +276,25 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
         self.unpatchify_channels = self.out_channels
 
         self.initialize_weights()
+
+    def check_condition_validation(self, image_meta_size, style):
+        if self.args.size_cond is None and image_meta_size is not None:
+            raise ValueError(f"When `size_cond` is None, `image_meta_size` should be None, but got "
+                             f"{type(image_meta_size)}. ")
+        if self.args.size_cond is not None and image_meta_size is None:
+            raise ValueError(f"When `size_cond` is not None, `image_meta_size` should not be None. ")
+        if not self.args.use_style_cond and style is not None:
+            raise ValueError(f"When `use_style_cond` is False, `style` should be None, but got {type(style)}. ")
+        if self.args.use_style_cond and style is None:
+            raise ValueError(f"When `use_style_cond` is True, `style` should be not None.")
+
+    def enable_gradient_checkpointing(self):
+        for block in self.blocks:
+            block.gradient_checkpointing = True
+
+    def disable_gradient_checkpointing(self):
+        for block in self.blocks:
+            block.gradient_checkpointing = False
 
     def forward(self,
                 x,
@@ -298,8 +336,8 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
         return_dict: bool
             Whether to return a dictionary.
         """
-        #print(controls)
-        #assert(0)
+        #import pdb
+        #pdb.set_trace()
         text_states = encoder_hidden_states                     # 2,77,1024
         text_states_t5 = encoder_hidden_states_t5               # 2,256,2048
         text_states_mask = text_embedding_mask.bool()           # 2,77
@@ -326,16 +364,19 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
         # Build text tokens with pooling
         extra_vec = self.pooler(encoder_hidden_states_t5)
 
-        # Build image meta size tokens
-        image_meta_size = timestep_embedding(image_meta_size.view(-1), 256)   # [B * 6, 256]
-        if self.args.use_fp16:
-            image_meta_size = image_meta_size.half()
-        image_meta_size = image_meta_size.view(-1, 6 * 256)
-        extra_vec = torch.cat([extra_vec, image_meta_size], dim=1)  # [B, D + 6 * 256]
+        self.check_condition_validation(image_meta_size, style)
+        # Build image meta size tokens if applicable
+        if image_meta_size is not None:
+            image_meta_size = timestep_embedding(image_meta_size.view(-1), 256)   # [B * 6, 256]
+            if self.args.use_fp16:
+                image_meta_size = image_meta_size.half()
+            image_meta_size = image_meta_size.view(-1, 6 * 256)
+            extra_vec = torch.cat([extra_vec, image_meta_size], dim=1)  # [B, D + 6 * 256]
 
         # Build style tokens
-        style_embedding = self.style_embedder(style)
-        extra_vec = torch.cat([extra_vec, style_embedding], dim=1)
+        if style is not None:
+            style_embedding = self.style_embedder(style)
+            extra_vec = torch.cat([extra_vec, style_embedding], dim=1)
 
         # Concatenate all extra vectors
         c = t + self.extra_embedder(extra_vec)  # [B, D]
@@ -364,6 +405,7 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
         if return_dict:
             return {'x': x}
         return x
+    
 
     def initialize_weights(self):
         # Initialize transformer layers:
@@ -499,10 +541,14 @@ HUNYUAN_DIT_CONFIG = {
     'DiT-XL/2': {'depth': 28, 'hidden_size': 1152, 'patch_size': 2, 'num_heads': 16},
 }
 
+
 def DiT_g_2(args, **kwargs):
     return HunYuanDiT(args, depth=40, hidden_size=1408, patch_size=2, num_heads=16, mlp_ratio=4.3637, **kwargs)
+
+
 def DiT_XL_2(args, **kwargs):
     return HunYuanDiT(args, depth=28, hidden_size=1152, patch_size=2, num_heads=16, **kwargs)
+
 
 HUNYUAN_DIT_MODELS = {
     'DiT-g/2':  DiT_g_2,

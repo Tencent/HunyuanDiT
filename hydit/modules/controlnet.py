@@ -1,9 +1,18 @@
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.models import ModelMixin
+from peft.utils import (
+    ModulesToSaveWrapper,
+    _get_submodules,
+)
 from timm.models.vision_transformer import Mlp
+from torch.utils import checkpoint
+from tqdm import tqdm
+from transformers.integrations import PeftAdapterMixin
 
 from .attn_layers import Attention, FlashCrossMHAModified, FlashSelfMHAModified, CrossAttention
 from .embedders import TimestepEmbedder, PatchEmbed, timestep_embedding
@@ -17,11 +26,13 @@ def zero_module(module):
         nn.init.zeros_(p)
     return module
 
-class HunYuanControlNet(ModelMixin, ConfigMixin):
+class HunYuanControlNet(ModelMixin, ConfigMixin, PeftAdapterMixin):
     """
     HunYuanDiT: Diffusion model with a Transformer backbone.
 
     Inherit ModelMixin and ConfigMixin to be compatible with the sampler StableDiffusionPipeline of diffusers.
+
+    Inherit PeftAdapterMixin to be compatible with the PEFT training pipeline.
 
     Parameters
     ----------
@@ -45,16 +56,16 @@ class HunYuanControlNet(ModelMixin, ConfigMixin):
         The logging function.
     """
     @register_to_config
-    def __init__(
-            self, args,
-            input_size=(32, 32),
-            patch_size=2,
-            in_channels=4,
-            hidden_size=1152,
-            depth=28,
-            num_heads=16,
-            mlp_ratio=4.0,
-            log_fn=print,
+    def __init__(self,
+                 args: Any,
+                 input_size: tuple = (32, 32),
+                 patch_size: int = 2,
+                 in_channels: int = 4,
+                 hidden_size: int = 1152,
+                 depth: int = 28,
+                 num_heads: int = 16,
+                 mlp_ratio: float = 4.0,
+                 log_fn: callable = print,
     ):
         super().__init__()
         self.args = args
@@ -86,18 +97,24 @@ class HunYuanControlNet(ModelMixin, ConfigMixin):
             torch.randn(self.text_len + self.text_len_t5, self.text_states_dim, dtype=torch.float32))
 
         # Attention pooling
-        self.pooler = AttentionPool(self.text_len_t5, self.text_states_dim_t5, num_heads=8, output_dim=1024)
+        pooler_out_dim = 1024
+        self.pooler = AttentionPool(self.text_len_t5, self.text_states_dim_t5, num_heads=8, output_dim=pooler_out_dim)
 
-        # Here we use a default learned embedder layer for future extension.
-        self.style_embedder = nn.Embedding(1, hidden_size)
+        # Dimension of the extra input vectors
+        self.extra_in_dim = pooler_out_dim
 
-        # Image size and crop size conditions
-        self.extra_in_dim = 256 * 6 + hidden_size
+        if args.size_cond:
+            # Image size and crop size conditions
+            self.extra_in_dim += 6 * 256
+
+        if args.use_style_cond:
+            # Here we use a default learned embedder layer for future extension.
+            self.style_embedder = nn.Embedding(1, hidden_size)
+            self.extra_in_dim += hidden_size
 
         # Text embedding for `add`
         self.x_embedder = PatchEmbed(input_size, patch_size, in_channels, hidden_size)
         self.t_embedder = TimestepEmbedder(hidden_size)
-        self.extra_in_dim += 1024
         self.extra_embedder = nn.Sequential(
             nn.Linear(self.extra_in_dim, hidden_size * 4),
             FP32_SiLU(),
@@ -132,7 +149,25 @@ class HunYuanControlNet(ModelMixin, ConfigMixin):
         )
 
         self.fix_weight_modules = ['mlp_t5', 'text_embedding_padding', 'pooler', 'style_embedder', 'x_embedder', 't_embedder', 'extra_embedder']
-        
+
+    def check_condition_validation(self, image_meta_size, style):
+        if self.args.size_cond is None and image_meta_size is not None:
+            raise ValueError(f"When `size_cond` is None, `image_meta_size` should be None, but got "
+                             f"{type(image_meta_size)}. ")
+        if self.args.size_cond is not None and image_meta_size is None:
+            raise ValueError(f"When `size_cond` is not None, `image_meta_size` should not be None. ")
+        if not self.args.use_style_cond and style is not None:
+            raise ValueError(f"When `use_style_cond` is False, `style` should be None, but got {type(style)}. ")
+        if self.args.use_style_cond and style is None:
+            raise ValueError(f"When `use_style_cond` is True, `style` should be not None.")
+    
+    def enable_gradient_checkpointing(self):
+        for block in self.blocks:
+            block.gradient_checkpointing = True
+
+    def disable_gradient_checkpointing(self):
+        for block in self.blocks:
+            block.gradient_checkpointing = False
 
     def from_dit(self, dit):
         """
@@ -149,7 +184,8 @@ class HunYuanControlNet(ModelMixin, ConfigMixin):
         
         self.text_embedding_padding.data = dit.text_embedding_padding.data
         self.pooler.load_state_dict(dit.pooler.state_dict())
-        self.style_embedder.load_state_dict(dit.style_embedder.state_dict())
+        if self.args.use_style_cond:
+            self.style_embedder.load_state_dict(dit.style_embedder.state_dict())
         self.x_embedder.load_state_dict(dit.x_embedder.state_dict())
         self.t_embedder.load_state_dict(dit.t_embedder.state_dict())
         self.extra_embedder.load_state_dict(dit.extra_embedder.state_dict())
@@ -162,7 +198,8 @@ class HunYuanControlNet(ModelMixin, ConfigMixin):
         self.mlp_t5.requires_grad_(False)
         self.text_embedding_padding.requires_grad_(False)
         self.pooler.requires_grad_(False)
-        self.style_embedder.requires_grad_(False)
+        if self.args.use_style_cond:
+            self.style_embedder.requires_grad_(False)
         self.x_embedder.requires_grad_(False)
         self.t_embedder.requires_grad_(False)
         self.extra_embedder.requires_grad_(False)
@@ -243,16 +280,19 @@ class HunYuanControlNet(ModelMixin, ConfigMixin):
         # Build text tokens with pooling
         extra_vec = self.pooler(encoder_hidden_states_t5)
 
-        # Build image meta size tokens
-        image_meta_size = timestep_embedding(image_meta_size.view(-1), 256)   # [B * 6, 256]
-        if self.args.use_fp16:
-            image_meta_size = image_meta_size.half()
-        image_meta_size = image_meta_size.view(-1, 6 * 256)
-        extra_vec = torch.cat([extra_vec, image_meta_size], dim=1)  # [B, D + 6 * 256]
+        self.check_condition_validation(image_meta_size, style)
+        # Build image meta size tokens if applicable
+        if image_meta_size is not None:
+            image_meta_size = timestep_embedding(image_meta_size.view(-1), 256)   # [B * 6, 256]
+            if self.args.use_fp16:
+                image_meta_size = image_meta_size.half()
+            image_meta_size = image_meta_size.view(-1, 6 * 256)
+            extra_vec = torch.cat([extra_vec, image_meta_size], dim=1)  # [B, D + 6 * 256]
 
         # Build style tokens
-        style_embedding = self.style_embedder(style)
-        extra_vec = torch.cat([extra_vec, style_embedding], dim=1)
+        if style is not None:
+            style_embedding = self.style_embedder(style)
+            extra_vec = torch.cat([extra_vec, style_embedding], dim=1)
 
         # Concatenate all extra vectors
         c = t + self.extra_embedder(extra_vec)  # [B, D]

@@ -122,8 +122,6 @@ def get_canny(np_img, low_threshold = 100, high_threshold = 200):
     image = cv2.Canny(np_img, low_threshold,high_threshold)
     image = image[:,:,None]
     image = np.concatenate([image,image,image], axis=2)
-    ## 输出边缘图像
-    ## 归一化为张量
     # canny_tensor = img_to_norm_tensor(canny_img)
     return image
 
@@ -160,8 +158,14 @@ def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5
         encoder_hidden_states_t5 = output_t5['hidden_states'][T5_ENCODER['layer_index']].detach()
 
     # additional condition
-    image_meta_size = kwargs['image_meta_size'].to(device)
-    style = kwargs['style'].to(device)
+    if args.size_cond:
+        image_meta_size = kwargs['image_meta_size'].to(device)
+    else:
+        image_meta_size = None
+    if args.use_style_cond:
+        style = kwargs['style'].to(device)
+    else:
+        style = None
 
     np_img = image.squeeze(0).add(1).mul(255 / 2).permute(1, 2, 0).cpu().numpy().astype('uint8')
     if args.control_type == 'canny':
@@ -179,7 +183,6 @@ def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5
 
     if args.extra_fp16:
         image = image.half()
-        image_meta_size = image_meta_size.half() if image_meta_size is not None else None
 
     # Map input images to latent space + normalize latents:
     image = image.to(device)
@@ -208,10 +211,8 @@ def prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5
     return latents, model_kwargs
 
 def main(args):
-    if args.training_parts == "lora":
-        args.use_ema = False
-    args.use_ema = False
 
+    args.use_ema = False # EMA usage is discouraged during ControlNet training.
     assert torch.cuda.is_available(), "Training currently requires at least one GPU."
 
     dist.init_process_group("nccl")
@@ -309,6 +310,11 @@ def main(args):
     if args.use_ema:
         ema = EMA(args, model, device, logger)
 
+    # Setup gradient checkpointing
+    if args.gradient_checkpointing:
+        model.enable_gradient_checkpointing()
+        controlnet.enable_gradient_checkpointing()
+
     # Setup FP16 main model:
     if args.use_fp16:
         model = Float16Module(model, args)
@@ -403,7 +409,7 @@ def main(args):
     start_epoch_step = 0
     train_steps = 0
     # Resume checkpoint if needed
-    if args.resume is not None or len(args.resume) > 0:
+    if args.resume:
         model, ema, start_epoch, start_epoch_step, train_steps = model_resume(args, model, ema, logger, len(loader))
 
     if args.training_parts == "lora":
@@ -488,9 +494,6 @@ def main(args):
     running_loss = 0
     start_time = time.time()
 
-    if args.async_ema:
-        ema_stream = torch.cuda.Stream()
-
     # Training loop
     for epoch in range(start_epoch, args.epochs):
         logger.info(f"    Start random shuffle with seed={seed}")
@@ -514,20 +517,13 @@ def main(args):
 
             latents, model_kwargs = prepare_model_inputs(args, batch, device, vae, text_encoder, text_encoder_t5, freqs_cis_img)
 
-            # training model by deepspeed while use fp16
-            if args.use_fp16:
-                if args.use_ema and args.async_ema:
-                    with torch.cuda.stream(ema_stream):
-                        ema.update(model.module.module, step=step)
-                    torch.cuda.current_stream().wait_stream(ema_stream)
-
             loss_dict = diffusion.training_losses(model=model, x_start=latents, model_kwargs=model_kwargs, controlnet=controlnet)
             loss = loss_dict["loss"].mean()
             controlnet.backward(loss)
             last_batch_iteration = (train_steps + 1) // (global_batch_size // (batch_size * world_size))
             controlnet.step(lr_kwargs={'last_batch_iteration': last_batch_iteration})
 
-            if args.use_ema and not args.async_ema or (args.async_ema and step == len(loader)-1):
+            if args.use_ema:
                 if args.use_fp16:
                     ema.update(model.module.module, step=step)
                 else:
@@ -569,11 +565,11 @@ def main(args):
                 save_checkpoint(args, rank, logger, controlnet, ema, epoch, train_steps, checkpoint_dir)
 
             if train_steps >= args.max_training_steps:
-                logger.info(f"Breaking step loop at {train_steps}.")
+                logger.info(f"Breaking step loop at train_steps={train_steps}.")
                 break
 
         if train_steps >= args.max_training_steps:
-            logger.info(f"Breaking epoch loop at {epoch}.")
+            logger.info(f"Breaking epoch loop at epoch={epoch}.")
             break
 
     dist.destroy_process_group()
