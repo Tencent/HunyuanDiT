@@ -1,0 +1,2 @@
+transformers==4.40.1
+git+https://github.com/huggingface/diffusers.git
