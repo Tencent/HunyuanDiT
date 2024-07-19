@@ -359,7 +359,7 @@ class DiffusersSampler:
             img = 255. * image.cpu().numpy()
             # print(i.size())
             img = Image.fromarray(np.clip(img[0], 0, 255).astype(np.uint8))
-            img = img.convert('RGB').resize((height, width))
+            img = img.convert('RGB').resize((width, height))
             image = norm_transform(img)
             image = image.unsqueeze(0).cuda()
             # print(image.size)
