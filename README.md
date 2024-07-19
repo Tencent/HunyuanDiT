@@ -267,6 +267,27 @@ python -m pip install -r requirements.txt
 # 4. Install flash attention v2 for acceleration (requires CUDA 11.6 or above)
 python -m pip install git+https://github.com/Dao-AILab/flash-attention.git@v2.1.2.post3
 ```
+```build Windows environments with python=3.10 and torch=2.1.2 cuda=12.1 for mathing comfyUI
+# 1. Prepare conda environment
+conda  create -n HunyuanDiT python==3.10.11
+
+# 2. Activate the environment
+conda activate HunyuanDiT
+
+# 3. Install pytorch
+pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/cu121
+
+# 4. Install deepspeed diffusers and nvidia-pyindex
+pip install deepspeed-0.6.3-py3-none-any.whl
+pip install diffusers-0.21.2-py3-none-any.whl
+pip install nvidia_pyindex-1.0.9-py3-none-any.whl
+
+# 5. Install pip dependencies
+pip install -r requirements.txt
+
+# 6. Install flash attention v2 for acceleration (requires CUDA 11.6 or above)
+pip install git+https://github.com/Dao-AILab/flash-attention.git@v2.1.2.post3
+```
 
 Additionally, you can also use docker to set up the environment.
 ```shell
