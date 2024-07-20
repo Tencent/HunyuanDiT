@@ -97,9 +97,15 @@ class CLIP:
         prompt_embeds.addit_embeds = addit_embeds
 
         if return_pooled:
-            return prompt_embeds, None
-        else:
-            return prompt_embeds
+            if return_dict:
+                # return_pooled  True ： no need return_dict
+                return {"cond": prompt_embeds, "pooled_output": None}
+            else:
+                return prompt_embeds, None
+        if return_dict:
+            return {"cond": prompt_embeds, "pooled_output": None}
+        # default prompt_embeds
+        return prompt_embeds
         
     def clone(self):
         n = CLIP(no_init=True)
