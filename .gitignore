@@ -137,3 +137,10 @@ trt/activate.sh
 trt/deactivate.sh
 *.onnx
 ckpts/
+
+# Data
+dataset/
+*.pkl
+
+# Log
+log_EXP

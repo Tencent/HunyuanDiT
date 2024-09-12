@@ -18,7 +18,8 @@ from transformers import BertModel, BertTokenizer, logging as tf_logging
 
 from IndexKits.index_kits import ResolutionGroup
 from IndexKits.index_kits.sampler import DistributedSamplerWithStartIndex, BlockDistributedSampler
-from hydit.config import get_args
+# from hydit.config import get_args
+from hydit.config_engine import get_args
 from hydit.constants import VAE_EMA_PATH, TEXT_ENCODER, TOKENIZER, T5_ENCODER
 from hydit.data_loader.arrow_load_stream import TextImageArrowStream
 from hydit.diffusion import create_diffusion
@@ -31,6 +32,7 @@ from hydit.modules.text_encoder import MT5Embedder
 from hydit.modules.posemb_layers import init_image_posemb
 from hydit.utils.tools import create_exp_folder, model_resume, get_trainable_params
 
+from apex.normalization import FusedRMSNorm
 
 def deepspeed_initialize(args, logger, model, opt, deepspeed_config):
     logger.info(f"Initialize deepspeed...")
@@ -193,6 +195,7 @@ def main(args):
     torch.cuda.set_device(device)
     print(f"Starting rank={rank}, seed={seed}, world_size={world_size}.")
     deepspeed_config = deepspeed_config_from_args(args, global_batch_size)
+    print(deepspeed_config)
 
     # Setup an experiment folder
     experiment_dir, checkpoint_dir, logger = create_exp_folder(args, rank)
