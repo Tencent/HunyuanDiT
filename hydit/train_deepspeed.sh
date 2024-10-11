@@ -1,0 +1,1 @@
+deepspeed hydit/train_deepspeed.py --deepspeed "$@"
