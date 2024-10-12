@@ -633,6 +633,10 @@ python sample_t2i.py --infer-mode fa --prompt "渔舟唱晚"  --load-4bit
 
 More example prompts can be found in [example_prompts.txt](example_prompts.txt)
 
+### Using ComfyUI
+
+ComfyUI for Hunyuan-DiT: [HunyuanDiT-ComfyUI](https://github.com/city96/ComfyUI_ExtraModels)
+
 ### More Configurations
 
 We list some more useful configurations for easy usage:
