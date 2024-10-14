@@ -76,7 +76,7 @@ class MT5Embedder(nn.Module):
         return text_encoder_embs, text_tokens_and_mask["attention_mask"].to(self.device)
 
     @torch.no_grad()
-    def __call__(self, tokens, attention_mask, layer_index=-1):
+    def forward(self, tokens, attention_mask, layer_index=-1):
         with torch.cuda.amp.autocast():
             outputs = self.model(
                 input_ids=tokens,
