@@ -1,0 +1,129 @@
+## :building_construction: 适配器
+
+### 控制网络
+
+我们提供了 ControlNet 的训练脚本，详细内容请查看 [./controlnet](./controlnet/README.md)。
+
+```
+shellCopy code# 训练 canny ControlNet。
+PYTHONPATH=./ sh hydit/train_controlnet.sh
+```
+
+我们提供了三种类型的训练好的 ControlNet 权重，包括 `canny`、`depth` 和 `pose`，详细信息请查看 [链接](https://huggingface.co/Tencent-Hunyuan/HYDiT-ControlNet)。
+
+```
+shellCopy codecd HunyuanDiT
+# 使用 huggingface-cli 工具下载模型。
+# 我们建议使用精简权重作为 ControlNet 推理的基础模型，因为我们提供的预训练权重是在这些模型上训练的。
+huggingface-cli download Tencent-Hunyuan/HYDiT-ControlNet --local-dir ./ckpts/t2i/controlnet
+huggingface-cli download Tencent-Hunyuan/Distillation-v1.1 ./pytorch_model_distill.pt --local-dir ./ckpts/t2i/model
+
+# 快速开始
+python3 sample_controlnet.py  --no-enhance --load-key distill --infer-steps 50 --control-type canny --prompt "在夜晚的酒店门前，一座古老的中国风格的狮子雕像矗立着，它的眼睛闪烁着光芒，仿佛在守护着这座建筑。背景是夜晚的酒店前，构图方式是特写，平视，居中构图。这张照片呈现了真实摄影风格，蕴含了中国雕塑文化，同时展现了神秘氛围" --condition-image-path controlnet/asset/input/canny.jpg --control-weight 1.0
+```
+
+<table>   <tr>     <td colspan="3" align="center">条件输入</td>   </tr>    <tr>     <td align="center">Canny ControlNet </td>     <td align="center">Depth ControlNet </td>     <td align="center">Pose ControlNet </td>   </tr>   <tr>     <td align="center">在夜晚的酒店门前，一座古老的中国风格的狮子雕像矗立着，它的眼睛闪烁着光芒，仿佛在守护着这座建筑。背景是夜晚的酒店前，构图方式是特写，平视，居中构图。这张照片呈现了真实摄影风格，蕴含了中国雕塑文化，同时展现了神秘氛围<br>（At night, an ancient Chinese-style lion statue stands in front of the hotel, its eyes gleaming as if guarding the building. The background is the hotel entrance at night, with a close-up, eye-level, and centered composition. This photo presents a realistic photographic style, embodies Chinese sculpture culture, and reveals a mysterious atmosphere.） </td>     <td align="center">在茂密的森林中，一只黑白相间的熊猫静静地坐在绿树红花中，周围是山川和海洋。背景是白天的森林，光线充足<br>（In the dense forest, a black and white panda sits quietly in green trees and red flowers, surrounded by mountains, rivers, and the ocean. The background is the forest in a bright environment.） </td>     <td align="center">一位亚洲女性，身穿绿色上衣，戴着紫色头巾和紫色围巾，站在黑板前。背景是黑板。照片采用近景、平视和居中构图的方式呈现真实摄影风格<br>（An Asian woman, dressed in a green top, wearing a purple headscarf and a purple scarf, stands in front of a blackboard. The background is the blackboard. The photo is presented in a close-up, eye-level, and centered composition, adopting a realistic photographic style） </td>   </tr>   <tr>     <td align="center"><img src="controlnet/asset/input/canny.jpg" alt="Image 0" width="200"/></td>     <td align="center"><img src="controlnet/asset/input/depth.jpg" alt="Image 1" width="200"/></td>     <td align="center"><img src="controlnet/asset/input/pose.jpg" alt="Image 2" width="200"/></td>   </tr>   <tr>     <td colspan="3" align="center">ControlNet 输出</td>   </tr>   <tr>     <td align="center"><img src="controlnet/asset/output/canny.jpg" alt="Image 3" width="200"/></td>     <td align="center"><img src="controlnet/asset/output/depth.jpg" alt="Image 4" width="200"/></td>     <td align="center"><img src="controlnet/asset/output/pose.jpg" alt="Image 5" width="200"/></td>   </tr> </table>
+
+## :art: Hunyuan-Captioner
+
+Hunyuan-Captioner 通过保持高度的图像文本一致性来满足文本到图像技术的需求。它可以从多个角度生成高质量的图像描述，包括对象描述、对象关系、背景信息、图像风格等。我们的代码基于 [LLaVA](https://github.com/haotian-liu/LLaVA) 实现。
+
+### 示例
+
+<td align="center"><img src="./asset/caption_demo.jpg" alt="Image 3" width="1200"/></td>
+
+### 指导说明
+
+a. 安装依赖项
+
+依赖项和安装基本与 [**基础模型**](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.1) 相同。
+
+b. 模型下载
+
+```
+shellCopy code# 使用 huggingface-cli 工具下载模型。
+huggingface-cli download Tencent-Hunyuan/HunyuanCaptioner --local-dir ./ckpts/captioner
+```
+
+### 推理
+
+我们的模型支持三种不同模式，包括：**直接生成中文描述**，**基于特定知识生成中文描述**，以及**直接生成英文描述**。插入的信息可以是精确的线索或嘈杂的标签（例如从互联网上抓取的原始描述）。该模型能够基于插入的信息和图像内容生成可靠且准确的描述。
+
+| 模式           | 提示模板                                  | 描述                 |
+| -------------- | ----------------------------------------- | -------------------- |
+| caption_zh     | 描述这张图片                              | 中文描述             |
+| insert_content | 根据提示词“{}”,描述这张图片               | 插入知识后的中文描述 |
+| caption_en     | Please describe the content of this image | 英文描述             |
+
+a. 单张图片中文推理
+
+```
+bash
+Copy code
+python mllm/caption_demo.py --mode "caption_zh" --image_file "mllm/images/demo1.png" --model_path "./ckpts/captioner"
+```
+
+b. 插入特定知识进行描述
+
+```
+bash
+Copy code
+python mllm/caption_demo.py --mode "insert_content" --content "宫保鸡丁" --image_file "mllm/images/demo2.png" --model_path "./ckpts/captioner"
+```
+
+c. 单张图片英文推理
+
+```
+bash
+Copy code
+python mllm/caption_demo.py --mode "caption_en" --image_file "mllm/images/demo3.png" --model_path "./ckpts/captioner"
+```
+
+d. 多张图片中文推理
+
+```
+bashCopy code### 将多张图片转换为 csv 文件。 
+python mllm/make_csv.py --img_dir "mllm/images" --input_file "mllm/images/demo.csv"
+
+### 多张图片推理
+python mllm/caption_demo.py --mode "caption_zh" --input_file
+```
+
+## 加速（适用于Linux）
+
+- 我们提供了用于推理加速的HunyuanDiT的TensorRT版本（比闪电注意力更快）。详细信息请参见[Tencent-Hunyuan/TensorRT-libs](https://huggingface.co/Tencent-Hunyuan/TensorRT-libs)。
+- 我们提供了用于推理加速的HunyuanDiT的蒸馏版本。详细信息请参见[Tencent-Hunyuan/Distillation](https://huggingface.co/Tencent-Hunyuan/Distillation)。
+
+## 🔗 BibTeX
+
+如果您认为[Hunyuan-DiT](https://arxiv.org/abs/2405.08748)或[DialogGen](https://arxiv.org/abs/2403.08857)对您的研究和应用有帮助，请使用以下BibTeX引用：
+
+```
+@misc{li2024hunyuandit,
+      title={Hunyuan-DiT: A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding}, 
+      author={Zhimin Li and Jianwei Zhang and Qin Lin and Jiangfeng Xiong and Yanxin Long and Xinchi Deng and Yingfang Zhang and Xingchao Liu and Minbin Huang and Zedong Xiao and Dayou Chen and Jiajun He and Jiahao Li and Wenyue Li and Chen Zhang and Rongwei Quan and Jianxiang Lu and Jiabin Huang and Xiaoyan Yuan and Xiaoxiao Zheng and Yixuan Li and Jihong Zhang and Chao Zhang and Meng Chen and Jie Liu and Zheng Fang and Weiyan Wang and Jinbao Xue and Yangyu Tao and Jianchen Zhu and Kai Liu and Sihuan Lin and Yifu Sun and Yun Li and Dongdong Wang and Mingtao Chen and Zhichao Hu and Xiao Xiao and Yan Chen and Yuhong Liu and Wei Liu and Di Wang and Yong Yang and Jie Jiang and Qinglin Lu},
+      year={2024},
+      eprint={2405.08748},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+
+@article{huang2024dialoggen,
+  title={DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation},
+  author={Huang, Minbin and Long, Yanxin and Deng, Xinchi and Chu, Ruihang and Xiong, Jiangfeng and Liang, Xiaodan and Cheng, Hong and Lu, Qinglin and Liu, Wei},
+  journal={arXiv preprint arXiv:2403.08857},
+  year={2024}
+}
+```
+
+## Start History
+
+<a href="https://star-history.com/#Tencent/HunyuanDiT&Date">
+
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Tencent/HunyuanDiT&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Tencent/HunyuanDiT&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Tencent/HunyuanDiT&type=Date" />
+ </picture>
+
+</a>
