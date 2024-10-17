@@ -426,7 +426,7 @@ All models will be automatically downloaded. For more information about the mode
 ### Full-parameter Training
   
   **Requirement:** 
-  1. The minimum requriment is a single GPU with at least 20GB memory, but we recommend to use a GPU with about 30 GB memory to avoid host memory offloading. 
+  1. The minimum requirement is a single GPU with at least 20GB memory, but we recommend to use a GPU with about 30 GB memory to avoid host memory offloading. 
   2. Additionally, we encourage users to leverage the multiple GPUs across different nodes to speed up training on large datasets. 
   
   **Notice:**
