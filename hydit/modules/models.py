@@ -270,6 +270,12 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
         self.final_layer = FinalLayer(hidden_size, hidden_size, patch_size, self.out_channels)
         self.unpatchify_channels = self.out_channels
 
+        # Set up skip-cache
+        if args.use_cache:
+            " This caching method is proposed in [Accelerating Vision Diffusion Transformers with Skip Branches]."
+            " Caching is performed at timestep [700-50], we calculate the high-level feature every ${args.cache_step}, and reuse it in the following ${args.cache_step-1} steps"
+            self.cache_conf = {'cont': 0, 'cache_val': None, 'cache_step': args.cache_step, 'start_cache_timestep': 700, 'end_cache_timestep': 50, 'cache_at_branch': 1}
+        
         self.initialize_weights()
 
     def check_condition_validation(self, image_meta_size, style):
@@ -331,6 +337,9 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
         return_dict: bool
             Whether to return a dictionary.
         """
+        if self.args.use_cache:
+            cur_timestep = t[0].item()
+        
         text_states = encoder_hidden_states                     # 2,77,1024
         text_states_t5 = encoder_hidden_states_t5               # 2,256,2048
         text_states_mask = text_embedding_mask.bool()           # 2,77
@@ -377,22 +386,64 @@ class HunYuanDiT(ModelMixin, ConfigMixin, PeftAdapterMixin):
         c = t + self.extra_embedder(extra_vec)  # [B, D]
 
         # ========================= Forward pass through HunYuanDiT blocks =========================
-        skips = []
-        for layer, block in enumerate(self.blocks):
-            if layer > self.depth // 2:
-                if controls is not None:
-                    skip = skips.pop() + controls.pop()
+        if not self.args.use_cache or self.training:
+            skips = []
+            for layer, block in enumerate(self.blocks):
+                if layer > self.depth // 2:
+                    if controls is not None:
+                        skip = skips.pop() + controls.pop()
+                    else:
+                        skip = skips.pop()
+                    x = block(x, c, text_states, freqs_cis_img, skip)   # (N, L, D)
                 else:
-                    skip = skips.pop()
-                x = block(x, c, text_states, freqs_cis_img, skip)   # (N, L, D)
+                    x = block(x, c, text_states, freqs_cis_img)         # (N, L, D)
+
+                if layer < (self.depth // 2 - 1):
+                    skips.append(x)
+            if controls is not None and len(controls) != 0:
+                raise ValueError("The number of controls is not equal to the number of skip connections.")
+            
+        # ========================= Faster forward pass through HunYuanDiT blocks with skip-cache =========================
+        if self.args.use_cache and not self.training:
+            # 1. Setup caching
+            cache_conf = self.cache_conf
+            do_cache = True
+            if cache_conf['cont'] % cache_conf['cache_step'] == 0 or cur_timestep >= cache_conf['start_cache_timestep'] or cur_timestep <= cache_conf['end_cache_timestep']:
+                do_cache = False
+            
+            # 2. Start to forward with caching
+            skips = []
+            for layer, block in enumerate(self.blocks):
+                if do_cache and (not (layer < cache_conf['cache_at_branch'] or layer >= len(self.blocks) - cache_conf['cache_at_branch'])):
+                    # skip middle layers
+                    continue
+                if layer == len(self.blocks) - cache_conf['cache_at_branch']:
+                    # reuse high-level features
+                    if do_cache:
+                        x = cache_conf['cache_val']
+                    else:
+                        cache_conf['cache_val'] = x
+                if layer > self.depth // 2:
+                    if controls is not None:
+                        skip = skips.pop() + controls.pop()
+                    else:
+                        skip = skips.pop()
+                    x = block(x, c, text_states, freqs_cis_img, skip)   # (N, L, D)
+                else:
+                    x = block(x, c, text_states, freqs_cis_img)         # (N, L, D)
+
+                if layer < (self.depth // 2 - 1):
+                    skips.append(x)
+            if controls is not None and len(controls) != 0:
+                raise ValueError("The number of controls is not equal to the number of skip connections.")
+            
+            # 3. Update cache config
+            if cur_timestep <= cache_conf['end_cache_timestep']:
+                cache_conf['cache_val'] = None
+                cache_conf['cont'] = 0
             else:
-                x = block(x, c, text_states, freqs_cis_img)         # (N, L, D)
-
-            if layer < (self.depth // 2 - 1):
-                skips.append(x)
-        if controls is not None and len(controls) != 0:
-            raise ValueError("The number of controls is not equal to the number of skip connections.")
-
+                cache_conf['cont'] += 1
+        
         # ========================= Final layer =========================
         x = self.final_layer(x, c)                              # (N, L, patch_size ** 2 * out_channels)
         x = self.unpatchify(x, th, tw)                          # (N, out_channels, H, W)

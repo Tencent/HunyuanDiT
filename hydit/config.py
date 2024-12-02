@@ -207,6 +207,9 @@ def get_args(default_args=None):
     parser.add_argument("--gradient-checkpointing", action="store_true", help="Use gradient checkpointing.")
     parser.add_argument("--cpu-offloading", action="store_true", help="Use cpu offloading for parameters and optimizer states.")
     parser.add_argument("--save-optimizer-state", action="store_true", help="Save optimizer state in the checkpoint.")
+    parser.add_argument("--use-cache", action="store_true", help="Accelerate with skip-cahce. This is a training-free caching method which can accelerate Hunyuan-DiT at most 2x for free.")
+    parser.add_argument("--cache-step", type=int, default=2, choices=[2, 3, 4, 5, 6], help="Specify steps to cache using skip-cache for a 1.5x~2.1x speedup.")
+    
 
     # ========================================================================================================
     # Deepspeed config
