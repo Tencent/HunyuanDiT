@@ -18,6 +18,7 @@ from transformers.modeling_utils import logger as tf_logger
 from .constants import SAMPLER_FACTORY, NEGATIVE_PROMPT, TRT_MAX_WIDTH, TRT_MAX_HEIGHT, TRT_MAX_BATCH_SIZE
 from .diffusion.pipeline import StableDiffusionPipeline
 from .modules.models import HunYuanDiT, HUNYUAN_DIT_CONFIG
+from .modules.skip_cache import HunYuanDiT_skip_cache
 from .modules.posemb_layers import get_2d_rotary_pos_embed, get_fill_resize_and_crop
 from .modules.text_encoder import MT5Embedder
 from .utils.tools import set_seeds
@@ -205,11 +206,19 @@ class End2End(object):
         self.infer_mode = self.args.infer_mode
         if self.infer_mode in ['fa', 'torch']:
             # Build model structure
-            self.model = HunYuanDiT(self.args,
-                                    input_size=latent_size,
-                                    **model_config,
-                                    log_fn=logger.info,
-                                    ).half().to(self.device)    # Force to use fp16
+            if not self.args.use_cache:
+                self.model = HunYuanDiT(self.args,
+                                        input_size=latent_size,
+                                        **model_config,
+                                        log_fn=logger.info,
+                                        ).half().to(self.device)    # Force to use fp16
+            else:
+                logger.info(f"Accelerating HunYuan-DiT model with skip-cache...")
+                self.model = HunYuanDiT_skip_cache(self.args,
+                                        input_size=latent_size,
+                                        **model_config,
+                                        log_fn=logger.info,
+                                        ).half().to(self.device)    # Force to use fp16
 
             # Load model checkpoint
             self.load_torch_weights()
