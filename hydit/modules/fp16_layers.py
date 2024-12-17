@@ -13,7 +13,7 @@ def conversion_helper(val, conversion):
     if isinstance(val, dict):
         res_dict = {}
         for k, v in val.items():
-            if  k!= 'cos_cis_img' and k != 'sin_cis_img':
+            if k != "cos_cis_img" and k != "sin_cis_img":
                 res_dict[k] = conversion_helper(v, conversion)
             else:
                 res_dict[k] = v
@@ -28,6 +28,7 @@ def conversion_helper(val, conversion):
 
 def fp32_to_float16(val, float16_convertor):
     """Convert fp32 `val` to fp16/bf16"""
+
     def half_conversion(val):
         val_typecheck = val
         if isinstance(val_typecheck, (Parameter, Variable)):
@@ -35,11 +36,13 @@ def fp32_to_float16(val, float16_convertor):
         if isinstance(val_typecheck, _FLOAT_TYPES):
             val = float16_convertor(val)
         return val
+
     return conversion_helper(val, half_conversion)
 
 
 def float16_to_fp32(val):
     """Convert fp16/bf16 `val` to fp32"""
+
     def float_conversion(val):
         val_typecheck = val
         if isinstance(val_typecheck, (Parameter, Variable)):
@@ -47,6 +50,7 @@ def float16_to_fp32(val):
         if isinstance(val_typecheck, (_HALF_TYPES,)):
             val = val.float()
         return val
+
     return conversion_helper(val, float_conversion)
 
 
@@ -55,7 +59,7 @@ class Float16Module(torch.nn.Module):
     def __init__(self, module, args):
         super(Float16Module, self).__init__()
 
-        self.add_module('module', module.half())
+        self.add_module("module", module.half())
 
         def float16_convertor(val):
             return val.half()
@@ -72,15 +76,15 @@ class Float16Module(torch.nn.Module):
         outputs = float16_to_fp32(outputs)
         return outputs
 
-    def state_dict(self, destination=None, prefix='', keep_vars=False):
+    def state_dict(self, destination=None, prefix="", keep_vars=False):
         return self.module.state_dict(destination, prefix, keep_vars)
 
-
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
-                                       keep_vars=False):
-        return self.module.state_dict_for_save_checkpoint(destination, prefix,
-                                                          keep_vars)
+    def state_dict_for_save_checkpoint(
+        self, destination=None, prefix="", keep_vars=False
+    ):
+        return self.module.state_dict_for_save_checkpoint(
+            destination, prefix, keep_vars
+        )
 
     def load_state_dict(self, state_dict, strict=True):
         self.module.load_state_dict(state_dict, strict=strict)
-

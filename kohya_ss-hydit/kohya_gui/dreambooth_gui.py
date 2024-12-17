@@ -17,7 +17,9 @@ from .common_gui import (
     SaveConfigFile,
     scriptdir,
     update_my_data,
-    validate_file_path, validate_folder_path, validate_model_path,
+    validate_file_path,
+    validate_folder_path,
+    validate_model_path,
     validate_args_setting,
     setup_environment,
 )
@@ -527,39 +529,43 @@ def train_model(
     log.info(f"Validating lr scheduler arguments...")
     if not validate_args_setting(lr_scheduler_args):
         return
-    
+
     log.info(f"Validating optimizer arguments...")
     if not validate_args_setting(optimizer_args):
         return TRAIN_BUTTON_VISIBLE
 
     #
     # Validate paths
-    # 
-    
+    #
+
     if not validate_file_path(dataset_config):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_file_path(log_tracker_config):
         return TRAIN_BUTTON_VISIBLE
-    
-    if not validate_folder_path(logging_dir, can_be_written_to=True, create_if_not_exists=True):
+
+    if not validate_folder_path(
+        logging_dir, can_be_written_to=True, create_if_not_exists=True
+    ):
         return TRAIN_BUTTON_VISIBLE
-    
-    if not validate_folder_path(output_dir, can_be_written_to=True, create_if_not_exists=True):
+
+    if not validate_folder_path(
+        output_dir, can_be_written_to=True, create_if_not_exists=True
+    ):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_model_path(pretrained_model_name_or_path):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_folder_path(reg_data_dir):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_folder_path(resume):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_folder_path(train_data_dir):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_model_path(vae):
         return TRAIN_BUTTON_VISIBLE
     #
@@ -700,7 +706,7 @@ def train_model(
         log.error("accelerate not found")
         return TRAIN_BUTTON_VISIBLE
 
-    run_cmd = [rf'{accelerate_path}', "launch"]
+    run_cmd = [rf"{accelerate_path}", "launch"]
 
     run_cmd = AccelerateLaunch.run_cmd(
         run_cmd=run_cmd,
@@ -719,9 +725,9 @@ def train_model(
     )
 
     if hunyuan11 or hunyuan12:
-        run_cmd.append(rf'{scriptdir}/sd-scripts/hunyuan_train.py')
+        run_cmd.append(rf"{scriptdir}/sd-scripts/hunyuan_train.py")
     elif sdxl:
-        run_cmd.append(rf'{scriptdir}/sd-scripts/sdxl_train.py')
+        run_cmd.append(rf"{scriptdir}/sd-scripts/sdxl_train.py")
     else:
         run_cmd.append(rf"{scriptdir}/sd-scripts/train_db.py")
 
@@ -787,7 +793,9 @@ def train_model(
         "lr_scheduler": lr_scheduler,
         "lr_scheduler_args": str(lr_scheduler_args).replace('"', "").split(),
         "lr_scheduler_num_cycles": (
-            int(lr_scheduler_num_cycles) if lr_scheduler_num_cycles != "" else int(epoch)
+            int(lr_scheduler_num_cycles)
+            if lr_scheduler_num_cycles != ""
+            else int(epoch)
         ),
         "lr_scheduler_power": lr_scheduler_power,
         "lr_warmup_steps": lr_warmup_steps,
@@ -795,7 +803,9 @@ def train_model(
         "max_bucket_reso": max_bucket_reso,
         "max_timestep": max_timestep if max_timestep != 0 else None,
         "max_token_length": int(max_token_length),
-        "max_train_epochs": int(max_train_epochs) if int(max_train_epochs) != 0 else None,
+        "max_train_epochs": (
+            int(max_train_epochs) if int(max_train_epochs) != 0 else None
+        ),
         "max_train_steps": int(max_train_steps) if int(max_train_steps) != 0 else None,
         "mem_eff_attn": mem_eff_attn,
         "metadata_author": metadata_author,
@@ -899,8 +909,8 @@ def train_model(
 
     current_datetime = datetime.now()
     formatted_datetime = current_datetime.strftime("%Y%m%d-%H%M%S")
-    tmpfilename = fr"{output_dir}/config_dreambooth-{formatted_datetime}.toml"
-    
+    tmpfilename = rf"{output_dir}/config_dreambooth-{formatted_datetime}.toml"
+
     # Save the updated TOML data back to the file
     with open(tmpfilename, "w", encoding="utf-8") as toml_file:
         toml.dump(config_toml_data, toml_file)
@@ -909,7 +919,7 @@ def train_model(
             log.error(f"Failed to write TOML file: {toml_file.name}")
 
     run_cmd.append(f"--config_file")
-    run_cmd.append(rf'{tmpfilename}')
+    run_cmd.append(rf"{tmpfilename}")
 
     # Initialize a dictionary with always-included keyword arguments
     kwargs_for_training = {
@@ -1169,7 +1179,6 @@ def dreambooth_tab(
             metadata.metadata_tags,
             metadata.metadata_title,
         ]
-
 
         configuration.button_open_config.click(
             open_configuration,

@@ -15,7 +15,9 @@ def resize_and_pad_image(pil_image, image_size):
     elif isinstance(image_size, int):
         image_width = image_height = image_size
     else:
-        raise ValueError(f"Image size should be int or list/tuple of int not {image_size}")
+        raise ValueError(
+            f"Image size should be int or list/tuple of int not {image_size}"
+        )
 
     while pil_image.size[1] >= 2 * image_height:
         pil_image = pil_image.resize(
@@ -23,15 +25,21 @@ def resize_and_pad_image(pil_image, image_size):
         )
 
     scale = image_height / pil_image.size[1]
-    pil_image = pil_image.resize(tuple(round(x * scale) for x in pil_image.size), resample=Image.BICUBIC)
+    pil_image = pil_image.resize(
+        tuple(round(x * scale) for x in pil_image.size), resample=Image.BICUBIC
+    )
 
     # shrink
     if pil_image.size[0] > image_width:
-        pil_image = pil_image.resize((image_width, image_height), resample=Image.BICUBIC)
+        pil_image = pil_image.resize(
+            (image_width, image_height), resample=Image.BICUBIC
+        )
 
     # padding
     if pil_image.size[0] < image_width:
-        img = Image.new(mode="RGBA", size=(image_width, image_height), color=(255, 255, 255, 0))
+        img = Image.new(
+            mode="RGBA", size=(image_width, image_height), color=(255, 255, 255, 0)
+        )
         width, _ = pil_image.size
         img.paste(pil_image, ((image_width - width) // 2, 0))
         pil_image = img
@@ -45,7 +53,9 @@ def resize_and_pad_image2(pil_image, image_size):
     elif isinstance(image_size, int):
         image_width = image_height = image_size
     else:
-        raise ValueError(f"Image size should be int or list/tuple of int not {image_size}")
+        raise ValueError(
+            f"Image size should be int or list/tuple of int not {image_size}"
+        )
 
     while pil_image.size[1] >= 2 * image_height:
         pil_image = pil_image.resize(
@@ -53,11 +63,15 @@ def resize_and_pad_image2(pil_image, image_size):
         )
 
     scale = image_height / pil_image.size[1]
-    pil_image = pil_image.resize(tuple(round(x * scale) for x in pil_image.size), resample=Image.BICUBIC)
+    pil_image = pil_image.resize(
+        tuple(round(x * scale) for x in pil_image.size), resample=Image.BICUBIC
+    )
 
     # shrink
     if pil_image.size[0] > image_width:
-        pil_image = pil_image.resize((image_width, image_height), resample=Image.BICUBIC)
+        pil_image = pil_image.resize(
+            (image_width, image_height), resample=Image.BICUBIC
+        )
 
     # padding
     if pil_image.size[0] < image_width:
@@ -69,14 +83,16 @@ def resize_and_pad_image2(pil_image, image_size):
     return pil_image
 
 
-def draw_visual_text(image_size, bboxes, rendered_txt_values, num_rows_values=None, align="center"):
+def draw_visual_text(
+    image_size, bboxes, rendered_txt_values, num_rows_values=None, align="center"
+):
     # aligns = ["center", "left", "right"]
     """Render text image based on the glyph instructions, i.e., the list of tuples (text, bbox, num_rows).
-       Currently we just use Calibri font to render glyph images.
+    Currently we just use Calibri font to render glyph images.
     """
     # print(image_size, bboxes, rendered_txt_values, num_rows_values, align)
     background = Image.new("RGB", image_size, "white")
-    font = ImageFont.truetype("simfang.ttf", encoding='utf-8', size=512)
+    font = ImageFont.truetype("simfang.ttf", encoding="utf-8", size=512)
     if num_rows_values is None:
         num_rows_values = [1] * len(rendered_txt_values)
 
@@ -97,27 +113,23 @@ def draw_visual_text(image_size, bboxes, rendered_txt_values, num_rows_values=No
             line_list = []
             start_idx = 0
             for index in index_list:
-                line_list.append(
-                    " ".join(word_tokens
-                             [start_idx: index]
-                             )
-                )
+                line_list.append(" ".join(word_tokens[start_idx:index]))
                 start_idx = index
             text = "\n".join(line_list)
 
-        if 'ratio' not in bbox or bbox['ratio'] == 0 or bbox['ratio'] < 1e-4:
+        if "ratio" not in bbox or bbox["ratio"] == 0 or bbox["ratio"] < 1e-4:
             image4ratio = Image.new("RGB", (512, 512), "white")
             draw = ImageDraw.Draw(image4ratio)
             _, _, w, h = draw.textbbox(xy=(0, 0), text=text, font=font)
             ratio = w / h
         else:
-            ratio = bbox['ratio']
+            ratio = bbox["ratio"]
 
-        width = int(bbox['width'] * image_size[1])
+        width = int(bbox["width"] * image_size[1])
         height = int(width / ratio)
-        top_left_x = int(bbox['top_left_x'] * image_size[0])
-        top_left_y = int(bbox['top_left_y'] * image_size[1])
-        yaw = bbox['yaw']
+        top_left_x = int(bbox["top_left_x"] * image_size[0])
+        top_left_y = int(bbox["top_left_y"] * image_size[1])
+        yaw = bbox["yaw"]
 
         text_image = Image.new("RGB", (512, 512), "white")
         draw = ImageDraw.Draw(text_image)
@@ -126,12 +138,14 @@ def draw_visual_text(image_size, bboxes, rendered_txt_values, num_rows_values=No
         draw = ImageDraw.Draw(text_image)
         draw.text((-x / 2, -y / 2), text, (0, 0, 0, 255), font=font, align=align)
 
-        text_image_ = resize_and_pad_image2(text_image.convert('RGB'), (288, 48))
+        text_image_ = resize_and_pad_image2(text_image.convert("RGB"), (288, 48))
         # import pdb; pdb.set_trace()
         text_list.append(np.array(text_image_))
 
         text_image = resize_and_pad_image(text_image, (width, height))
-        text_image = text_image.rotate(angle=-yaw, expand=True, fillcolor=(255, 255, 255, 0))
+        text_image = text_image.rotate(
+            angle=-yaw, expand=True, fillcolor=(255, 255, 255, 0)
+        )
         # image = Image.new("RGB", (w, h), "white")
         # draw = ImageDraw.Draw(image)
         background.paste(text_image, (top_left_x, top_left_y), mask=text_image)
@@ -152,34 +166,43 @@ def insert_spaces(string, nSpace):
     return new_string[:-nSpace]
 
 
-def draw_glyph(text, font='simfang.ttf'):
+def draw_glyph(text, font="simfang.ttf"):
     if isinstance(font, str):
-        font = ImageFont.truetype(font, encoding='utf-8', size=512)
+        font = ImageFont.truetype(font, encoding="utf-8", size=512)
     g_size = 50
     W, H = (512, 80)
     new_font = font.font_variant(size=g_size)
-    img = Image.new(mode='1', size=(W, H), color=0)
+    img = Image.new(mode="1", size=(W, H), color=0)
     draw = ImageDraw.Draw(img)
     left, top, right, bottom = new_font.getbbox(text)
-    text_width = max(right-left, 5)
+    text_width = max(right - left, 5)
     text_height = max(bottom - top, 5)
-    ratio = min(W*0.9/text_width, H*0.9/text_height)
-    new_font = font.font_variant(size=int(g_size*ratio))
+    ratio = min(W * 0.9 / text_width, H * 0.9 / text_height)
+    new_font = font.font_variant(size=int(g_size * ratio))
 
     text_width, text_height = new_font.getsize(text)
     offset_x, offset_y = new_font.getoffset(text)
     x = (img.width - text_width) // 2
-    y = (img.height - text_height) // 2 - offset_y//2
-    draw.text((x, y), text, font=new_font, fill='white')
+    y = (img.height - text_height) // 2 - offset_y // 2
+    draw.text((x, y), text, font=new_font, fill="white")
     img = np.expand_dims(np.array(img), axis=2).astype(np.float64)
 
     return img
 
 
-def draw_glyph2(text, polygon, font='simfang.ttf', vertAng=10, scale=1, width=1024, height=1024, add_space=True):
+def draw_glyph2(
+    text,
+    polygon,
+    font="simfang.ttf",
+    vertAng=10,
+    scale=1,
+    width=1024,
+    height=1024,
+    add_space=True,
+):
     if isinstance(font, str):
-        font = ImageFont.truetype(font, encoding='utf-8', size=60)
-    enlarge_polygon = polygon*scale
+        font = ImageFont.truetype(font, encoding="utf-8", size=60)
+    enlarge_polygon = polygon * scale
     rect = cv2.minAreaRect(enlarge_polygon)
     box = cv2.boxPoints(rect)
     box = np.int0(box)
@@ -192,14 +215,14 @@ def draw_glyph2(text, polygon, font='simfang.ttf', vertAng=10, scale=1, width=10
         angle += 90
 
     vert = False
-    if (abs(angle) % 90 < vertAng or abs(90-abs(angle) % 90) % 90 < vertAng):
+    if abs(angle) % 90 < vertAng or abs(90 - abs(angle) % 90) % 90 < vertAng:
         _w = max(box[:, 0]) - min(box[:, 0])
         _h = max(box[:, 1]) - min(box[:, 1])
         if _h >= _w:
             vert = True
             angle = 0
 
-    img = np.zeros((height*scale, width*scale, 3), np.uint8)
+    img = np.zeros((height * scale, width * scale, 3), np.uint8)
     img = Image.fromarray(img)
 
     # infer font size
@@ -215,24 +238,29 @@ def draw_glyph2(text, polygon, font='simfang.ttf', vertAng=10, scale=1, width=10
                 _, _, _tw2, _th2 = draw.textbbox(xy=(0, 0), text=text_space, font=font)
                 if min(w, h) * (_tw2 / _th2) > max(w, h):
                     break
-            text = insert_spaces(text, i-1)
-        font_size = min(w, h)*0.80
+            text = insert_spaces(text, i - 1)
+        font_size = min(w, h) * 0.80
     else:
         # shrink = 0.75 if vert else 0.85
         shrink = 1.0
-        font_size = min(w, h) / (text_w/max(w, h)) * shrink
+        font_size = min(w, h) / (text_w / max(w, h)) * shrink
     new_font = font.font_variant(size=int(font_size))
 
     left, top, right, bottom = new_font.getbbox(text)
-    text_width = right-left
+    text_width = right - left
     text_height = bottom - top
 
-    layer = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer)
     if not vert:
-        draw.text((rect[0][0]-text_width//2, rect[0][1]-text_height//2-top), text, font=new_font, fill=(255, 255, 255, 255))
+        draw.text(
+            (rect[0][0] - text_width // 2, rect[0][1] - text_height // 2 - top),
+            text,
+            font=new_font,
+            fill=(255, 255, 255, 255),
+        )
     else:
-        x_s = min(box[:, 0]) + _w//2 - text_height//2
+        x_s = min(box[:, 0]) + _w // 2 - text_height // 2
         y_s = min(box[:, 1])
         for c in text:
             draw.text((x_s, y_s), c, font=new_font, fill=(255, 255, 255, 255))
@@ -244,6 +272,6 @@ def draw_glyph2(text, polygon, font='simfang.ttf', vertAng=10, scale=1, width=10
     x_offset = int((img.width - rotated_layer.width) / 2)
     y_offset = int((img.height - rotated_layer.height) / 2)
     img.paste(rotated_layer, (x_offset, y_offset), rotated_layer)
-    img = np.expand_dims(np.array(img.convert('1')), axis=2).astype(np.float64)
+    img = np.expand_dims(np.array(img.convert("1")), axis=2).astype(np.float64)
 
     return img

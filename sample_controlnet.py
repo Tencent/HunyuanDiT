@@ -10,13 +10,15 @@ from torchvision import transforms as T
 import numpy as np
 
 norm_transform = T.Compose(
-        [
-            T.ToTensor(),
-            T.Normalize([0.5], [0.5]),
-        ]
-    )
+    [
+        T.ToTensor(),
+        T.Normalize([0.5], [0.5]),
+    ]
+)
 
 from PIL import Image
+
+
 def inferencer():
     args = get_args()
     models_root_path = Path(args.model_root)
@@ -54,30 +56,33 @@ if __name__ == "__main__":
     logger.info("Generating images...")
     height, width = args.image_size
 
-    condition = Image.open(args.condition_image_path).convert('RGB').resize((width, height))
+    condition = (
+        Image.open(args.condition_image_path).convert("RGB").resize((width, height))
+    )
     image = norm_transform(condition)
     image = image.unsqueeze(0).cuda()
-    
-    results = gen.predict(args.prompt,
-                          height=height,
-                          width=width,
-                          image=image,
-                          seed=args.seed,
-                          enhanced_prompt=enhanced_prompt,
-                          negative_prompt=args.negative,
-                          infer_steps=args.infer_steps,
-                          guidance_scale=args.cfg_scale,
-                          batch_size=args.batch_size,
-                          src_size_cond=args.size_cond,
-                          use_style_cond=args.use_style_cond,
-                          )
-    images = results['images']
+
+    results = gen.predict(
+        args.prompt,
+        height=height,
+        width=width,
+        image=image,
+        seed=args.seed,
+        enhanced_prompt=enhanced_prompt,
+        negative_prompt=args.negative,
+        infer_steps=args.infer_steps,
+        guidance_scale=args.cfg_scale,
+        batch_size=args.batch_size,
+        src_size_cond=args.size_cond,
+        use_style_cond=args.use_style_cond,
+    )
+    images = results["images"]
 
     # Save images
-    save_dir = Path('results')
+    save_dir = Path("results")
     save_dir.mkdir(exist_ok=True)
     # Find the first available index
-    all_files = list(save_dir.glob('*.png'))
+    all_files = list(save_dir.glob("*.png"))
     if all_files:
         start = max([int(f.stem) for f in all_files]) + 1
     else:

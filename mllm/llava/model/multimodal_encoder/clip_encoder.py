@@ -5,41 +5,49 @@ from transformers import CLIPVisionModel, CLIPImageProcessor, CLIPVisionConfig
 
 
 class CLIPVisionTower(nn.Module):
-    def __init__(self, vision_tower, args,  delay_load=False):
+    def __init__(self, vision_tower, args, delay_load=False):
         super().__init__()
 
         self.is_loaded = False
 
         self.vision_tower_name = vision_tower
         self.select_layer = args.mm_vision_select_layer
-        self.select_feature = getattr(args, 'mm_vision_select_feature', 'patch')
+        self.select_feature = getattr(args, "mm_vision_select_feature", "patch")
 
         if not delay_load:
             self.load_model()
-        elif getattr(args, 'unfreeze_mm_vision_tower', False):
+        elif getattr(args, "unfreeze_mm_vision_tower", False):
             self.load_model()
         else:
             self.cfg_only = CLIPVisionConfig.from_pretrained(self.vision_tower_name)
 
     def load_model(self, device_map=None):
         if self.is_loaded:
-            print('{} is already loaded, `load_model` called again, skipping.'.format(self.vision_tower_name))
+            print(
+                "{} is already loaded, `load_model` called again, skipping.".format(
+                    self.vision_tower_name
+                )
+            )
             return
 
-        self.image_processor = CLIPImageProcessor.from_pretrained(self.vision_tower_name)
-        self.vision_tower = CLIPVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
+        self.image_processor = CLIPImageProcessor.from_pretrained(
+            self.vision_tower_name
+        )
+        self.vision_tower = CLIPVisionModel.from_pretrained(
+            self.vision_tower_name, device_map=device_map
+        )
         self.vision_tower.requires_grad_(False)
 
         self.is_loaded = True
 
     def feature_select(self, image_forward_outs):
         image_features = image_forward_outs.hidden_states[self.select_layer]
-        if self.select_feature == 'patch':
+        if self.select_feature == "patch":
             image_features = image_features[:, 1:]
-        elif self.select_feature == 'cls_patch':
+        elif self.select_feature == "cls_patch":
             image_features = image_features
         else:
-            raise ValueError(f'Unexpected select feature: {self.select_feature}')
+            raise ValueError(f"Unexpected select feature: {self.select_feature}")
         return image_features
 
     @torch.no_grad()
@@ -47,11 +55,17 @@ class CLIPVisionTower(nn.Module):
         if type(images) is list:
             image_features = []
             for image in images:
-                image_forward_out = self.vision_tower(image.to(device=self.device, dtype=self.dtype).unsqueeze(0), output_hidden_states=True)
+                image_forward_out = self.vision_tower(
+                    image.to(device=self.device, dtype=self.dtype).unsqueeze(0),
+                    output_hidden_states=True,
+                )
                 image_feature = self.feature_select(image_forward_out).to(image.dtype)
                 image_features.append(image_feature)
         else:
-            image_forward_outs = self.vision_tower(images.to(device=self.device, dtype=self.dtype), output_hidden_states=True)
+            image_forward_outs = self.vision_tower(
+                images.to(device=self.device, dtype=self.dtype),
+                output_hidden_states=True,
+            )
             image_features = self.feature_select(image_forward_outs).to(images.dtype)
 
         return image_features

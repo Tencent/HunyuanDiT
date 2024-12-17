@@ -2,6 +2,7 @@
 A controller manages distributed workers.
 It sends worker addresses to clients.
 """
+
 import argparse
 import asyncio
 import dataclasses
@@ -61,13 +62,15 @@ class Controller:
         self.dispatch_method = DispatchMethod.from_str(dispatch_method)
 
         self.heart_beat_thread = threading.Thread(
-            target=heart_beat_controller, args=(self,), daemon=True)
+            target=heart_beat_controller, args=(self,), daemon=True
+        )
         self.heart_beat_thread.start()
 
         logger.info("Init controller")
 
-    def register_worker(self, worker_name: str, check_heart_beat: bool,
-                        worker_status: dict):
+    def register_worker(
+        self, worker_name: str, check_heart_beat: bool, worker_status: dict
+    ):
         if worker_name not in self.worker_info:
             logger.info(f"Register a new worker: {worker_name}")
         else:
@@ -79,8 +82,12 @@ class Controller:
             return False
 
         self.worker_info[worker_name] = WorkerInfo(
-            worker_status["model_names"], worker_status["speed"], worker_status["queue_length"],
-            check_heart_beat, time.time())
+            worker_status["model_names"],
+            worker_status["speed"],
+            worker_status["queue_length"],
+            check_heart_beat,
+            time.time(),
+        )
 
         logger.info(f"Register done: {worker_name}, {worker_status}")
         return True
@@ -131,15 +138,13 @@ class Controller:
                 return ""
             worker_speeds = worker_speeds / norm
             if True:  # Directly return address
-                pt = np.random.choice(np.arange(len(worker_names)),
-                    p=worker_speeds)
+                pt = np.random.choice(np.arange(len(worker_names)), p=worker_speeds)
                 worker_name = worker_names[pt]
                 return worker_name
 
             # Check status before returning
             while True:
-                pt = np.random.choice(np.arange(len(worker_names)),
-                    p=worker_speeds)
+                pt = np.random.choice(np.arange(len(worker_names)), p=worker_speeds)
                 worker_name = worker_names[pt]
 
                 if self.get_worker_status(worker_name):
@@ -165,7 +170,9 @@ class Controller:
             min_index = np.argmin(worker_qlen)
             w_name = worker_names[min_index]
             self.worker_info[w_name].queue_length += 1
-            logger.info(f"names: {worker_names}, queue_lens: {worker_qlen}, ret: {w_name}")
+            logger.info(
+                f"names: {worker_names}, queue_lens: {worker_qlen}, ret: {w_name}"
+            )
             return w_name
         else:
             raise ValueError(f"Invalid dispatch method: {self.dispatch_method}")
@@ -201,8 +208,12 @@ class Controller:
             yield json.dumps(ret).encode() + b"\0"
 
         try:
-            response = requests.post(worker_addr + "/worker_generate_stream",
-                json=params, stream=True, timeout=5)
+            response = requests.post(
+                worker_addr + "/worker_generate_stream",
+                json=params,
+                stream=True,
+                timeout=5,
+            )
             for chunk in response.iter_lines(decode_unicode=False, delimiter=b"\0"):
                 if chunk:
                     yield chunk + b"\0"
@@ -213,7 +224,6 @@ class Controller:
                 "error_code": 3,
             }
             yield json.dumps(ret).encode() + b"\0"
-
 
     # Let the controller act as a worker to achieve hierarchical
     # management. This can be used to connect isolated sub networks.
@@ -243,8 +253,8 @@ app = FastAPI()
 async def register_worker(request: Request):
     data = await request.json()
     controller.register_worker(
-        data["worker_name"], data["check_heart_beat"],
-        data.get("worker_status", None))
+        data["worker_name"], data["check_heart_beat"], data.get("worker_status", None)
+    )
 
 
 @app.post("/refresh_all_workers")
@@ -268,8 +278,7 @@ async def get_worker_address(request: Request):
 @app.post("/receive_heart_beat")
 async def receive_heart_beat(request: Request):
     data = await request.json()
-    exist = controller.receive_heart_beat(
-        data["worker_name"], data["queue_length"])
+    exist = controller.receive_heart_beat(data["worker_name"], data["queue_length"])
     return {"exist": exist}
 
 
@@ -289,8 +298,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", type=str, default="localhost")
     parser.add_argument("--port", type=int, default=21001)
-    parser.add_argument("--dispatch-method", type=str, choices=[
-        "lottery", "shortest_queue"], default="shortest_queue")
+    parser.add_argument(
+        "--dispatch-method",
+        type=str,
+        choices=["lottery", "shortest_queue"],
+        default="shortest_queue",
+    )
     args = parser.parse_args()
     logger.info(f"args: {args}")
 

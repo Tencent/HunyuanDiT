@@ -2,10 +2,11 @@ import argparse
 import torch
 import sys
 import os
-import pandas as pd 
+import pandas as pd
 import tqdm
+
 # 添加当前命令行运行的目录到 sys.path
-sys.path.append(os.getcwd()+"/mllm")
+sys.path.append(os.getcwd() + "/mllm")
 
 
 from llava.constants import (
@@ -30,7 +31,7 @@ from io import BytesIO
 import re
 
 
-def image_parser(image_file, sep=','):
+def image_parser(image_file, sep=","):
     out = image_file.split(sep)
     return out
 
@@ -55,24 +56,24 @@ def load_images(image_files):
 def init_dialoggen_model(model_path, model_base=None, load_4bit=False):
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, context_len = load_pretrained_model(
-        model_path, model_base, model_name, llava_type_model=True, load_4bit=load_4bit)
-    return {"tokenizer": tokenizer,
-            "model": model,
-            "image_processor": image_processor}
+        model_path, model_base, model_name, llava_type_model=True, load_4bit=load_4bit
+    )
+    return {"tokenizer": tokenizer, "model": model, "image_processor": image_processor}
 
 
-def eval_model(models,
-               query='详细描述一下这张图片',
-               image_file=None,
-               sep=',',
-               temperature=0.2,
-               top_p=None,
-               num_beams=1,
-               max_new_tokens=512,
-               return_history=False,
-               history=None,
-               skip_special=False
-               ):
+def eval_model(
+    models,
+    query="详细描述一下这张图片",
+    image_file=None,
+    sep=",",
+    temperature=0.2,
+    top_p=None,
+    num_beams=1,
+    max_new_tokens=512,
+    return_history=False,
+    history=None,
+    skip_special=False,
+):
     # Model
     disable_torch_init()
 
@@ -88,9 +89,9 @@ def eval_model(models,
             qs = image_token_se + "\n" + qs
         else:
             qs = DEFAULT_IMAGE_TOKEN + "\n" + qs
-            
+
     if not history:
-        conv = conv_templates['llava_v1'].copy()
+        conv = conv_templates["llava_v1"].copy()
     else:
         conv = history
 
@@ -106,18 +107,24 @@ def eval_model(models,
         images = load_images(image_files)
         image_sizes = [x.size for x in images]
         images_tensor = process_images(
-            images,
-            models["image_processor"],
-            models["model"].config
+            images, models["image_processor"], models["model"].config
         ).to(models["model"].device, dtype=torch.float16)
     else:
         # fomatted input as training data
         image_sizes = [(1024, 1024)]
-        images_tensor = torch.zeros(1, 5, 3, models["image_processor"].crop_size["height"], models["image_processor"].crop_size["width"])
+        images_tensor = torch.zeros(
+            1,
+            5,
+            3,
+            models["image_processor"].crop_size["height"],
+            models["image_processor"].crop_size["width"],
+        )
         images_tensor = images_tensor.to(models["model"].device, dtype=torch.float16)
 
     input_ids = (
-        tokenizer_image_token(prompt, models["tokenizer"], IMAGE_TOKEN_INDEX, return_tensors="pt")
+        tokenizer_image_token(
+            prompt, models["tokenizer"], IMAGE_TOKEN_INDEX, return_tensors="pt"
+        )
         .unsqueeze(0)
         .cuda()
     )
@@ -134,31 +141,44 @@ def eval_model(models,
             use_cache=True,
         )
 
-    outputs = models["tokenizer"].batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+    outputs = (
+        models["tokenizer"]
+        .batch_decode(output_ids, skip_special_tokens=True)[0]
+        .strip()
+    )
     if return_history:
         return outputs, conv
     return outputs
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path', type=str, default='/apdcephfs_data_cq5_1/share_300167803/dengxinchi/project/LLaVA/checkpoints/exps/caption/caption_v3_prolr2-5_lr2-5_v5_checkpoint-50000_merge_lora')
-    parser.add_argument('--mode', choices=['caption_zh','caption_en','insert_content'], default="caption_zh")
-    parser.add_argument('--content', type=str, default=None)
-    parser.add_argument('--input_file', type=str, default=None) # 'images/demo.csv'
-    parser.add_argument('--output_file', type=str, default=None) # 'images/demo_res.csv'
-    parser.add_argument('--image_file', type=str, default='images/demo1.jpeg') # 'images/demo1.jpeg'
+    parser.add_argument(
+        "--model_path",
+        type=str,
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["caption_zh", "caption_en", "insert_content"],
+        default="caption_zh",
+    )
+    parser.add_argument("--content", type=str, default=None)
+    parser.add_argument("--input_file", type=str, default=None)  # 'images/demo.csv'
+    parser.add_argument(
+        "--output_file", type=str, default=None
+    )  # 'images/demo_res.csv'
+    parser.add_argument(
+        "--image_file", type=str, default="images/demo1.jpeg"
+    )  # 'images/demo1.jpeg'
     args = parser.parse_args()
 
-    if args.mode == 'caption_zh':
+    if args.mode == "caption_zh":
         query = "描述这张图片"
-    elif args.mode == 'caption_en':
-        query = 'Please describe the content of this image'
-    elif args.mode == 'insert_content':
+    elif args.mode == "caption_en":
+        query = "Please describe the content of this image"
+    elif args.mode == "insert_content":
         assert args.content is not None
-        query = f'根据提示词“{args.content}”,描述这张图片'
-
+        query = f"根据提示词“{args.content}”,描述这张图片"
 
     models = init_dialoggen_model(args.model_path)
 
@@ -167,15 +187,17 @@ if __name__ == "__main__":
         text_zh = []
         for i in tqdm.tqdm(range(len(df))):
             img_path = df.loc[i]["img_path"]
-            res = eval_model(models,
+            res = eval_model(
+                models,
                 query=query,
                 image_file=img_path,
             )
             text_zh.append(res)
         df["text_zh"] = text_zh
-        df.to_csv(args.output_file, index=False, encoding='utf-8-sig')
-    else:        
-        res = eval_model(models,
+        df.to_csv(args.output_file, index=False, encoding="utf-8-sig")
+    else:
+        res = eval_model(
+            models,
             query=query,
             image_file=args.image_file,
         )

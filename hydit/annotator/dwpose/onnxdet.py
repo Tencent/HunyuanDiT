@@ -112,10 +112,10 @@ def inference_detector(session, oriImg):
     scores = predictions[:, 4:5] * predictions[:, 5:]
 
     boxes_xyxy = np.ones_like(boxes)
-    boxes_xyxy[:, 0] = boxes[:, 0] - boxes[:, 2] / 2.
-    boxes_xyxy[:, 1] = boxes[:, 1] - boxes[:, 3] / 2.
-    boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2] / 2.
-    boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3] / 2.
+    boxes_xyxy[:, 0] = boxes[:, 0] - boxes[:, 2] / 2.0
+    boxes_xyxy[:, 1] = boxes[:, 1] - boxes[:, 3] / 2.0
+    boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2] / 2.0
+    boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3] / 2.0
     boxes_xyxy /= ratio
     dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.45, score_thr=0.1)
     if dets is not None:

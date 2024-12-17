@@ -66,4 +66,3 @@ def discretized_gaussian_log_likelihood(x, *, means, log_scales):
     )
     assert log_probs.shape == x.shape
     return log_probs
-

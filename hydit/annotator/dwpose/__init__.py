@@ -16,11 +16,11 @@ from .wholebody import Wholebody
 
 
 def draw_pose(pose, H, W, draw_body=True):
-    bodies = pose['bodies']
-    faces = pose['faces']
-    hands = pose['hands']
-    candidate = bodies['candidate']
-    subset = bodies['subset']
+    bodies = pose["bodies"]
+    faces = pose["faces"]
+    hands = pose["hands"]
+    candidate = bodies["candidate"]
+    subset = bodies["subset"]
     canvas = np.zeros(shape=(H, W, 3), dtype=np.uint8)
 
     if draw_body:
@@ -34,13 +34,16 @@ def draw_pose(pose, H, W, draw_body=True):
 
 
 def keypoint2bbox(keypoints):
-    valid_keypoints = keypoints[keypoints[:, 0] >= 0]  # Ignore keypoints with confidence 0
+    valid_keypoints = keypoints[
+        keypoints[:, 0] >= 0
+    ]  # Ignore keypoints with confidence 0
     if len(valid_keypoints) == 0:
         return np.zeros(4)
     x_min, y_min = np.min(valid_keypoints, axis=0)
     x_max, y_max = np.max(valid_keypoints, axis=0)
 
     return np.array([x_min, y_min, x_max, y_max])
+
 
 def expand_bboxes(bboxes, expansion_rate=0.5, image_shape=(0, 0)):
     expanded_bboxes = []
@@ -63,25 +66,35 @@ def expand_bboxes(bboxes, expansion_rate=0.5, image_shape=(0, 0)):
 
     return expanded_bboxes
 
+
 def create_mask(image_width, image_height, bboxs):
     mask = np.zeros((image_height, image_width), dtype=np.float32)
     for bbox in bboxs:
         x1, y1, x2, y2 = map(int, bbox)
-        mask[y1:y2+1, x1:x2+1] = 1.0
+        mask[y1 : y2 + 1, x1 : x2 + 1] = 1.0
     return mask
 
+
 threshold = 0.4
+
+
 class DWposeDetector:
     def __init__(self):
 
         self.pose_estimation = Wholebody()
 
-    def __call__(self, oriImg, return_index=False, return_yolo=False, return_mask=False):
+    def __call__(
+        self, oriImg, return_index=False, return_yolo=False, return_mask=False
+    ):
         oriImg = oriImg.copy()
         H, W, C = oriImg.shape
         with torch.no_grad():
             candidate, subset = self.pose_estimation(oriImg)
-            candidate = np.zeros((1, 134, 2), dtype=np.float32) if candidate is None else candidate
+            candidate = (
+                np.zeros((1, 134, 2), dtype=np.float32)
+                if candidate is None
+                else candidate
+            )
             subset = np.zeros((1, 134), dtype=np.float32) if subset is None else subset
             nums, keys, locs = candidate.shape
             candidate[..., 0] /= float(W)
@@ -124,8 +137,6 @@ class DWposeDetector:
                 hand_random = random.choice(hands_)
                 bbox = (keypoint2bbox(hand_random) * H).astype(int)  # [0, 1] -> [h, w]
 
-
-
             bodies = dict(candidate=body, subset=score)
             pose = dict(bodies=bodies, hands=hands, faces=faces)
 
@@ -139,5 +150,3 @@ class DWposeDetector:
                 return pose
             else:
                 return draw_pose(pose, H, W), bbox
-
-

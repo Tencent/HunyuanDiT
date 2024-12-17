@@ -22,9 +22,9 @@ def get_table(arrow_file):
     return pa.ipc.RecordBatchFileReader(pa.memory_map(f"{arrow_file}", "r")).read_all()
 
 
-def assert_type(data, dtype, msg=''):
+def assert_type(data, dtype, msg=""):
     if not isinstance(data, dtype):
-        raise ValueError(f'Expected {msg} type {dtype}, got {type(data)}.')
+        raise ValueError(f"Expected {msg} type {dtype}, got {type(data)}.")
 
 
 def ndarray_to_list(data):
@@ -37,7 +37,9 @@ def ndarray_to_list(data):
         # Because numpy integer cannot be serialized to json.
         data = [int(x) for x in data]
     else:
-        raise ValueError(f'Expected data type list, tuple, dict or np.ndarray, got {type(data)}.')
+        raise ValueError(
+            f"Expected data type list, tuple, dict or np.ndarray, got {type(data)}."
+        )
     return data
 
 
@@ -67,55 +69,67 @@ class ArrowIndexV2(object):
     >>> text = indexObj.get_attribute(0, column='text_zh')
 
     """
-    def __init__(self, index_file=None, res_dict=None, align=1,
-                 shadow_file_fn=None, **kwargs):
+
+    def __init__(
+        self, index_file=None, res_dict=None, align=1, shadow_file_fn=None, **kwargs
+    ):
         if index_file is not None:
-            with open(index_file, 'r') as f:
+            with open(index_file, "r") as f:
                 res_dict = json.load(f)
         elif res_dict is not None:
             pass
         else:
-            raise ValueError(f'Either index_file or res_dict should be provided.')
+            raise ValueError(f"Either index_file or res_dict should be provided.")
 
         self.shadow_file_fn = {}
         if shadow_file_fn is not None:
             if not callable(shadow_file_fn) and not isinstance(shadow_file_fn, dict):
-                raise ValueError('shadow_file_fn should be a callable function or a dict.')
+                raise ValueError(
+                    "shadow_file_fn should be a callable function or a dict."
+                )
             if callable(shadow_file_fn):
-                self.shadow_file_fn['default'] = shadow_file_fn
+                self.shadow_file_fn["default"] = shadow_file_fn
             else:
                 for k, v in shadow_file_fn.items():
                     if not callable(v):
-                        raise ValueError(f'{k} should be a callable function.')
+                        raise ValueError(f"{k} should be a callable function.")
                     self.shadow_file_fn[k] = v
 
         self._data = res_dict
-        self.data_type = res_dict['data_type']
-        self.arrow_files = res_dict['arrow_files']
-        self.cum_length = res_dict['cum_length']
+        self.data_type = res_dict["data_type"]
+        self.arrow_files = res_dict["arrow_files"]
+        self.cum_length = res_dict["cum_length"]
 
-        self.group_length = res_dict['group_length']
-        error_msg = f'Expected group_length type list, got {type(self.group_length)}.'
+        self.group_length = res_dict["group_length"]
+        error_msg = f"Expected group_length type list, got {type(self.group_length)}."
         if isinstance(self.group_length, dict):
-            raise ValueError(f'{error_msg}\nNote: You may using a multi-resolution index file. '
-                             'Try `MultiResolutionBucketIndexV2` instead.')
+            raise ValueError(
+                f"{error_msg}\nNote: You may using a multi-resolution index file. "
+                "Try `MultiResolutionBucketIndexV2` instead."
+            )
         elif not isinstance(self.group_length, list):
             raise ValueError(error_msg)
 
-        self.indices = res_dict['indices']
-        if 'indices_file' in res_dict:
-            self.indices_file = res_dict['indices_file']
-            if self.indices_file != '':
+        self.indices = res_dict["indices"]
+        if "indices_file" in res_dict:
+            self.indices_file = res_dict["indices_file"]
+            if self.indices_file != "":
                 indices_file = Path(index_file).parent / self.indices_file
                 if Path(indices_file).exists():
-                    self.indices = np.load(indices_file)['x']
+                    self.indices = np.load(indices_file)["x"]
                 else:
-                    raise ValueError(f'This Index file contains an extra file {indices_file} which is missed.')
+                    raise ValueError(
+                        f"This Index file contains an extra file {indices_file} which is missed."
+                    )
         else:
-            self.indices_file = ''
+            self.indices_file = ""
 
-        if not isinstance(self.indices, list) and not isinstance(self.indices, np.ndarray):
-            raise ValueError(f'Expected indices type list or np.ndarray, got {type(self.indices)}.')
+        if not isinstance(self.indices, list) and not isinstance(
+            self.indices, np.ndarray
+        ):
+            raise ValueError(
+                f"Expected indices type list or np.ndarray, got {type(self.indices)}."
+            )
 
         if align > 1:
             if isinstance(self.indices, np.ndarray):
@@ -125,13 +139,20 @@ class ArrowIndexV2(object):
         self.indices = np.asarray(self.indices, int)
 
         if len(self.arrow_files) != len(self.cum_length):
-            raise ValueError(f'Length of arrow_files and cum_length does not match. {len(self.arrow_files)} != {len(self.cum_length)}')
+            raise ValueError(
+                f"Length of arrow_files and cum_length does not match. {len(self.arrow_files)} != {len(self.cum_length)}"
+            )
         if len(self.arrow_files) != len(self.group_length):
-            raise ValueError(f'Length of arrow_files and group_length does not match. {len(self.arrow_files)} != {len(self.group_length)}')
+            raise ValueError(
+                f"Length of arrow_files and group_length does not match. {len(self.arrow_files)} != {len(self.group_length)}"
+            )
         if len(self.indices) == 0:
-            raise ValueError(f'No indices found in index_dict.')
-        if isinstance(self.indices, list) and self.indices[-1] > self.cum_length[-1] - 1:
-            raise ValueError(f'Indices exceed cum_length.')
+            raise ValueError(f"No indices found in index_dict.")
+        if (
+            isinstance(self.indices, list)
+            and self.indices[-1] > self.cum_length[-1] - 1
+        ):
+            raise ValueError(f"Indices exceed cum_length.")
 
         # Warning:
         #  Ensure that indices are an increasing array. Currently,
@@ -244,13 +265,15 @@ class ArrowIndexV2(object):
         indices_group_list = []
         group_cum_len = 0
         for group_len in self.group_length:
-            indices_group = indices[group_cum_len:group_cum_len + group_len]
+            indices_group = indices[group_cum_len : group_cum_len + group_len]
             random.shuffle(indices_group)
             indices_group_list.append((indices_group, group_len))
             group_cum_len += group_len
         random.shuffle(indices_group_list)
         self.group_length = [x[1] for x in indices_group_list]
-        self.indices = np.asarray(list(chain.from_iterable([x[0] for x in indices_group_list])))
+        self.indices = np.asarray(
+            list(chain.from_iterable([x[0] for x in indices_group_list]))
+        )
 
         if seed is not None:
             random.setstate(state)
@@ -278,7 +301,9 @@ class ArrowIndexV2(object):
 
             self._cur_arrow_file = arrow_file
             self._cur_table_map = pa.memory_map(f"{arrow_file}", "r")
-            self._cur_table = pa.ipc.RecordBatchFileReader(self._cur_table_map).read_all()
+            self._cur_table = pa.ipc.RecordBatchFileReader(
+                self._cur_table_map
+            ).read_all()
             return self._cur_table
         else:
             if self._shadow_cur_table[shadow] is not None:
@@ -290,7 +315,9 @@ class ArrowIndexV2(object):
 
             self._shadow_cur_arrow_file[shadow] = arrow_file
             self._shadow_cur_table_map[shadow] = pa.memory_map(f"{arrow_file}", "r")
-            self._shadow_cur_table[shadow] = pa.ipc.RecordBatchFileReader(self._shadow_cur_table_map[shadow]).read_all()
+            self._shadow_cur_table[shadow] = pa.ipc.RecordBatchFileReader(
+                self._shadow_cur_table_map[shadow]
+            ).read_all()
             return self._shadow_cur_table[shadow]
 
     def get_arrow_file_by_index(self, index, return_index_bias=False, shadow=None):
@@ -330,36 +357,48 @@ class ArrowIndexV2(object):
         if shadow is None:
             if index == self.last_index:
                 return self._cur_table
-            arrow_file, self._index_bias = \
-                self.get_arrow_file_by_index(index, return_index_bias=True)
+            arrow_file, self._index_bias = self.get_arrow_file_by_index(
+                index, return_index_bias=True
+            )
             self._cur_table = self.get_table(arrow_file)
             self.last_index = index
             return self._cur_table
         else:
             if index == self.shadow_last_index[shadow]:
                 return self._shadow_cur_table[shadow]
-            shadow_arrow_file, _shadow_index_bias = \
-                self.get_arrow_file_by_index(index, return_index_bias=True, shadow=shadow)
+            shadow_arrow_file, _shadow_index_bias = self.get_arrow_file_by_index(
+                index, return_index_bias=True, shadow=shadow
+            )
             self._shadow_index_bias[shadow] = _shadow_index_bias
-            self._shadow_cur_table[shadow] = self.get_table(shadow_arrow_file, shadow=shadow)
+            self._shadow_cur_table[shadow] = self.get_table(
+                shadow_arrow_file, shadow=shadow
+            )
             self.shadow_last_index[shadow] = index
             return self._shadow_cur_table[shadow]
 
-    def get_data_by_index(self, index, columns=None, allow_missing=False, return_meta=True, shadow=None):
+    def get_data_by_index(
+        self, index, columns=None, allow_missing=False, return_meta=True, shadow=None
+    ):
         table = self.load_table_by_index(index, shadow=shadow)
         if isinstance(columns, str):
             columns = [columns]
         if columns is None:
             columns = list(table.column_names)
 
-        index_bias = self._index_bias if shadow is None else self._shadow_index_bias[shadow]
+        index_bias = (
+            self._index_bias if shadow is None else self._shadow_index_bias[shadow]
+        )
         in_arrow_index = index - index_bias
         if return_meta:
-            cur_arrow_file = self._cur_arrow_file if shadow is None else self._shadow_cur_arrow_file[shadow]
+            cur_arrow_file = (
+                self._cur_arrow_file
+                if shadow is None
+                else self._shadow_cur_arrow_file[shadow]
+            )
             data = {
-                'index': index,
-                'in_arrow_index': in_arrow_index,
-                'arrow_name': cur_arrow_file,
+                "index": index,
+                "in_arrow_index": in_arrow_index,
+                "arrow_name": cur_arrow_file,
             }
         else:
             data = {}
@@ -373,7 +412,9 @@ class ArrowIndexV2(object):
                 data[col] = table[col][in_arrow_index].as_py()
         return data
 
-    def get_data(self, ind, columns=None, allow_missing=False, return_meta=True, shadow=None):
+    def get_data(
+        self, ind, columns=None, allow_missing=False, return_meta=True, shadow=None
+    ):
         """
         Get data by in-dataset index.
 
@@ -397,12 +438,19 @@ class ArrowIndexV2(object):
             A dict containing the data.
         """
         index = self.indices[ind]
-        return self.get_data_by_index(index, columns, allow_missing=allow_missing, return_meta=return_meta,
-                                      shadow=shadow)
+        return self.get_data_by_index(
+            index,
+            columns,
+            allow_missing=allow_missing,
+            return_meta=return_meta,
+            shadow=shadow,
+        )
 
     def get_attribute_by_index(self, index, column, shadow=None):
         table = self.load_table_by_index(index, shadow=shadow)
-        index_bias = self._index_bias if shadow is None else self._shadow_index_bias[shadow]
+        index_bias = (
+            self._index_bias if shadow is None else self._shadow_index_bias[shadow]
+        )
         return table[column][index - index_bias].as_py()
 
     def get_attribute(self, ind, column, shadow=None):
@@ -425,11 +473,15 @@ class ArrowIndexV2(object):
         index = self.indices[ind]
         return self.get_attribute_by_index(index, column, shadow=shadow)
 
-    def get_image_by_index(self, index, column='image', ret_type='pil', max_size=-1, shadow=None):
+    def get_image_by_index(
+        self, index, column="image", ret_type="pil", max_size=-1, shadow=None
+    ):
         table = self.load_table_by_index(index, shadow=shadow)
-        index_bias = self._index_bias if shadow is None else self._shadow_index_bias[shadow]
+        index_bias = (
+            self._index_bias if shadow is None else self._shadow_index_bias[shadow]
+        )
 
-        col = 'image' if 'image' in table.column_names else 'binary'
+        col = "image" if "image" in table.column_names else "binary"
         temp = table[col][index - index_bias].as_py()
         image_bytes = io.BytesIO(temp)
         image_bytes.seek(0)
@@ -441,7 +493,9 @@ class ArrowIndexV2(object):
             #    method in resize (even if you specify LANCZOS), which will cause blurry images.
             pil_image = Image.open(image_bytes).convert("RGB")
         except Exception as e:
-            print(f'get_image_by_index | Error: {e} ({self.get_arrow_file_by_index(index), index - index_bias})')
+            print(
+                f"get_image_by_index | Error: {e} ({self.get_arrow_file_by_index(index), index - index_bias})"
+            )
             pil_image = Image.new("RGB", (256, 256), (255, 255, 255))
 
         if max_size > 0:
@@ -455,12 +509,12 @@ class ArrowIndexV2(object):
                 new_w = int(w * max_size / h)
             pil_image = pil_image.resize((new_w, new_h))
 
-        if ret_type == 'numpy':
+        if ret_type == "numpy":
             return np.array(pil_image)
 
         return pil_image
 
-    def get_image(self, ind, column='image', ret_type='pil', max_size=-1, shadow=None):
+    def get_image(self, ind, column="image", ret_type="pil", max_size=-1, shadow=None):
         """
         Get image by in-dataset index.
 
@@ -486,8 +540,10 @@ class ArrowIndexV2(object):
 
     def get_md5_by_index(self, index, shadow=None):
         table = self.load_table_by_index(index, shadow=shadow)
-        index_bias = self._index_bias if shadow is None else self._shadow_index_bias[shadow]
-        return table['md5'][index - index_bias].as_py()
+        index_bias = (
+            self._index_bias if shadow is None else self._shadow_index_bias[shadow]
+        )
+        return table["md5"][index - index_bias].as_py()
 
     def get_md5(self, ind, shadow=None):
         index = self.indices[ind]
@@ -504,15 +560,16 @@ class ArrowIndexV2(object):
     def source_distribution(self, save_path=None, shadow=None):
         sources = defaultdict(int)
         for index in tqdm(self.indices):
-            source = self.get_attribute_by_index(index, 'source', shadow=shadow)
+            source = self.get_attribute_by_index(index, "source", shadow=shadow)
             sources[source] += 1
 
         sources = sorted(sources.items(), key=lambda x: x[1], reverse=True)
         for k, v in sources:
-            print(f'{k:20s} {v:10d}')
+            print(f"{k:20s} {v:10d}")
         if save_path is not None:
             Path(save_path).write_text(
-                '\n'.join([f'{k:20s} {v:10d}' for k, v in sources]))
+                "\n".join([f"{k:20s} {v:10d}" for k, v in sources])
+            )
 
     def save(self, save_path):
         """
@@ -523,11 +580,12 @@ class ArrowIndexV2(object):
         save_path: str or pathlib.Path
             The path to save the index file.
         """
-        builder = IndexV2Builder(data_type=self.data_type,
-                                 arrow_files=self.arrow_files,
-                                 cum_length=self.cum_length,
-                                 indices=self.indices,
-                                 )
+        builder = IndexV2Builder(
+            data_type=self.data_type,
+            arrow_files=self.arrow_files,
+            cum_length=self.cum_length,
+            indices=self.indices,
+        )
         builder.build(save_path)
 
     def sample_batch_indices(self, n):
@@ -550,7 +608,7 @@ class ArrowIndexV2(object):
         return batch_data
 
     @staticmethod
-    def resize_and_crop(image, target_size, resample=Image.LANCZOS, crop_type='random'):
+    def resize_and_crop(image, target_size, resample=Image.LANCZOS, crop_type="random"):
         """
         Resize image without changing aspect ratio, then crop the center/random part.
 
@@ -589,30 +647,31 @@ class ArrowIndexV2(object):
 
         image = image.resize((resize_width, resize_height), resample=resample)
 
-        if crop_type == 'center':
+        if crop_type == "center":
             crop_top = int(round((resize_height - th) / 2.0))
             crop_left = int(round((resize_width - tw) / 2.0))
-        elif crop_type == 'random':
+        elif crop_type == "random":
             crop_top = random.randint(0, resize_height - th)
             crop_left = random.randint(0, resize_width - tw)
         else:
-            raise ValueError(f'crop_type must be center or random, but got {crop_type}')
+            raise ValueError(f"crop_type must be center or random, but got {crop_type}")
 
         image = image.crop((crop_left, crop_top, crop_left + tw, crop_top + th))
         return image, (crop_left, crop_top)
 
 
 class IndexV2Builder(object):
-    def __init__(self,
-                 arrow_files,
-                 indices=None,
-                 cum_length=None,
-                 group_length=None,
-                 data_type=None,
-                 max_indices=5_000_000,
-                 example_num=1000,
-                 config_file=None,
-                 ):
+    def __init__(
+        self,
+        arrow_files,
+        indices=None,
+        cum_length=None,
+        group_length=None,
+        data_type=None,
+        max_indices=5_000_000,
+        example_num=1000,
+        config_file=None,
+    ):
         """
         Build index v2 from an index dict.
 
@@ -660,14 +719,16 @@ class IndexV2Builder(object):
         self.config_file = config_file
 
         if isinstance(arrow_files, str):
-            if '*' in arrow_files or '?' in arrow_files:
+            if "*" in arrow_files or "?" in arrow_files:
                 self.arrow_files = list(glob(arrow_files))
             else:
                 self.arrow_files = [arrow_files]
         elif isinstance(self.arrow_files, tuple):
             self.arrow_files = list(self.arrow_files)
         if not isinstance(self.arrow_files, list):
-            raise ValueError(f'Expected arrow_files to be a list, got {type(self.arrow_files)}.')
+            raise ValueError(
+                f"Expected arrow_files to be a list, got {type(self.arrow_files)}."
+            )
 
         if self.cum_length is None:
             continuous = False
@@ -695,33 +756,44 @@ class IndexV2Builder(object):
             self.group_length = []
 
         if self.data_type is None:
-            self.data_type = ['Made by IndexV2Builder']
+            self.data_type = ["Made by IndexV2Builder"]
         elif isinstance(self.data_type, str):
             self.data_type = [self.data_type]
 
-        assert_type(self.data_type, list, 'data_type')
-        assert_type(self.cum_length, (list, np.ndarray), 'cum_length')
-        assert_type(self.group_length, (list, dict, np.ndarray), 'group_length')
-        assert_type(self.indices, (list, dict, np.ndarray), 'indices')
+        assert_type(self.data_type, list, "data_type")
+        assert_type(self.cum_length, (list, np.ndarray), "cum_length")
+        assert_type(self.group_length, (list, dict, np.ndarray), "group_length")
+        assert_type(self.indices, (list, dict, np.ndarray), "indices")
         self.cum_length = ndarray_to_list(self.cum_length)
         self.group_length = ndarray_to_list(self.group_length)
         self.indices = ndarray_to_list(self.indices)
 
         if isinstance(self.indices, dict):
             for k, v in self.indices.items():
-                assert_type(v, list, f'indices[{k}]')
+                assert_type(v, list, f"indices[{k}]")
 
         if len(self.arrow_files) != len(self.cum_length):
-            raise ValueError(f'Length of arrow_files and cum_length does not match. {len(self.arrow_files)} != {len(self.cum_length)}')
+            raise ValueError(
+                f"Length of arrow_files and cum_length does not match. {len(self.arrow_files)} != {len(self.cum_length)}"
+            )
         if len(self.indices) == 0:
-            raise ValueError(f'No indices found in index_dict.')
-        if isinstance(self.indices, list) and self.indices[-1] > self.cum_length[-1] - 1:
-            raise ValueError(f'Indices exceed cum_length. {self.indices[-1]} > {self.cum_length[-1] - 1}')
+            raise ValueError(f"No indices found in index_dict.")
+        if (
+            isinstance(self.indices, list)
+            and self.indices[-1] > self.cum_length[-1] - 1
+        ):
+            raise ValueError(
+                f"Indices exceed cum_length. {self.indices[-1]} > {self.cum_length[-1] - 1}"
+            )
         if len(self.group_length) > 0:
             if len(self.arrow_files) != len(self.group_length):
-                raise ValueError(f'Length of arrow_files and group_length does not match. {len(self.arrow_files)} != {len(self.group_length)}')
+                raise ValueError(
+                    f"Length of arrow_files and group_length does not match. {len(self.arrow_files)} != {len(self.group_length)}"
+                )
             if sum(self.group_length) != len(self.indices):
-                raise ValueError(f'Sum of group_length does not match length of indices. {sum(self.group_length)} != {len(self.indices)}')
+                raise ValueError(
+                    f"Sum of group_length does not match length of indices. {sum(self.group_length)} != {len(self.indices)}"
+                )
 
     def encode(self):
         # Encode arrow files
@@ -736,7 +808,9 @@ class IndexV2Builder(object):
         print("Calculating group length...")
         if isinstance(self.indices, list):
             if len(self.group_length) == 0:
-                self.group_length = self.calc_group_length(self.indices, self.cum_length)
+                self.group_length = self.calc_group_length(
+                    self.indices, self.cum_length
+                )
             else:
                 print("Group length already calculated, skip.")
         elif isinstance(self.indices, dict):
@@ -749,17 +823,19 @@ class IndexV2Builder(object):
                 else:
                     print("Group length already calculated, skip.")
         else:
-            raise ValueError(f'Expected indices type list or dict, got {type(self.indices)}.')
+            raise ValueError(
+                f"Expected indices type list or dict, got {type(self.indices)}."
+            )
 
         return {
-            'data_type': self.data_type,
-            'config_file': self.config_file if self.config_file is not None else '',
-            'indices_file': '',
-            'arrow_files': self.arrow_files,
-            'cum_length': self.cum_length,
-            'group_length': self.group_length,
-            'indices': self.indices,
-            'example_indices': [],
+            "data_type": self.data_type,
+            "config_file": self.config_file if self.config_file is not None else "",
+            "indices_file": "",
+            "arrow_files": self.arrow_files,
+            "cum_length": self.cum_length,
+            "group_length": self.group_length,
+            "indices": self.indices,
+            "example_indices": [],
         }
 
     def build(self, save_path):
@@ -780,27 +856,32 @@ class IndexV2Builder(object):
         save_path = Path(save_path)
         save_path.parent.mkdir(exist_ok=True, parents=True)
 
-        if isinstance(index_dict['indices'], list) and len(index_dict['indices']) > self.max_indices:
-            self.example_indices = index_dict['indices'][:self.example_num]
-            indices_to_save = {'x': index_dict['indices']}
-            index_dict['indices'] = []
-        elif isinstance(index_dict['indices'], dict):
-            indices_to_save = index_dict['indices']
-            index_dict['indices'] = {}
+        if (
+            isinstance(index_dict["indices"], list)
+            and len(index_dict["indices"]) > self.max_indices
+        ):
+            self.example_indices = index_dict["indices"][: self.example_num]
+            indices_to_save = {"x": index_dict["indices"]}
+            index_dict["indices"] = []
+        elif isinstance(index_dict["indices"], dict):
+            indices_to_save = index_dict["indices"]
+            index_dict["indices"] = {}
             num_keys = len(indices_to_save)
             example_num_per_key = max(self.example_num // num_keys, 10)
-            index_dict['example_indices'] = {k: v[:example_num_per_key] for k, v in index_dict['indices'].items()}
+            index_dict["example_indices"] = {
+                k: v[:example_num_per_key] for k, v in index_dict["indices"].items()
+            }
         else:
             indices_to_save = None
 
         # save indices
         if indices_to_save is not None:
-            indices_file = save_path.parent / f'{save_path.stem}.index'
+            indices_file = save_path.parent / f"{save_path.stem}.index"
             indices_dict = {k: np.array(v) for k, v in indices_to_save.items()}
             np.savez_compressed(indices_file, **indices_dict)
-            index_dict['indices_file'] = indices_file.name + '.npz'
+            index_dict["indices_file"] = indices_file.name + ".npz"
 
-        with save_path.open('w') as f:
+        with save_path.open("w") as f:
             json.dump(index_dict, f, indent=4, ensure_ascii=False)
 
     @staticmethod
@@ -823,7 +904,10 @@ class IndexV2Builder(object):
                 count = 1
         # The indices array is exhausted, and the last group containing the index should also be added.
         group_lengths.append(count)
-        assert len(group_lengths) <= len(cum_length), (len(group_lengths), len(cum_length))
+        assert len(group_lengths) <= len(cum_length), (
+            len(group_lengths),
+            len(cum_length),
+        )
         # Check if the number of groups is less than the number of cum_length,
         # then the last n groups are empty and need to be filled with zeros.
         if len(group_lengths) < len(cum_length):

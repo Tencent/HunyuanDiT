@@ -92,7 +92,12 @@ class SpacedDiffusion(GaussianDiffusion):
         self, model, controlnet=None, *args, **kwargs
     ):  # pylint: disable=signature-differs
         if controlnet != None:
-            return super().training_losses(self._wrap_model(model), controlnet=self._wrap_model(controlnet), *args, **kwargs)
+            return super().training_losses(
+                self._wrap_model(model),
+                controlnet=self._wrap_model(controlnet),
+                *args,
+                **kwargs,
+            )
         else:
             return super().training_losses(self._wrap_model(model), *args, **kwargs)
 
@@ -108,9 +113,7 @@ class SpacedDiffusion(GaussianDiffusion):
     def _wrap_model(self, model):
         if isinstance(model, _WrappedModel):
             return model
-        return _WrappedModel(
-            model, self.timestep_map, self.original_num_steps
-        )
+        return _WrappedModel(model, self.timestep_map, self.original_num_steps)
 
     def _scale_timesteps(self, t):
         # Scaling is done by the wrapped model.
@@ -124,6 +127,7 @@ class _WrappedModel:
     When using a subsequent timesteps (e.g., 250), we must wrap the model
     for mapping the timesteps 1-250 with step 1 to 1-1000 with step 4
     """
+
     def __init__(self, model, timestep_map, original_num_steps):
         self.model = model
         self.timestep_map = timestep_map

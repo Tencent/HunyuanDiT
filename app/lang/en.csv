@@ -20,3 +20,9 @@ generated image,HunYuanDiT Generated Image
 examples,More Examples
 title,Hunyuan-DiT
 desc,A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding
+controlnet,controlnet
+controlnet_model,model list
+Control_Weight,Control Weight
+input image,input image
+width,width
+height,height

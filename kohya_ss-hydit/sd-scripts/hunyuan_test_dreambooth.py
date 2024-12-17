@@ -33,8 +33,14 @@ _loaded_model = None
 _loaded_model_path = None
 _loaded_ckpt_path = None
 
+
 def load_scheduler_sigmas(beta_start=0.00085, beta_end=0.018, num_train_timesteps=1000):
-    betas = torch.linspace(beta_start**0.5, beta_end**0.5, num_train_timesteps, dtype=torch.float32) ** 2
+    betas = (
+        torch.linspace(
+            beta_start**0.5, beta_end**0.5, num_train_timesteps, dtype=torch.float32
+        )
+        ** 2
+    )
     alphas = 1.0 - betas
     alphas_cumprod = torch.cumprod(alphas, dim=0)
 
@@ -43,9 +49,14 @@ def load_scheduler_sigmas(beta_start=0.00085, beta_end=0.018, num_train_timestep
     sigmas = torch.from_numpy(sigmas)
     return alphas_cumprod, sigmas
 
+
 def load_model_if_needed(model_path, ckpt_path):
     global _loaded_model, _loaded_model_path, _loaded_ckpt_path
-    if _loaded_model is None or _loaded_model_path != model_path or _loaded_ckpt_path != ckpt_path:
+    if (
+        _loaded_model is None
+        or _loaded_model_path != model_path
+        or _loaded_ckpt_path != ckpt_path
+    ):
         (
             denoiser,
             patch_size,
@@ -54,22 +65,48 @@ def load_model_if_needed(model_path, ckpt_path):
             clip_encoder,
             mt5_embedder,
             vae,
-        ) = load_model(model_path, dtype=DTYPE, device=DEVICE, dit_path=ckpt_path, use_extra_cond=USE_EXTRA_COND)
-        
+        ) = load_model(
+            model_path,
+            dtype=DTYPE,
+            device=DEVICE,
+            dit_path=ckpt_path,
+            use_extra_cond=USE_EXTRA_COND,
+        )
+
         denoiser.eval()
         denoiser.disable_fp32_silu()
         denoiser.disable_fp32_layer_norm()
         denoiser.set_attn_mode(ATTN_MODE)
         vae.requires_grad_(False)
         mt5_embedder.to(torch.float16)
-        
-        _loaded_model = (denoiser, patch_size, head_dim, clip_tokenizer, clip_encoder, mt5_embedder, vae)
+
+        _loaded_model = (
+            denoiser,
+            patch_size,
+            head_dim,
+            clip_tokenizer,
+            clip_encoder,
+            mt5_embedder,
+            vae,
+        )
         _loaded_model_path = model_path
         _loaded_ckpt_path = ckpt_path
-        
+
     return _loaded_model
 
-def generate_image(prompt: str, neg_prompt: str, seed: int, height: int, width: int, steps: int, cfg_scale: int, model_path: str, ckpt_path: str, model_version: str):
+
+def generate_image(
+    prompt: str,
+    neg_prompt: str,
+    seed: int,
+    height: int,
+    width: int,
+    steps: int,
+    cfg_scale: int,
+    model_path: str,
+    ckpt_path: str,
+    model_version: str,
+):
     seed_everything(seed)
     if model_version == "1.2":
         BETA_END = 0.018
@@ -153,7 +190,7 @@ def generate_image(prompt: str, neg_prompt: str, seed: int, height: int, width: 
         sigmas = get_sigmas_exponential(
             STEPS, denoiser_wrapper.sigma_min, denoiser_wrapper.sigma_max, DEVICE
         )
-        x1 = torch.randn(1, 4, H//8, W//8, dtype=torch.float16, device=DEVICE)
+        x1 = torch.randn(1, 4, H // 8, W // 8, dtype=torch.float16, device=DEVICE)
 
         with torch.autocast("cuda"):
             sample = sample_euler_ancestral(
@@ -175,4 +212,15 @@ def generate_image(prompt: str, neg_prompt: str, seed: int, height: int, width: 
 
 if __name__ == "__main__":
     seed_everything(0)
-    generate_image(PROMPT, NEG_PROMPT, 0, H, W, STEPS, CFG_SCALE, "/root/albertxyu/HunYuanDiT-V1.2-fp16-pruned", "/root/autodl-tmp/outputs2/cglast_ckpt.ckpt", "1.2")
+    generate_image(
+        PROMPT,
+        NEG_PROMPT,
+        0,
+        H,
+        W,
+        STEPS,
+        CFG_SCALE,
+        "/root/albertxyu/HunYuanDiT-V1.2-fp16-pruned",
+        "/root/autodl-tmp/outputs2/cglast_ckpt.ckpt",
+        "1.2",
+    )

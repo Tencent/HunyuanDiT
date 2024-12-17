@@ -26,7 +26,12 @@ import torch
 from polygraphy import cuda
 from polygraphy.backend.common import bytes_from_path
 from polygraphy.backend.trt import CreateConfig, Profile
-from polygraphy.backend.trt import engine_from_bytes, engine_from_network, network_from_onnx_path, save_engine
+from polygraphy.backend.trt import (
+    engine_from_bytes,
+    engine_from_network,
+    network_from_onnx_path,
+    save_engine,
+)
 from polygraphy.backend.trt import util as trt_util
 import ctypes
 from glob import glob
@@ -36,14 +41,14 @@ TRT_LOGGER = trt.Logger(trt.Logger.INFO)
 trt_util.TRT_LOGGER = TRT_LOGGER
 
 
-class Engine():
+class Engine:
     def __init__(
-            self,
-            model_name,
-            engine_dir,
-            onnx_file=None,
+        self,
+        model_name,
+        engine_dir,
+        onnx_file=None,
     ):
-        self.engine_path = os.path.join(engine_dir, model_name + '.plan')
+        self.engine_path = os.path.join(engine_dir, model_name + ".plan")
         self.engine = None
         self.context = None
         self.buffers = OrderedDict()
@@ -63,7 +68,14 @@ class Engine():
         del self.buffers
         del self.tensors
 
-    def build(self, onnx_path, fp16, input_profile=None, enable_preview=False, sparse_weights=False):
+    def build(
+        self,
+        onnx_path,
+        fp16,
+        input_profile=None,
+        enable_preview=False,
+        sparse_weights=False,
+    ):
         print(f"Building TensorRT engine for {onnx_path}: {self.engine_path}")
         p = Profile()
         if input_profile:
@@ -75,13 +87,23 @@ class Engine():
         if enable_preview:
             trt_version = [int(i) for i in trt.__version__.split(".")]
             # FASTER_DYNAMIC_SHAPES_0805 should only be used for TRT 8.5.1 or above.
-            if trt_version[0] > 8 or \
-                    (trt_version[0] == 8 and (trt_version[1] > 5 or (trt_version[1] == 5 and trt_version[2] >= 1))):
+            if trt_version[0] > 8 or (
+                trt_version[0] == 8
+                and (
+                    trt_version[1] > 5 or (trt_version[1] == 5 and trt_version[2] >= 1)
+                )
+            ):
                 preview_features = [trt.PreviewFeature.FASTER_DYNAMIC_SHAPES_0805]
 
-        engine = engine_from_network(network_from_onnx_path(onnx_path), config=CreateConfig(fp16=fp16, profiles=[p],
-                                                                                            preview_features=preview_features,
-                                                                                            sparse_weights=sparse_weights))
+        engine = engine_from_network(
+            network_from_onnx_path(onnx_path),
+            config=CreateConfig(
+                fp16=fp16,
+                profiles=[p],
+                preview_features=preview_features,
+                sparse_weights=sparse_weights,
+            ),
+        )
         save_engine(engine, path=self.engine_path)
 
     def activate(self, plugin_path=""):
@@ -102,7 +124,7 @@ class Engine():
         result = self.context.set_binding_shape(idx, shape)
         return result
 
-    def allocate_buffers(self, shape_dict=None, device='cuda'):
+    def allocate_buffers(self, shape_dict=None, device="cuda"):
         print("Allocate buffers and bindings inputs:")
         for idx in range(trt_util.get_bindings_per_profile(self.engine)):
             binding = self.engine[idx]
@@ -112,12 +134,14 @@ class Engine():
             else:
                 shape = self.engine.get_binding_shape(binding)
             nv_dtype = self.engine.get_binding_dtype(binding)
-            dtype_map = {trt.DataType.FLOAT: np.float32,
-                         trt.DataType.HALF: np.float16,
-                         trt.DataType.INT8: np.int8,
-                         trt.DataType.INT64: np.int64,
-                         trt.DataType.BOOL: bool}
-            if hasattr(trt.DataType, 'INT32'):
+            dtype_map = {
+                trt.DataType.FLOAT: np.float32,
+                trt.DataType.HALF: np.float16,
+                trt.DataType.INT8: np.int8,
+                trt.DataType.INT64: np.int64,
+                trt.DataType.BOOL: bool,
+            }
+            if hasattr(trt.DataType, "INT32"):
                 dtype_map[trt.DataType.INT32] = np.int32
             dtype = dtype_map[nv_dtype]
             if self.engine.binding_is_input(binding):
@@ -125,11 +149,15 @@ class Engine():
             # Workaround to convert np dtype to torch
             np_type_tensor = np.empty(shape=[], dtype=dtype)
             torch_type_tensor = torch.from_numpy(np_type_tensor)
-            tensor = torch.empty(tuple(shape), dtype=torch_type_tensor.dtype).to(device=device)
+            tensor = torch.empty(tuple(shape), dtype=torch_type_tensor.dtype).to(
+                device=device
+            )
 
             print(f"  binding={binding}, shape={shape}, dtype={tensor.dtype}")
             self.tensors[binding] = tensor
-            self.buffers[binding] = cuda.DeviceView(ptr=tensor.data_ptr(), shape=shape, dtype=dtype)
+            self.buffers[binding] = cuda.DeviceView(
+                ptr=tensor.data_ptr(), shape=shape, dtype=dtype
+            )
 
     def infer(self, feed_dict, stream):
         start_binding, end_binding = trt_util.get_active_profile_bindings(self.context)
@@ -140,7 +168,9 @@ class Engine():
             device_buffers[name] = buf
             self.binding_input(name, buf.shape)
         bindings = [0] * start_binding + [buf.ptr for buf in device_buffers.values()]
-        noerror = self.context.execute_async_v2(bindings=bindings, stream_handle=stream.ptr)
+        noerror = self.context.execute_async_v2(
+            bindings=bindings, stream_handle=stream.ptr
+        )
         if not noerror:
             raise ValueError(f"ERROR: inference failed.")
 

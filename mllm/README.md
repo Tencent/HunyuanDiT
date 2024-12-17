@@ -10,6 +10,7 @@ We provide two multimodal large language models, Hunyuan-Captioner and Dialogen.
 - [DialogGen](https://github.com/Tencent/HunyuanDiT/tree/main/mllm#dialoggen)
   - [Inference](https://github.com/Tencent/HunyuanDiT/tree/main/mllm#inference-1)
   - [Gradio](https://github.com/Tencent/HunyuanDiT/tree/main/mllm#gradio-1)
+- [Acceleration](https://github.com/Tencent/HunyuanDiT/tree/main/mllm/trtllm#acceleration)
 
 ## Hunyuan-Captioner
 Hunyuan-Captioner meets the need of text-to-image techniques by maintaining a high degree of image-text consistency. It can generate high-quality image descriptions from a variety of angles, including object description, objects relationships, background information, image style, etc. Our code is based on [LLaVA](https://github.com/haotian-liu/LLaVA) implementation.
@@ -98,4 +99,8 @@ python mllm/dialoggen_demo.py --prompt "画一只小猫"
 # Start a multi-turn T2I generation UI. 
 # If your GPU memory is less than 32GB, use '--load-4bit' to enable 4-bit quantization, which requires at least 22GB of memory.
 python app/multiTurnT2I_app.py
+
 ```
+
+## Acceleration (for Linux)
+We provide TensorRT-LLM (precision: int8 weight-only) version of Hunyuan-Captioner for inference acceleration(for Linux). See: [Acceleration](https://github.com/Tencent/HunyuanDiT/tree/main/mllm/trtllm#acceleration)

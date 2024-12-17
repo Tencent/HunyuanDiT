@@ -7,7 +7,7 @@ from timm.models.layers import to_2tuple
 
 
 class PatchEmbed(nn.Module):
-    """ 2D Image to Patch Embedding
+    """2D Image to Patch Embedding
 
     Image to Patch Embedding using Conv2d
 
@@ -19,15 +19,16 @@ class PatchEmbed(nn.Module):
 
     Remove the _assert function in forward function to be compatible with multi-resolution images.
     """
+
     def __init__(
-            self,
-            img_size=224,
-            patch_size=16,
-            in_chans=3,
-            embed_dim=768,
-            norm_layer=None,
-            flatten=True,
-            bias=True,
+        self,
+        img_size=224,
+        patch_size=16,
+        in_chans=3,
+        embed_dim=768,
+        norm_layer=None,
+        flatten=True,
+        bias=True,
     ):
         super().__init__()
         if isinstance(img_size, int):
@@ -35,7 +36,9 @@ class PatchEmbed(nn.Module):
         elif isinstance(img_size, (tuple, list)) and len(img_size) == 2:
             img_size = tuple(img_size)
         else:
-            raise ValueError(f"img_size must be int or tuple/list of length 2. Got {img_size}")
+            raise ValueError(
+                f"img_size must be int or tuple/list of length 2. Got {img_size}"
+            )
         patch_size = to_2tuple(patch_size)
         self.img_size = img_size
         self.patch_size = patch_size
@@ -43,12 +46,17 @@ class PatchEmbed(nn.Module):
         self.num_patches = self.grid_size[0] * self.grid_size[1]
         self.flatten = flatten
 
-        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size, bias=bias)
+        self.proj = nn.Conv2d(
+            in_chans, embed_dim, kernel_size=patch_size, stride=patch_size, bias=bias
+        )
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
 
     def update_image_size(self, img_size):
         self.img_size = img_size
-        self.grid_size = (img_size[0] // self.patch_size[0], img_size[1] // self.patch_size[1])
+        self.grid_size = (
+            img_size[0] // self.patch_size[0],
+            img_size[1] // self.patch_size[1],
+        )
         self.num_patches = self.grid_size[0] * self.grid_size[1]
 
     def forward(self, x):
@@ -78,7 +86,9 @@ def timestep_embedding(t, dim, max_period=10000, repeat_only=False):
             -math.log(max_period)
             * torch.arange(start=0, end=half, dtype=torch.float32)
             / half
-        ).to(device=t.device)   # size: [dim/2], 一个指数衰减的曲线
+        ).to(
+            device=t.device
+        )  # size: [dim/2], 一个指数衰减的曲线
         args = t[:, None].float() * freqs[None]
         embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
         if dim % 2:
@@ -94,6 +104,7 @@ class TimestepEmbedder(nn.Module):
     """
     Embeds scalar timesteps into vector representations.
     """
+
     def __init__(self, hidden_size, frequency_embedding_size=256, out_size=None):
         super().__init__()
         if out_size is None:
@@ -106,6 +117,8 @@ class TimestepEmbedder(nn.Module):
         self.frequency_embedding_size = frequency_embedding_size
 
     def forward(self, t):
-        t_freq = timestep_embedding(t, self.frequency_embedding_size).type(self.mlp[0].weight.dtype)
+        t_freq = timestep_embedding(t, self.frequency_embedding_size).type(
+            self.mlp[0].weight.dtype
+        )
         t_emb = self.mlp(t_freq)
         return t_emb

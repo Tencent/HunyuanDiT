@@ -60,13 +60,13 @@ def train(args):
         not args.weighted_captions
     ), "weighted_captions is not supported currently / weighted_captionsは現在サポートされていません"
     assert (
-            not args.train_text_encoder or not args.cache_text_encoder_outputs
+        not args.train_text_encoder or not args.cache_text_encoder_outputs
     ), "cache_text_encoder_outputs is not supported when training text encoder / text encoderを学習するときはcache_text_encoder_outputsはサポートされていません"
 
     if args.block_lr:
         block_lrs = [float(lr) for lr in args.block_lr.split(",")]
         assert (
-                len(block_lrs) == UNET_NUM_BLOCKS_FOR_BLOCK_LR
+            len(block_lrs) == UNET_NUM_BLOCKS_FOR_BLOCK_LR
         ), f"block_lr must have {UNET_NUM_BLOCKS_FOR_BLOCK_LR} values / block_lrは{UNET_NUM_BLOCKS_FOR_BLOCK_LR}個の値を指定してください"
     else:
         block_lrs = None
@@ -81,7 +81,9 @@ def train(args):
 
     # Prepare datasets
     if args.dataset_class is None:
-        blueprint_generator = BlueprintGenerator(ConfigSanitizer(True, True, args.masked_loss, True))
+        blueprint_generator = BlueprintGenerator(
+            ConfigSanitizer(True, True, args.masked_loss, True)
+        )
         if args.dataset_config is not None:
             logger.info(f"Load dataset config from {args.dataset_config}")
             user_config = config_util.load_user_config(args.dataset_config)
@@ -119,14 +121,22 @@ def train(args):
                     ]
                 }
 
-        blueprint = blueprint_generator.generate(user_config, args, tokenizer=[tokenizer1, tokenizer2])
-        train_dataset_group = config_util.generate_dataset_group_by_blueprint(blueprint.dataset_group)
+        blueprint = blueprint_generator.generate(
+            user_config, args, tokenizer=[tokenizer1, tokenizer2]
+        )
+        train_dataset_group = config_util.generate_dataset_group_by_blueprint(
+            blueprint.dataset_group
+        )
     else:
-        train_dataset_group = train_util.load_arbitrary_dataset(args, [tokenizer1, tokenizer2])
+        train_dataset_group = train_util.load_arbitrary_dataset(
+            args, [tokenizer1, tokenizer2]
+        )
 
     current_epoch = Value("i", 0)
     current_step = Value("i", 0)
-    ds_for_collator = train_dataset_group if args.max_data_loader_n_workers == 0 else None
+    ds_for_collator = (
+        train_dataset_group if args.max_data_loader_n_workers == 0 else None
+    )
     collator = train_util.collator_class(current_epoch, current_step, ds_for_collator)
 
     train_dataset_group.verify_bucket_reso_steps(32)
@@ -167,11 +177,13 @@ def train(args):
         hydit,
         logit_scale,
         ckpt_info,
-    ) = hunyuan_utils.load_target_model(args, accelerator, "hydit", weight_dtype, args.use_extra_cond)
+    ) = hunyuan_utils.load_target_model(
+        args, accelerator, "hydit", weight_dtype, args.use_extra_cond
+    )
     if args.use_extra_cond:
-        hydit_version = 'v1.1'
+        hydit_version = "v1.1"
     else:
-        hydit_version = 'v1.2'
+        hydit_version = "v1.2"
 
     # verify load/save model formats
     if load_stable_diffusion_format:
@@ -185,8 +197,13 @@ def train(args):
         save_stable_diffusion_format = load_stable_diffusion_format
         use_safetensors = args.use_safetensors
     else:
-        save_stable_diffusion_format = args.save_model_as.lower() == "ckpt" or args.save_model_as.lower() == "safetensors"
-        use_safetensors = args.use_safetensors or ("safetensors" in args.save_model_as.lower())
+        save_stable_diffusion_format = (
+            args.save_model_as.lower() == "ckpt"
+            or args.save_model_as.lower() == "safetensors"
+        )
+        use_safetensors = args.use_safetensors or (
+            "safetensors" in args.save_model_as.lower()
+        )
         # assert save_stable_diffusion_format, "save_model_as must be ckpt or safetensors / save_model_asはckptかsafetensorsである必要があります"
 
     # Setting the flag for using Diffusers version of xformers function
@@ -209,8 +226,12 @@ def train(args):
     else:
         # The Windows version of xformers may not be able to train with float, so there is a need to enable settings that don't use xformers.
         accelerator.print("Disable Diffusers' xformers")
-        train_util.replace_unet_modules(hydit, args.mem_eff_attn, args.xformers, args.sdpa)
-        if torch.__version__ >= "2.0.0":  # The following can be used with xformers compatible with PyTorch 2.0.0 and above.
+        train_util.replace_unet_modules(
+            hydit, args.mem_eff_attn, args.xformers, args.sdpa
+        )
+        if (
+            torch.__version__ >= "2.0.0"
+        ):  # The following can be used with xformers compatible with PyTorch 2.0.0 and above.
             vae.set_use_memory_efficient_attention_xformers(args.xformers)
 
     # Prepare vae latents
@@ -219,7 +240,12 @@ def train(args):
         vae.requires_grad_(False)
         vae.eval()
         with torch.no_grad():
-            train_dataset_group.cache_latents(vae, args.vae_batch_size, args.cache_latents_to_disk, accelerator.is_main_process)
+            train_dataset_group.cache_latents(
+                vae,
+                args.vae_batch_size,
+                args.cache_latents_to_disk,
+                accelerator.is_main_process,
+            )
         vae.to("cpu")
         clean_memory_on_device(accelerator.device)
 
@@ -233,7 +259,9 @@ def train(args):
     train_text_encoder2 = False
 
     if args.train_text_encoder:
-        raise NotImplementedError("Training text encoder is not supported yet for HunyuanDiT")
+        raise NotImplementedError(
+            "Training text encoder is not supported yet for HunyuanDiT"
+        )
     else:
         text_encoder1.to(weight_dtype)
         text_encoder2.to(weight_dtype)
@@ -244,7 +272,9 @@ def train(args):
 
         # Cache the output of Textencoder
         if args.cache_text_encoder_outputs:
-            raise NotImplementedError("Caching text encoder outputs in HunyuanDiT is not supported yet")
+            raise NotImplementedError(
+                "Caching text encoder outputs in HunyuanDiT is not supported yet"
+            )
             # TODO: We just copy the code from sdxl_train.py, need to rewrite `cache_text_encoder_outputs`
             #  for supporting SDXL and HunyuanDiT at the same time.
             # Text Encodes are eval and no grad
@@ -266,23 +296,37 @@ def train(args):
 
     hydit.requires_grad_(train_hydit)
     if not train_hydit:
-        hydit.to(accelerator.device, dtype=weight_dtype)  # because of hydit is not prepared
+        hydit.to(
+            accelerator.device, dtype=weight_dtype
+        )  # because of hydit is not prepared
 
     training_models = []
     params_to_optimize = []
     if train_hydit:
         training_models.append(hydit)
         if block_lrs is None:
-            params_to_optimize.append({"params": list(hydit.parameters()), "lr": args.learning_rate})
+            params_to_optimize.append(
+                {"params": list(hydit.parameters()), "lr": args.learning_rate}
+            )
         else:
             raise NotImplementedError("block_lr is not supported yet for HunyuanDiT")
 
     if train_text_encoder1:
         training_models.append(text_encoder1)
-        params_to_optimize.append({"params": list(text_encoder1.parameters()), "lr": args.learning_rate_te1 or args.learning_rate})
+        params_to_optimize.append(
+            {
+                "params": list(text_encoder1.parameters()),
+                "lr": args.learning_rate_te1 or args.learning_rate,
+            }
+        )
     if train_text_encoder2:
         training_models.append(text_encoder2)
-        params_to_optimize.append({"params": list(text_encoder2.parameters()), "lr": args.learning_rate_te2 or args.learning_rate})
+        params_to_optimize.append(
+            {
+                "params": list(text_encoder2.parameters()),
+                "lr": args.learning_rate_te2 or args.learning_rate,
+            }
+        )
 
     # calculate number of trainable parameters
     n_params = 0
@@ -290,7 +334,9 @@ def train(args):
         for p in group["params"]:
             n_params += p.numel()
 
-    accelerator.print(f"train hydit: {train_hydit}, text_encoder1: {train_text_encoder1}, text_encoder2: {train_text_encoder2}")
+    accelerator.print(
+        f"train hydit: {train_hydit}, text_encoder1: {train_text_encoder1}, text_encoder2: {train_text_encoder2}"
+    )
     accelerator.print(f"number of models: {len(training_models)}")
     accelerator.print(f"number of trainable parameters: {n_params}")
 
@@ -317,7 +363,9 @@ def train(args):
                 # if the learning rate is different for different params, start a new group
                 if lr != param_group_lr:
                     if param_group:
-                        grouped_params.append({"params": param_group, "lr": param_group_lr})
+                        grouped_params.append(
+                            {"params": param_group, "lr": param_group_lr}
+                        )
                         param_group = []
                     param_group_lr = lr
 
@@ -342,11 +390,15 @@ def train(args):
         logger.info(f"using {len(optimizers)} optimizers for fused optimizer groups")
 
     else:
-        _, _, optimizer = train_util.get_optimizer(args, trainable_params=params_to_optimize)
+        _, _, optimizer = train_util.get_optimizer(
+            args, trainable_params=params_to_optimize
+        )
 
     # Prepare the DataLoader
     # Note that the number of DataLoader processes: 0 cannot use persistent_workers
-    n_workers = min(args.max_data_loader_n_workers, os.cpu_count())  # cpu_count or max_data_loader_n_workers
+    n_workers = min(
+        args.max_data_loader_n_workers, os.cpu_count()
+    )  # cpu_count or max_data_loader_n_workers
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset_group,
         batch_size=1,
@@ -359,7 +411,9 @@ def train(args):
     # Calculate the number of training steps
     if args.max_train_epochs is not None:
         args.max_train_steps = args.max_train_epochs * math.ceil(
-            len(train_dataloader) / accelerator.num_processes / args.gradient_accumulation_steps
+            len(train_dataloader)
+            / accelerator.num_processes
+            / args.gradient_accumulation_steps
         )
         accelerator.print(
             f"override steps. steps for {args.max_train_epochs} epochs is / 指定エポックまでのステップ数: {args.max_train_steps}"
@@ -371,10 +425,15 @@ def train(args):
     # Prepare a learning rate scheduler
     if args.fused_optimizer_groups:
         # prepare lr schedulers for each optimizer
-        lr_schedulers = [train_util.get_scheduler_fix(args, optimizer, accelerator.num_processes) for optimizer in optimizers]
+        lr_schedulers = [
+            train_util.get_scheduler_fix(args, optimizer, accelerator.num_processes)
+            for optimizer in optimizers
+        ]
         lr_scheduler = lr_schedulers[0]  # avoid error in the following code
     else:
-        lr_scheduler = train_util.get_scheduler_fix(args, optimizer, accelerator.num_processes)
+        lr_scheduler = train_util.get_scheduler_fix(
+            args, optimizer, accelerator.num_processes
+        )
 
     # Experimental Feature: Conducting fp16/bf16 learning, including gradients, converting the entire model to fp16/bf16.
     if args.full_fp16:
@@ -415,7 +474,9 @@ def train(args):
             text_encoder1 = accelerator.prepare(text_encoder1)
         if train_text_encoder2:
             text_encoder2 = accelerator.prepare(text_encoder2)
-        optimizer, train_dataloader, lr_scheduler = accelerator.prepare(optimizer, train_dataloader, lr_scheduler)
+        optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
+            optimizer, train_dataloader, lr_scheduler
+        )
 
     # TextEncoderの出力をキャッシュするときにはCPUへ移動する
     if args.cache_text_encoder_outputs:
@@ -476,7 +537,9 @@ def train(args):
 
                         def optimizer_hook(parameter: torch.Tensor):
                             if accelerator.sync_gradients and args.max_grad_norm != 0.0:
-                                accelerator.clip_grad_norm_(parameter, args.max_grad_norm)
+                                accelerator.clip_grad_norm_(
+                                    parameter, args.max_grad_norm
+                                )
 
                             i = parameter_optimizer_map[parameter]
                             optimizer_hooked_count[i] += 1
@@ -489,16 +552,24 @@ def train(args):
                         num_parameters_per_group[opt_idx] += 1
 
     # epoch数を計算する
-    num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
+    num_update_steps_per_epoch = math.ceil(
+        len(train_dataloader) / args.gradient_accumulation_steps
+    )
     num_train_epochs = math.ceil(args.max_train_steps / num_update_steps_per_epoch)
     if (args.save_n_epoch_ratio is not None) and (args.save_n_epoch_ratio > 0):
-        args.save_every_n_epochs = math.floor(num_train_epochs / args.save_n_epoch_ratio) or 1
+        args.save_every_n_epochs = (
+            math.floor(num_train_epochs / args.save_n_epoch_ratio) or 1
+        )
 
     # 学習する
     # total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
     accelerator.print("running training / 学習開始")
-    accelerator.print(f"  num examples / サンプル数: {train_dataset_group.num_train_images}")
-    accelerator.print(f"  num batches per epoch / 1epochのバッチ数: {len(train_dataloader)}")
+    accelerator.print(
+        f"  num examples / サンプル数: {train_dataset_group.num_train_images}"
+    )
+    accelerator.print(
+        f"  num batches per epoch / 1epochのバッチ数: {len(train_dataloader)}"
+    )
     accelerator.print(f"  num epochs / epoch数: {num_train_epochs}")
     accelerator.print(
         f"  batch size per device / バッチサイズ: {', '.join([str(d.batch_size) for d in train_dataset_group.datasets])}"
@@ -506,19 +577,34 @@ def train(args):
     # accelerator.print(
     #     f"  total train batch size (with parallel & distributed & accumulation) / 総バッチサイズ（並列学習、勾配合計含む）: {total_batch_size}"
     # )
-    accelerator.print(f"  gradient accumulation steps / 勾配を合計するステップ数 = {args.gradient_accumulation_steps}")
-    accelerator.print(f"  total optimization steps / 学習ステップ数: {args.max_train_steps}")
+    accelerator.print(
+        f"  gradient accumulation steps / 勾配を合計するステップ数 = {args.gradient_accumulation_steps}"
+    )
+    accelerator.print(
+        f"  total optimization steps / 学習ステップ数: {args.max_train_steps}"
+    )
 
-    progress_bar = tqdm(range(args.max_train_steps), smoothing=0, disable=not accelerator.is_local_main_process, desc="steps")
+    progress_bar = tqdm(
+        range(args.max_train_steps),
+        smoothing=0,
+        disable=not accelerator.is_local_main_process,
+        desc="steps",
+    )
     global_step = 0
 
     train_noise_scheduler = DDPMScheduler(
-        beta_start=0.00085, beta_end=args.beta_end, beta_schedule="scaled_linear", num_train_timesteps=1000, clip_sample=False,
+        beta_start=0.00085,
+        beta_end=args.beta_end,
+        beta_schedule="scaled_linear",
+        num_train_timesteps=1000,
+        clip_sample=False,
         steps_offset=1,
     )
     prepare_scheduler_for_custom_training(train_noise_scheduler, accelerator.device)
     if args.zero_terminal_snr:
-        custom_train_functions.fix_noise_scheduler_betas_for_zero_terminal_snr(train_noise_scheduler)
+        custom_train_functions.fix_noise_scheduler_betas_for_zero_terminal_snr(
+            train_noise_scheduler
+        )
 
     if accelerator.is_main_process:
         init_kwargs = {}
@@ -534,7 +620,15 @@ def train(args):
 
     # For --sample_at_first
     sdxl_train_util.sample_images(
-        accelerator, args, 0, global_step, accelerator.device, vae, [tokenizer1, tokenizer2], [text_encoder1, text_encoder2], hydit
+        accelerator,
+        args,
+        0,
+        global_step,
+        accelerator.device,
+        vae,
+        [tokenizer1, tokenizer2],
+        [text_encoder1, text_encoder2],
+        hydit,
     )
 
     loss_recorder = train_util.LossRecorder()
@@ -549,23 +643,36 @@ def train(args):
             current_step.value = global_step
 
             if args.fused_optimizer_groups:
-                optimizer_hooked_count = {i: 0 for i in range(len(optimizers))}  # reset counter for each step
+                optimizer_hooked_count = {
+                    i: 0 for i in range(len(optimizers))
+                }  # reset counter for each step
 
             with accelerator.accumulate(*training_models):
                 if "latents" in batch and batch["latents"] is not None:
-                    latents = batch["latents"].to(accelerator.device).to(dtype=weight_dtype)
+                    latents = (
+                        batch["latents"].to(accelerator.device).to(dtype=weight_dtype)
+                    )
                 else:
                     with torch.no_grad():
                         # latentに変換
-                        latents = vae.encode(batch["images"].to(vae_dtype)).latent_dist.sample().to(weight_dtype)
+                        latents = (
+                            vae.encode(batch["images"].to(vae_dtype))
+                            .latent_dist.sample()
+                            .to(weight_dtype)
+                        )
 
                         # NaNが含まれていれば警告を表示し0に置き換える
                         if torch.any(torch.isnan(latents)):
-                            accelerator.print("NaN found in latents, replacing with zeros")
+                            accelerator.print(
+                                "NaN found in latents, replacing with zeros"
+                            )
                             latents = torch.nan_to_num(latents, 0, out=latents)
                 latents = latents * sdxl_model_util.VAE_SCALE_FACTOR
 
-                if "text_encoder_outputs1_list" not in batch or batch["text_encoder_outputs1_list"] is None:
+                if (
+                    "text_encoder_outputs1_list" not in batch
+                    or batch["text_encoder_outputs1_list"] is None
+                ):
                     input_ids1 = batch["input_ids"]
                     input_ids2 = batch["input_ids2"]
                     with torch.set_grad_enabled(args.train_text_encoder):
@@ -591,11 +698,15 @@ def train(args):
 
                 # Sample noise, sample a random timestep for each image, and add noise to the latents,
                 # with noise offset and/or multires noise if specified
-                noise, noisy_latents, timesteps, huber_c = train_util.get_noise_noisy_latents_and_timesteps(
-                    args, train_noise_scheduler, latents
+                noise, noisy_latents, timesteps, huber_c = (
+                    train_util.get_noise_noisy_latents_and_timesteps(
+                        args, train_noise_scheduler, latents
+                    )
                 )
 
-                noisy_latents = noisy_latents.to(weight_dtype)  # TODO check why noisy_latents is not weight_dtype
+                noisy_latents = noisy_latents.to(
+                    weight_dtype
+                )  # TODO check why noisy_latents is not weight_dtype
                 B, C, H, W = noisy_latents.shape
 
                 if args.use_extra_cond:
@@ -635,38 +746,61 @@ def train(args):
 
                 if args.v_parameterization:
                     # v-parameterization training
-                    target = train_noise_scheduler.get_velocity(latents, noise, timesteps)
+                    target = train_noise_scheduler.get_velocity(
+                        latents, noise, timesteps
+                    )
                 else:
                     target = noise
 
                 if (
-                        args.min_snr_gamma
-                        or args.scale_v_pred_loss_like_noise_pred
-                        or args.v_pred_like_loss
-                        or args.debiased_estimation_loss
-                        or args.masked_loss
+                    args.min_snr_gamma
+                    or args.scale_v_pred_loss_like_noise_pred
+                    or args.v_pred_like_loss
+                    or args.debiased_estimation_loss
+                    or args.masked_loss
                 ):
                     # do not mean over batch dimension for snr weight or scale v-pred loss
                     loss = train_util.conditional_loss(
-                        noise_pred.float(), target.float(), reduction="none", loss_type=args.loss_type, huber_c=huber_c
+                        noise_pred.float(),
+                        target.float(),
+                        reduction="none",
+                        loss_type=args.loss_type,
+                        huber_c=huber_c,
                     )
-                    if args.masked_loss or ("alpha_masks" in batch and batch["alpha_masks"] is not None):
+                    if args.masked_loss or (
+                        "alpha_masks" in batch and batch["alpha_masks"] is not None
+                    ):
                         loss = apply_masked_loss(loss, batch)
                     loss = loss.mean([1, 2, 3])
 
                     if args.min_snr_gamma:
-                        loss = apply_snr_weight(loss, timesteps, train_noise_scheduler, args.min_snr_gamma)
+                        loss = apply_snr_weight(
+                            loss, timesteps, train_noise_scheduler, args.min_snr_gamma
+                        )
                     if args.scale_v_pred_loss_like_noise_pred:
-                        loss = scale_v_prediction_loss_like_noise_prediction(loss, timesteps, train_noise_scheduler)
+                        loss = scale_v_prediction_loss_like_noise_prediction(
+                            loss, timesteps, train_noise_scheduler
+                        )
                     if args.v_pred_like_loss:
-                        loss = add_v_prediction_like_loss(loss, timesteps, train_noise_scheduler, args.v_pred_like_loss)
+                        loss = add_v_prediction_like_loss(
+                            loss,
+                            timesteps,
+                            train_noise_scheduler,
+                            args.v_pred_like_loss,
+                        )
                     if args.debiased_estimation_loss:
-                        loss = apply_debiased_estimation(loss, timesteps, train_noise_scheduler)
+                        loss = apply_debiased_estimation(
+                            loss, timesteps, train_noise_scheduler
+                        )
 
                     loss = loss.mean()  # mean over batch dimension
                 else:
                     loss = train_util.conditional_loss(
-                        noise_pred.float(), target.float(), reduction="mean", loss_type=args.loss_type, huber_c=huber_c
+                        noise_pred.float(),
+                        target.float(),
+                        reduction="mean",
+                        loss_type=args.loss_type,
+                        huber_c=huber_c,
                     )
 
                 accelerator.backward(loss)
@@ -706,10 +840,17 @@ def train(args):
                 )
 
                 # 指定ステップごとにモデルを保存
-                if args.save_every_n_steps is not None and global_step % args.save_every_n_steps == 0:
+                if (
+                    args.save_every_n_steps is not None
+                    and global_step % args.save_every_n_steps == 0
+                ):
                     accelerator.wait_for_everyone()
                     if accelerator.is_main_process:
-                        src_path = src_stable_diffusion_ckpt if save_stable_diffusion_format else src_diffusers_model_path
+                        src_path = (
+                            src_stable_diffusion_ckpt
+                            if save_stable_diffusion_format
+                            else src_diffusers_model_path
+                        )
                         hunyuan_utils.save_hydit_model_on_epoch_end_or_stepwise(
                             args,
                             False,
@@ -734,9 +875,16 @@ def train(args):
             if args.logging_dir is not None:
                 logs = {"loss": current_loss}
                 if block_lrs is None:
-                    train_util.append_lr_to_logs(logs, lr_scheduler, args.optimizer_type, including_unet=train_hydit)
+                    train_util.append_lr_to_logs(
+                        logs,
+                        lr_scheduler,
+                        args.optimizer_type,
+                        including_unet=train_hydit,
+                    )
                 else:
-                    append_block_lr_to_logs(block_lrs, logs, lr_scheduler, args.optimizer_type)  # U-Net is included in block_lrs
+                    append_block_lr_to_logs(
+                        block_lrs, logs, lr_scheduler, args.optimizer_type
+                    )  # U-Net is included in block_lrs
 
                 accelerator.log(logs, step=global_step)
 
@@ -756,7 +904,11 @@ def train(args):
 
         if args.save_every_n_epochs is not None:
             if accelerator.is_main_process:
-                src_path = src_stable_diffusion_ckpt if save_stable_diffusion_format else src_diffusers_model_path
+                src_path = (
+                    src_stable_diffusion_ckpt
+                    if save_stable_diffusion_format
+                    else src_diffusers_model_path
+                )
                 hunyuan_utils.save_hydit_model_on_epoch_end_or_stepwise(
                     args,
                     True,
@@ -787,7 +939,7 @@ def train(args):
             [tokenizer1, tokenizer2],
             [text_encoder1, text_encoder2],
             hydit,
-            )
+        )
 
     is_main_process = accelerator.is_main_process
     # if is_main_process:
@@ -803,7 +955,11 @@ def train(args):
     del accelerator  # この後メモリを使うのでこれは消す
 
     if is_main_process:
-        src_path = src_stable_diffusion_ckpt if save_stable_diffusion_format else src_diffusers_model_path
+        src_path = (
+            src_stable_diffusion_ckpt
+            if save_stable_diffusion_format
+            else src_diffusers_model_path
+        )
         hunyuan_utils.save_hydit_model_on_train_end(
             args,
             src_path,
@@ -854,9 +1010,15 @@ def setup_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--diffusers_xformers", action="store_true", help="use xformers by diffusers / Diffusersでxformersを使用する"
+        "--diffusers_xformers",
+        action="store_true",
+        help="use xformers by diffusers / Diffusersでxformersを使用する",
     )
-    parser.add_argument("--train_text_encoder", action="store_true", help="train text encoder / text encoderも学習する")
+    parser.add_argument(
+        "--train_text_encoder",
+        action="store_true",
+        help="train text encoder / text encoderも学習する",
+    )
     parser.add_argument(
         "--no_half_vae",
         action="store_true",
@@ -867,7 +1029,7 @@ def setup_parser() -> argparse.ArgumentParser:
         type=str,
         default=None,
         help=f"learning rates for each block of HunyuanDiT, comma-separated, {UNET_NUM_BLOCKS_FOR_BLOCK_LR} values / "
-             + f"U-Netの各ブロックの学習率、カンマ区切り、{UNET_NUM_BLOCKS_FOR_BLOCK_LR}個の値",
+        + f"U-Netの各ブロックの学習率、カンマ区切り、{UNET_NUM_BLOCKS_FOR_BLOCK_LR}個の値",
     )
     parser.add_argument(
         "--fused_optimizer_groups",
@@ -878,7 +1040,7 @@ def setup_parser() -> argparse.ArgumentParser:
     return parser
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = setup_parser()
 
     args = parser.parse_args()

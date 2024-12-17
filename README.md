@@ -14,6 +14,7 @@
   <a href="https://huggingface.co/Tencent-Hunyuan/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT&message=HuggingFace&color=yellow"></a> &ensp;
   <a href="https://hunyuan.tencent.com/bot/chat"><img src="https://img.shields.io/static/v1?label=Hunyuan Bot&message=Web&color=green"></a> &ensp;
   <a href="https://huggingface.co/spaces/Tencent-Hunyuan/HunyuanDiT"><img src="https://img.shields.io/static/v1?label=Hunyuan-DiT Demo&message=HuggingFace&color=yellow"></a> &ensp;
+  <a href="./comfyui"><img src="https://img.shields.io/static/v1?label=ComfyUI Support&message=ComfyUI&color=purple&logo=github-pages"></a> &ensp;
 </div>
 
 -----
@@ -25,8 +26,11 @@ This repo contains PyTorch model definitions, pre-trained weights and inference/
 > [**DialogGen: Multi-modal Interactive Dialogue System for Multi-turn Text-to-Image Generation**](https://arxiv.org/abs/2403.08857) <br>
 
 ## 🔥🔥🔥 News!!
+* Dec 17, 2024: :tada: Optimize Lora training with `refined grad checkpoint` and `low-bit optimizer`. Just use `--lowbit-opt` to get started.
+* Sep 13, 2024: 🎉 IPAdapter is officially supported by HunYuanDiT. Document for it: [./ipadapter](./ipadapter). And scaled attention is utilized to replace flash attention on V100 GPUs.
+* Aug 26, 2024, 🎉 HunYuanDIT Controlnet and LoRA are officially supported by ComfyUI. Document for it: [./comfyui](./comfyui)
 * Jul 15, 2024: 🚀 HunYuanDiT and Shakker.Ai have jointly launched a fine-tuning event based on the HunYuanDiT 1.2 model. By publishing a lora or fine-tuned model based on HunYuanDiT, you can earn up to $230 bonus from Shakker.Ai. See [Shakker.Ai](https://www.shakker.ai/activitys/shaker-the-world-hunyuan) for more details.
-* Jul 15, 2024: :tada: Update ComfyUI to support standardized workflows and compatibility with weights from t2i module and Lora training for versions 1.1/1.2, as well as those trained by Kohya or the official script. See [ComfyUI](./comfyui-hydit) for details.
+* Jul 15, 2024: :tada: Update ComfyUI to support standardized workflows and compatibility with weights from t2i module and Lora training for versions 1.1/1.2, as well as those trained by Kohya or the official script. 
 * Jul 15, 2024: :zap: We offer Docker environments for CUDA 11/12, allowing you to bypass complex installations and play with a single click! See [dockers](#installation-guide-for-linux) for details. 
 * Jul 08, 2024: :tada: HYDiT-v1.2 version is released. Please check [HunyuanDiT-v1.2](https://huggingface.co/Tencent-Hunyuan/HunyuanDiT-v1.2) and [Distillation-v1.2](https://huggingface.co/Tencent-Hunyuan/Distillation-v1.2) for more details.
 * Jul 03, 2024: :tada: Kohya-hydit version now available for v1.1 and v1.2 models, with GUI for inference. Official Kohya version is under review. See [kohya](./kohya_ss-hydit) for details.
@@ -68,6 +72,28 @@ or multi-turn language interactions to create the picture.
 >
 > turn into glass
 
+
+## 🤗 Community Contribution Leaderboard
+1. By [@TTPlanetPig](https://github.com/TTPlanetPig)
+   - HunyuanDIT_v1.2 ControlNet models
+     - Inpaint controlnet: https://huggingface.co/TTPlanet/HunyuanDiT_Controlnet_inpainting
+     - Tile controlnet: https://huggingface.co/TTPlanet/HunyuanDiT_Controlnet_tile
+     - Lineart controlnet: https://huggingface.co/TTPlanet/HunyuanDiT_Controlnet_lineart
+   - HunyuanDIT_v1.2 ComfyUI nodes
+     - Comfyui_TTP_CN_Preprocessor: https://github.com/TTPlanetPig/Comfyui_TTP_CN_Preprocessor
+     - Comfyui_TTP_Toolset: https://github.com/TTPlanetPig/Comfyui_TTP_Toolset
+
+2. By [@sdbds](https://github.com/sdbds) (bilibili up [青龙圣者](https://space.bilibili.com/219296))
+   - Kohya_ss-hydit train tools: https://github.com/zml-ai/HunyuanDIT-PRE/tree/main/kohya_ss-hydit
+
+3. By [@CrazyBoyM](https://github.com/CrazyBoyM) (bilibili up [飞鸟白菜](https://space.bilibili.com/291593914))
+   - ComfyUI support for HunyuanDIT_v1.2 Controlnet: https://github.com/comfyanonymous/ComfyUI/pull/4245
+    
+4. By [@L_A_X](https://huggingface.co/Laxhar/Freeway_Animation_HunYuan_Demo)
+   - HunyuanDIT_v1.2 base model for anime
+     - Original hf: https://huggingface.co/Laxhar/Freeway_Animation_HunYuan_Demo
+     - Converted ComfyUI model: https://huggingface.co/comfyanonymous/Freeway_Animation_Hunyuan_Demo_ComfyUI_Converted
+    
 ## 📑 Open-source Plan
 
 - Hunyuan-DiT (Text-to-Image Model)
@@ -79,7 +105,7 @@ or multi-turn language interactions to create the picture.
   - [x] Lora
   - [x] Controlnet (Pose, Canny, Depth)
   - [x] 6GB GPU VRAM Inference 
-  - [ ] IP-adapter
+  - [x] IP-adapter
   - [ ] Hunyuan-DiT-S checkpoints (0.7B model)
 - Mllm
   - Hunyuan-Captioner (Re-caption the raw image-text pairs)
@@ -99,11 +125,12 @@ or multi-turn language interactions to create the picture.
 - [Hunyuan-DiT : A Powerful Multi-Resolution Diffusion Transformer with Fine-Grained Chinese Understanding](#hunyuan-dit--a-powerful-multi-resolution-diffusion-transformer-with-fine-grained-chinese-understanding)
   - [🔥🔥🔥 News!!](#-news)
   - [🤖 Try it on the web](#-try-it-on-the-web)
+  - [🤗 Community Contribution Leaderboard](#-community-contribution-leaderboard)
   - [📑 Open-source Plan](#-open-source-plan)
   - [Contents](#contents)
-  - [**Abstract**](#abstract)
-  - [🎉 **Hunyuan-DiT Key Features**](#-hunyuan-dit-key-features)
-    - [**Chinese-English Bilingual DiT Architecture**](#chinese-english-bilingual-dit-architecture)
+  - [Abstract](#abstract)
+  - [🎉 Hunyuan-DiT Key Features](#-hunyuan-dit-key-features)
+    - [Chinese-English Bilingual DiT Architecture](#chinese-english-bilingual-dit-architecture)
     - [Multi-turn Text2Image Generation](#multi-turn-text2image-generation)
   - [📈 Comparisons](#-comparisons)
   - [🎥 Visualization](#-visualization)
@@ -128,6 +155,7 @@ or multi-turn language interactions to create the picture.
     - [Using Previous versions](#using-previous-versions)
   - [:building\_construction: Adapter](#building_construction-adapter)
     - [ControlNet](#controlnet)
+    - [IP-Adapter](#IP-Adapter)
   - [:art: Hunyuan-Captioner](#art-hunyuan-captioner)
     - [Examples](#examples)
     - [Instructions](#instructions)
@@ -465,10 +493,18 @@ We provide training and inference scripts for LoRA, detailed in the [./lora](./l
 
   ```shell
   # Training for porcelain LoRA.
-  PYTHONPATH=./ sh lora/train_lora.sh --index-file dataset/porcelain/jsons/porcelain.json
-
+  PYTHONPATH=./ sh lora/train_lora_with_fa.sh --index-file dataset/porcelain/jsons/porcelain.json
+  
   # Inference using trained LORA weights.
   python sample_t2i.py --infer-mode fa --prompt "青花瓷风格，一只小狗"  --no-enhance --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
+  ```
+ If you can't install flash_attn, use code:
+  ```shell
+  # Training for porcelain LoRA.
+  PYTHONPATH=./ sh lora/train_lora.sh --index-file dataset/porcelain/jsons/porcelain.json
+  
+  # Inference using trained LORA weights.
+  python sample_t2i.py --infer-mode torch --prompt "青花瓷风格，一只小狗"  --no-enhance --lora-ckpt log_EXP/001-lora_porcelain_ema_rank64/checkpoints/0001000.pt
   ```
  We offer two types of trained LoRA weights for `porcelain` and `jade`, see details at [links](https://huggingface.co/Tencent-Hunyuan/HYDiT-LoRA)
   ```shell
@@ -556,6 +592,9 @@ Make sure the conda environment is activated before running the following comman
 ```shell
 # By default, we start a Chinese UI. Using Flash Attention for acceleration.
 python app/hydit_app.py --infer-mode fa
+
+# Using special port and host
+python app/hydit_app.py --infer-mode fa --server_name 0.0.0.0 --server_port 443 --load-key distill
 
 # You can disable the enhancement model if the GPU memory is insufficient.
 # The enhancement will be unavailable until you restart the app without the `--no-enhance` flag. 
@@ -657,10 +696,9 @@ We list some more useful configurations for easy usage:
 - Support HunyuanDiT-v1.1 and v1.2.
 - Support module, lora and clip lora models trained by Kohya.
 - Support module, lora models trained by HunyunDiT official training scripts.
-- ControlNet is coming soon.
+- ControlNet support.
 
-![Workflow](comfyui-hydit/img/workflow_v1.2_lora.png)
-More details can be found in [./comfyui-hydit](comfyui-hydit/README.md)
+More details can be found in [./comfyui](comfyui/README.md)
 
 ### Using Kohya
 
@@ -745,6 +783,84 @@ We provide training scripts for ControlNet, detailed in the [./controlnet](./con
  
 </table>
 
+### IP-Adapter
+  We provide training scripts for IP-Adapter, detailed in the [./ipadapter](./ipadapter/README.md). 
+  ```shell
+  # Training for IP-Adapter.
+  PYTHONPATH=./ sh hydit/train_ipadapter.sh
+  ```
+   We offer  trained IP-Adapter weights, see details at [links](https://huggingface.co/Tencent-Hunyuan/HYDiT-IP-Adapter)
+  ```shell
+  cd HunyuanDiT
+  # Use the huggingface-cli tool to download the model.
+  # We recommend using module weights as the base model for IP-Adapter inference, as our provided pretrained weights are trained on them.
+  huggingface-cli download Tencent-Hunyuan/IP-Adapter ipa.pt --local-dir ./ckpts/t2i/model
+  huggingface-cli download Tencent-Hunyuan/IP-Adapter clip_img_encoder.pt  --local-dir ./ckpts/t2i/model/clip_img_encoder
+  
+  # Quick start
+  python3 sample_ipadapter.py  --infer-mode fa --ref-image-path ipadapter/asset/input/tiger.png --i-scale 1.0 --prompt 一只老虎在海洋中游泳，背景是海洋。构图方式是居中构图，呈现了动漫风格和文化，营造了平静的氛围。 --infer-steps 100 --is-ipa True --load-key distill
+  ```
+
+Examples of ref input and IP-Adapter results are as follows:
+<table>
+  <tr>
+    <td colspan="3" align="center">Ref Input</td>
+  </tr>
+  
+
+
+  
+
+  <tr>
+    <td align="center"><img src="ipadapter/asset/input/tiger.png" alt="Image 0" width="200"/></td>
+    <td align="center"><img src="ipadapter/asset/input/beauty.png" alt="Image 1" width="200"/></td>
+    <td align="center"><img src="ipadapter/asset/input/xunyicao.png" alt="Image 2" width="200"/></td>
+    
+  </tr>
+  
+  <tr>
+    <td colspan="3" align="center">IP-Adapter Output</td>
+  </tr>
+
+  <tr>
+    <td align="center">一只老虎在奔跑。<br>（A tiger running.） </td>
+    <td align="center">一个卡通美女，抱着一只小猪。<br>（A cartoon beauty holding a little pig.） </td>
+    <td align="center">一片紫色薰衣草地。<br>（A purple lavender field.） </td>
+  </tr>
+
+  <tr>
+    <td align="center"><img src="ipadapter/asset/output/tiger_run.png" alt="Image 3" width="200"/></td>
+    <td align="center"><img src="ipadapter/asset/output/beauty_pig.png" alt="Image 4" width="200"/></td>
+    <td align="center"><img src="ipadapter/asset/output/xunyicao_res.png" alt="Image 5" width="200"/></td>
+  </tr>
+
+  <tr>
+    <td align="center">一只老虎在看书。<br>（A tiger is reading a book.） </td>
+    <td align="center">一个卡通美女，穿着绿色衣服。<br>（A cartoon beauty wearing green clothes.） </td>
+    <td align="center">一片紫色薰衣草地，有一只可爱的小狗。<br>（A purple lavender field with a cute puppy.） </td>
+  </tr>
+
+  <tr>
+    <td align="center"><img src="ipadapter/asset/output/tiger_book.png" alt="Image 3" width="200"/></td>
+    <td align="center"><img src="ipadapter/asset/output/beauty_green_cloth.png" alt="Image 4" width="200"/></td>
+    <td align="center"><img src="ipadapter/asset/output/xunyicao_dog.png" alt="Image 5" width="200"/></td>
+  </tr>
+
+  <tr>
+    <td align="center">一只老虎在咆哮。<br>（A tiger is roaring.） </td>
+    <td align="center">一个卡通美女，戴着墨镜。<br>（A cartoon beauty wearing sunglasses.） </td>
+    <td align="center">水墨风格,一片紫色薰衣草地。<br>（Ink style. A purple lavender field.） </td>
+  </tr>
+  <tr>
+    <td align="center"><img src="ipadapter/asset/output/tiger_roar.png" alt="Image 3" width="200"/></td>
+    <td align="center"><img src="ipadapter/asset/output/beauty_glass.png" alt="Image 4" width="200"/></td>
+    <td align="center"><img src="ipadapter/asset/output/xunyicao_style.png" alt="Image 5" width="200"/></td>
+  </tr>
+ 
+  
+</table>
+
+  
 ## :art: Hunyuan-Captioner
 Hunyuan-Captioner meets the need of text-to-image techniques by maintaining a high degree of image-text consistency. It can generate high-quality image descriptions from a variety of angles, including object description, objects relationships, background information, image style, etc. Our code is based on [LLaVA](https://github.com/haotian-liu/LLaVA) implementation.
 

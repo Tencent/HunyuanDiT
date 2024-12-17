@@ -38,8 +38,8 @@ STEPS = 100
 CFG_SCALE = 5
 DEVICE = "cuda"
 DTYPE = torch.float16
-MODEL_PATH = '../models/HunYuanDiT-V1.1-fp16-pruned'
-LORA_WEIGHT = '../output/last.safetensors'
+MODEL_PATH = "../models/HunYuanDiT-V1.1-fp16-pruned"
+LORA_WEIGHT = "../output/last.safetensors"
 MODEL_VERSION = "1.1"
 USE_EXTRA_COND = True
 BETA_END = 0.03
@@ -49,9 +49,14 @@ _loaded_model = None
 _loaded_model_path = None
 _loaded_ckpt_path = None
 
+
 def load_model_if_needed(model_path, ckpt_path):
     global _loaded_model, _loaded_model_path, _loaded_ckpt_path
-    if _loaded_model is None or _loaded_model_path != model_path or _loaded_ckpt_path != ckpt_path:
+    if (
+        _loaded_model is None
+        or _loaded_model_path != model_path
+        or _loaded_ckpt_path != ckpt_path
+    ):
         (
             denoiser,
             patch_size,
@@ -60,7 +65,9 @@ def load_model_if_needed(model_path, ckpt_path):
             clip_encoder,
             mt5_embedder,
             vae,
-        ) = load_model(model_path, dtype=DTYPE, device=DEVICE, use_extra_cond=USE_EXTRA_COND)
+        ) = load_model(
+            model_path, dtype=DTYPE, device=DEVICE, use_extra_cond=USE_EXTRA_COND
+        )
         denoiser.eval()
         denoiser.disable_fp32_silu()
         denoiser.disable_fp32_layer_norm()
@@ -83,13 +90,33 @@ def load_model_if_needed(model_path, ckpt_path):
             device=DEVICE,
         )
 
-        _loaded_model = (denoiser, patch_size, head_dim, clip_tokenizer, clip_encoder, mt5_embedder, vae)
+        _loaded_model = (
+            denoiser,
+            patch_size,
+            head_dim,
+            clip_tokenizer,
+            clip_encoder,
+            mt5_embedder,
+            vae,
+        )
         _loaded_model_path = model_path
         _loaded_ckpt_path = ckpt_path
 
     return _loaded_model
 
-def generate_image(prompt: str, neg_prompt: str, seed: int, height: int, width: int, steps: int, cfg_scale: int, model_path: str, ckpt_path: str, model_version:str):
+
+def generate_image(
+    prompt: str,
+    neg_prompt: str,
+    seed: int,
+    height: int,
+    width: int,
+    steps: int,
+    cfg_scale: int,
+    model_path: str,
+    ckpt_path: str,
+    model_version: str,
+):
     seed_everything(seed)
 
     PROMPT = prompt
@@ -101,7 +128,6 @@ def generate_image(prompt: str, neg_prompt: str, seed: int, height: int, width: 
     MODEL_PATH = model_path
     LORA_WEIGHT = ckpt_path
     MODEL_VERSION = model_version
-
 
     with torch.inference_mode(True), torch.no_grad():
         alphas, sigmas = load_scheduler_sigmas()
@@ -192,4 +218,15 @@ def generate_image(prompt: str, neg_prompt: str, seed: int, height: int, width: 
 
 if __name__ == "__main__":
     seed_everything(0)
-    generate_image(PROMPT, NEG_PROMPT, 0, H, W, STEPS, CFG_SCALE, MODEL_PATH, LORA_WEIGHT, MODEL_VERSION)
+    generate_image(
+        PROMPT,
+        NEG_PROMPT,
+        0,
+        H,
+        W,
+        STEPS,
+        CFG_SCALE,
+        MODEL_PATH,
+        LORA_WEIGHT,
+        MODEL_VERSION,
+    )

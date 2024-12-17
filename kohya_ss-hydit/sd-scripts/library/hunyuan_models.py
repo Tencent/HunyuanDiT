@@ -54,9 +54,8 @@ class MT5Embedder(nn.Module):
         self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
         if use_tokenizer_only:
             return
-        self.model = (
-            MT5EncoderModel.from_pretrained(model_dir, **model_kwargs)
-            .to(self.torch_dtype)
+        self.model = MT5EncoderModel.from_pretrained(model_dir, **model_kwargs).to(
+            self.torch_dtype
         )
         self.register_buffer("device", torch.tensor(0.0), persistent=False)
 
@@ -113,6 +112,7 @@ class MT5Embedder(nn.Module):
                         return_dict,
                         use_reentrant=False,
                     )
+
                 return mt5_block_forward
 
             block.forward = wrapper(block)
@@ -985,7 +985,10 @@ class HunYuanDiT(nn.Module):
         # Attention pooling
         pooler_out_dim = 1024
         self.pooler = AttentionPool(
-            self.text_len_t5, self.text_states_dim_t5, num_heads=8, output_dim=pooler_out_dim
+            self.text_len_t5,
+            self.text_states_dim_t5,
+            num_heads=8,
+            output_dim=pooler_out_dim,
         )
 
         # Dimension of the extra input vectors
@@ -1157,7 +1160,9 @@ class HunYuanDiT(nn.Module):
             )  # [B * 6, 256]
             image_meta_size = image_meta_size.to(x)
             image_meta_size = image_meta_size.view(-1, 6 * 256)
-            extra_vec = torch.cat([extra_vec, image_meta_size], dim=1)  # [B, D + 6 * 256]
+            extra_vec = torch.cat(
+                [extra_vec, image_meta_size], dim=1
+            )  # [B, D + 6 * 256]
 
             # Build style tokens
             style_embedding = self.style_embedder(style)

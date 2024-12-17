@@ -10,11 +10,14 @@ args = get_args()
 image_size = _to_tuple(args.image_size)
 latent_size = (image_size[0] // 8, image_size[1] // 8)
 
-model = HUNYUAN_DIT_MODELS[args.model](args,
-                                       input_size=latent_size,
-                                       log_fn=print,
-                                        )
-model_path = os.path.join(args.model_root, 't2i', 'model', f"pytorch_model_{args.load_key}.pt")
+model = HUNYUAN_DIT_MODELS[args.model](
+    args,
+    input_size=latent_size,
+    log_fn=print,
+)
+model_path = os.path.join(
+    args.model_root, "t2i", "model", f"pytorch_model_{args.load_key}.pt"
+)
 state_dict = torch.load(model_path, map_location=lambda storage, loc: storage)
 
 print(f"Loading model from {model_path}")

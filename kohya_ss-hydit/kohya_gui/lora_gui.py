@@ -19,8 +19,12 @@ from .common_gui import (
     SaveConfigFile,
     scriptdir,
     update_my_data,
-    validate_file_path, validate_folder_path, validate_model_path, validate_toml_file,
-    validate_args_setting, setup_environment,
+    validate_file_path,
+    validate_folder_path,
+    validate_model_path,
+    validate_toml_file,
+    validate_args_setting,
+    setup_environment,
 )
 from .class_accelerate_launch import AccelerateLaunch
 from .class_configuration_file import ConfigurationFile
@@ -705,42 +709,46 @@ def train_model(
 
     #
     # Validate paths
-    # 
-    
+    #
+
     if not validate_file_path(dataset_config):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_file_path(log_tracker_config):
         return TRAIN_BUTTON_VISIBLE
-    
-    if not validate_folder_path(logging_dir, can_be_written_to=True, create_if_not_exists=True):
+
+    if not validate_folder_path(
+        logging_dir, can_be_written_to=True, create_if_not_exists=True
+    ):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if LyCORIS_preset not in LYCORIS_PRESETS_CHOICES:
         if not validate_toml_file(LyCORIS_preset):
             return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_file_path(network_weights):
         return TRAIN_BUTTON_VISIBLE
-    
-    if not validate_folder_path(output_dir, can_be_written_to=True, create_if_not_exists=True):
+
+    if not validate_folder_path(
+        output_dir, can_be_written_to=True, create_if_not_exists=True
+    ):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_model_path(pretrained_model_name_or_path):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_folder_path(reg_data_dir):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_folder_path(resume):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_folder_path(train_data_dir):
         return TRAIN_BUTTON_VISIBLE
-    
+
     if not validate_model_path(vae):
         return TRAIN_BUTTON_VISIBLE
-    
+
     #
     # End of path validation
     #
@@ -931,7 +939,7 @@ def train_model(
         log.error("accelerate not found")
         return TRAIN_BUTTON_VISIBLE
 
-    run_cmd = [rf'{accelerate_path}', "launch"]
+    run_cmd = [rf"{accelerate_path}", "launch"]
 
     run_cmd = AccelerateLaunch.run_cmd(
         run_cmd=run_cmd,
@@ -1264,7 +1272,7 @@ def train_model(
 
     current_datetime = datetime.now()
     formatted_datetime = current_datetime.strftime("%Y%m%d-%H%M%S")
-    tmpfilename = fr"{output_dir}/config_lora-{formatted_datetime}.toml"
+    tmpfilename = rf"{output_dir}/config_lora-{formatted_datetime}.toml"
 
     # Save the updated TOML data back to the file
     with open(tmpfilename, "w", encoding="utf-8") as toml_file:

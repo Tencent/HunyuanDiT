@@ -7,6 +7,7 @@ import json
 from typing import List
 from collections import defaultdict
 
+
 def source_names_to_names(source_names_):
     """
     Get all arrow file names from a list of source names.
@@ -19,8 +20,8 @@ def source_names_to_names(source_names_):
     for data_name in source_names_:
         if isinstance(data_name, dict):
             data_name, value = list(data_name.items())[0]
-            exclude = value.get('exclude', [])
-            repeat_times = value.get('repeat', 1)
+            exclude = value.get("exclude", [])
+            repeat_times = value.get("repeat", 1)
         else:
             exclude = []
             repeat_times = 1
@@ -43,7 +44,9 @@ def source_names_to_names(source_names_):
 def get_or_create_arrow_name_list(source_names=None):
 
     if not isinstance(source_names, list):
-        raise ValueError(f"`source_names` should be of type list, got {type(source_names)}")
+        raise ValueError(
+            f"`source_names` should be of type list, got {type(source_names)}"
+        )
     if len(source_names) == 0:
         raise ValueError(f"`source_names` is an empty list.")
     names, exclude_count = source_names_to_names(source_names)
@@ -105,15 +108,15 @@ class Operator(object):
         for path in paths:
             if not path.exists():
                 raise ValueError(f"Path not found: {path}")
-            if path.suffix == '.pkl':
-                with path.open('rb') as f:
+            if path.suffix == ".pkl":
+                with path.open("rb") as f:
                     md5s = pickle.load(f)
                 assert isinstance(md5s, (set, dict)), f"Invalid type: {type(md5s)}"
-            elif path.suffix == '.json':
+            elif path.suffix == ".json":
                 with path.open() as f:
                     md5s = json.load(f)
                 assert isinstance(md5s, dict), f"Invalid type: {type(md5s)}"
-            elif path.suffix == '.txt':
+            elif path.suffix == ".txt":
                 md5s = set(path.read_text().splitlines())
             else:
                 raise ValueError(f"Invalid file type: {path}")
@@ -131,41 +134,68 @@ class Operator(object):
 
 class ColumnFilter(Operator):
     numeric_actions = {"eq", "ne", "gt", "lt", "ge", "le"}
-    str_actions = {"eq", "ne", "len_eq", "len_ne", "len_gt", "len_lt", "len_ge", "len_le", "contains", "not_contains",
-                   "in", "not_in", "lower_last_in"}
+    str_actions = {
+        "eq",
+        "ne",
+        "len_eq",
+        "len_ne",
+        "len_gt",
+        "len_lt",
+        "len_ge",
+        "len_le",
+        "contains",
+        "not_contains",
+        "in",
+        "not_in",
+        "lower_last_in",
+    }
     int_target_str_actions = {"len_eq", "len_gt", "len_lt", "len_ge", "len_le"}
     action_mapper_left = {
-        "eq": "==", "ne": "!=", "len_eq": ".len()==",
-        "gt": ">", "len_gt": ".len()>",
-        "lt": "<", "len_lt": ".len()<",
-        "ge": ">=", "len_ge": ".len()>=",
-        "le": "<=", "len_le": ".len()<=",
+        "eq": "==",
+        "ne": "!=",
+        "len_eq": ".len()==",
+        "gt": ">",
+        "len_gt": ".len()>",
+        "lt": "<",
+        "len_lt": ".len()<",
+        "ge": ">=",
+        "len_ge": ".len()>=",
+        "le": "<=",
+        "len_le": ".len()<=",
         "contains": ".contains(",
         "not_contains": ".not_contains(",
-        "in": ".isin(", "not_in": ".notin(",
+        "in": ".isin(",
+        "not_in": ".notin(",
         "lower_last_in": "[-1].lower().isin(",
     }
     action_mapper_right = {
-        "eq": "", "ne": "", "len_eq": "",
-        "gt": "", "len_gt": "",
-        "lt": "", "len_lt": "",
-        "ge": "", "len_ge": "",
-        "le": "", "len_le": "",
+        "eq": "",
+        "ne": "",
+        "len_eq": "",
+        "gt": "",
+        "len_gt": "",
+        "lt": "",
+        "len_lt": "",
+        "ge": "",
+        "len_ge": "",
+        "le": "",
+        "len_le": "",
         "contains": ")",
         "not_contains": ")",
-        "in": ")", "not_in": ")",
+        "in": ")",
+        "not_in": ")",
         "lower_last_in": ")",
     }
 
     def __init__(self, config):
         super().__init__(config)
-        self.name = self.column_name = config['name']
-        self.dtype = config['type']
-        self.action = config['action']
-        self.target = config['target']
-        self.default = config['default']
-        self.arrow_file_cond = config.get('arrow_file', None)
-        self.arrow_file_keyword = config.get('arrow_file_keyword', None)
+        self.name = self.column_name = config["name"]
+        self.dtype = config["type"]
+        self.action = config["action"]
+        self.target = config["target"]
+        self.default = config["default"]
+        self.arrow_file_cond = config.get("arrow_file", None)
+        self.arrow_file_keyword = config.get("arrow_file_keyword", None)
         if self.arrow_file_keyword is not None:
             if isinstance(self.arrow_file_keyword, str):
                 self.arrow_file_keyword = [self.arrow_file_keyword]
@@ -182,26 +212,28 @@ class ColumnFilter(Operator):
         if self.arrow_file_keyword is None or len(self.arrow_file_keyword) == 0:
             arrow_file_keyword_repr = ""
         else:
-            arrow_file_keyword_repr = f', arrow_file_keys={self.arrow_file_keyword}'
-        fmt_str = f"{self.column_name}" \
-                  f"{self.action_mapper_left[self.action]}{self.target}{self.action_mapper_right[self.action]}" \
-                  f" (default={self.default}{arrow_file_keyword_repr})"
+            arrow_file_keyword_repr = f", arrow_file_keys={self.arrow_file_keyword}"
+        fmt_str = (
+            f"{self.column_name}"
+            f"{self.action_mapper_left[self.action]}{self.target}{self.action_mapper_right[self.action]}"
+            f" (default={self.default}{arrow_file_keyword_repr})"
+        )
         return fmt_str
 
 
 class NumericFilter(ColumnFilter):
     def run_on_column(self, column):
-        if self.action == 'eq':
+        if self.action == "eq":
             return column == self.target
-        elif self.action == 'ne':
+        elif self.action == "ne":
             return column != self.target
-        elif self.action == 'gt':
+        elif self.action == "gt":
             return column > self.target
-        elif self.action == 'lt':
+        elif self.action == "lt":
             return column < self.target
-        elif self.action == 'ge':
+        elif self.action == "ge":
             return column >= self.target
-        elif self.action == 'le':
+        elif self.action == "le":
             return column <= self.target
         else:
             raise ValueError(f"Invalid action: {self.action}")
@@ -212,7 +244,11 @@ class IntFilter(NumericFilter):
         success = self.check_exists(arrow_file, table)
         if not success:
             return None
-        column = table[self.column_name].to_pandas().apply(lambda x: to_numeric(x, self.default))
+        column = (
+            table[self.column_name]
+            .to_pandas()
+            .apply(lambda x: to_numeric(x, self.default))
+        )
         return self.run_on_column(column)
 
 
@@ -221,7 +257,11 @@ class FloatFilter(NumericFilter):
         success = self.check_exists(arrow_file, table)
         if not success:
             return None
-        column = table[self.column_name].to_pandas().apply(lambda x: to_numeric(x, self.default))
+        column = (
+            table[self.column_name]
+            .to_pandas()
+            .apply(lambda x: to_numeric(x, self.default))
+        )
         return self.run_on_column(column)
 
 
@@ -231,42 +271,42 @@ class StrFilter(ColumnFilter):
         if not success:
             return None
         column = table[self.column_name].to_pandas()
-        if self.action == 'eq':
+        if self.action == "eq":
             return column.apply(lambda x: x == self.target)
-        elif self.action == 'ne':
+        elif self.action == "ne":
             return column.apply(lambda x: x != self.target)
-        elif self.action == 'len_eq':
+        elif self.action == "len_eq":
             return column.str.len() == self.target
-        elif self.action == 'len_ne':
+        elif self.action == "len_ne":
             return column.str.len() != self.target
-        elif self.action == 'len_gt':
+        elif self.action == "len_gt":
             return column.str.len() > self.target
-        elif self.action == 'len_lt':
+        elif self.action == "len_lt":
             return column.str.len() < self.target
-        elif self.action == 'len_ge':
+        elif self.action == "len_ge":
             return column.str.len() >= self.target
-        elif self.action == 'len_le':
+        elif self.action == "len_le":
             return column.str.len() <= self.target
-        elif self.action == 'contains':
+        elif self.action == "contains":
             return column.str.contains(self.target)
-        elif self.action == 'not_contains':
+        elif self.action == "not_contains":
             return ~column.str.contains(self.target)
-        elif self.action == 'in':
+        elif self.action == "in":
             return column.apply(lambda x: x in self.target)
-        elif self.action == 'not_in':
+        elif self.action == "not_in":
             return column.apply(lambda x: x not in self.target)
-        elif self.action == 'lower_last_in':
+        elif self.action == "lower_last_in":
             return column.apply(lambda x: x[-1].lower() in self.target)
         else:
             raise ValueError(f"Invalid action: {self.action}")
 
 
 def check_type(parent, config):
-    if 'type' not in config:
+    if "type" not in config:
         return False, f"Missing required argument: {parent}.type"
-    if not isinstance(config['type'], str):
+    if not isinstance(config["type"], str):
         return False, f"Argument {parent}.type should be of type str"
-    if config['type'] not in TYPE_MAPPER:
+    if config["type"] not in TYPE_MAPPER:
         return False, f"Invalid type: {parent}.type: {config['type']}"
     return True, ""
 
@@ -282,7 +322,10 @@ def check_keys(parent, config, required_args, types):
                 ts = [ts]
             for t in ts:
                 if not isinstance(config[arg], t):
-                    return False, f"Argument {parent}.{arg} should be of type {t}, got {type(config[arg])}"
+                    return (
+                        False,
+                        f"Argument {parent}.{arg} should be of type {t}, got {type(config[arg])}",
+                    )
     return True, ""
 
 
@@ -291,31 +334,34 @@ def get_column_filter(parent, config):
     if not success:
         return False, msg, None
 
-    if config['type'] == 'str' and config['action'] in ColumnFilter.int_target_str_actions:
-        dtype = TYPE_MAPPER['int']
+    if (
+        config["type"] == "str"
+        and config["action"] in ColumnFilter.int_target_str_actions
+    ):
+        dtype = TYPE_MAPPER["int"]
     else:
-        dtype = TYPE_MAPPER[config['type']]
+        dtype = TYPE_MAPPER[config["type"]]
 
     # Check other keys
-    required_args = ['name', 'action', 'target', 'default']
+    required_args = ["name", "action", "target", "default"]
     types = [str, str, dtype, dtype]
     success, msg = check_keys(parent, config, required_args, types)
     if not success:
         return False, msg, None
 
     # Check action values
-    if config['type'] == 'str':
+    if config["type"] == "str":
         valid_actions = ColumnFilter.str_actions
     else:
         valid_actions = ColumnFilter.numeric_actions
-    if config['action'] not in valid_actions:
+    if config["action"] not in valid_actions:
         return False, f"Invalid action: {parent}.action: {config['action']}", None
 
-    if config['type'] == 'int':
+    if config["type"] == "int":
         return True, "", IntFilter(config)
-    elif config['type'] == 'float':
+    elif config["type"] == "float":
         return True, "", FloatFilter(config)
-    elif config['type'] == 'str':
+    elif config["type"] == "str":
         return True, "", StrFilter(config)
     else:
         raise ValueError(f"Invalid type: {config['type']}")
@@ -327,27 +373,35 @@ class MD5Filter(Operator):
         "dict": {"eq", "ne", "gt", "lt", "ge", "le"},
     }
     action_mapper_left = {
-        "eq": "==", "ne": "!=",
-        "gt": ">", "lt": "<",
-        "ge": ">=", "le": "<=",
-        "in": ".isin(", "not_in": ".isin(",
+        "eq": "==",
+        "ne": "!=",
+        "gt": ">",
+        "lt": "<",
+        "ge": ">=",
+        "le": "<=",
+        "in": ".isin(",
+        "not_in": ".isin(",
     }
     action_mapper_right = {
-        "eq": "", "ne": "",
-        "gt": "", "lt": "",
-        "ge": "", "le": "",
-        "in": ")", "not_in": ")",
+        "eq": "",
+        "ne": "",
+        "gt": "",
+        "lt": "",
+        "ge": "",
+        "le": "",
+        "in": ")",
+        "not_in": ")",
     }
 
     def __init__(self, config):
         super().__init__(config)
-        self.name = config['name']
-        self.paths = self.parse_path(config['path'])
-        self.dtype = config['type']
-        self.action = config['action']
-        self.target = config.get('target', None)                            # only for type=='dict'
-        self.is_valid = config.get('is_valid', None)                        # only for type=='dict'
-        self.arrow_file_keyword = config.get('arrow_file_keyword', None)
+        self.name = config["name"]
+        self.paths = self.parse_path(config["path"])
+        self.dtype = config["type"]
+        self.action = config["action"]
+        self.target = config.get("target", None)  # only for type=='dict'
+        self.is_valid = config.get("is_valid", None)  # only for type=='dict'
+        self.arrow_file_keyword = config.get("arrow_file_keyword", None)
         if self.arrow_file_keyword is not None:
             if isinstance(self.arrow_file_keyword, str):
                 self.arrow_file_keyword = [self.arrow_file_keyword]
@@ -359,20 +413,24 @@ class MD5Filter(Operator):
         if self.arrow_file_keyword is None or len(self.arrow_file_keyword) == 0:
             arrow_file_keyword_repr = ""
         else:
-            arrow_file_keyword_repr = f'(arrow_file_keys={self.arrow_file_keyword})'
-        return_space = '\n' + ' ' * 22
-        if self.dtype == 'list':
-            fmt_str = ("Good Cases" if self.is_valid else " Bad Cases") \
-                      + f" (md5): {return_space.join([str(p) for p in self.paths])} " \
-                        f"{arrow_file_keyword_repr} " \
-                        f"| {self.name}"
-        elif self.dtype == 'dict':
-            fmt_str = ("Good Cases" if self.is_valid else " Bad Cases") \
-                      + f" (md5): {return_space.join([str(p) for p in self.paths])}\n" \
-                        f"                      --> value" \
-                        f"{self.action_mapper_left[self.action]}{self.target}{self.action_mapper_right[self.action]} " \
-                        f"{arrow_file_keyword_repr} " \
-                        f"| {self.name}"
+            arrow_file_keyword_repr = f"(arrow_file_keys={self.arrow_file_keyword})"
+        return_space = "\n" + " " * 22
+        if self.dtype == "list":
+            fmt_str = (
+                ("Good Cases" if self.is_valid else " Bad Cases")
+                + f" (md5): {return_space.join([str(p) for p in self.paths])} "
+                f"{arrow_file_keyword_repr} "
+                f"| {self.name}"
+            )
+        elif self.dtype == "dict":
+            fmt_str = (
+                ("Good Cases" if self.is_valid else " Bad Cases")
+                + f" (md5): {return_space.join([str(p) for p in self.paths])}\n"
+                f"                      --> value"
+                f"{self.action_mapper_left[self.action]}{self.target}{self.action_mapper_right[self.action]} "
+                f"{arrow_file_keyword_repr} "
+                f"| {self.name}"
+            )
         else:
             raise ValueError(f"Invalid type: {self.dtype}")
         return fmt_str
@@ -396,9 +454,13 @@ class ListFilter(MD5Filter):
 class DictFilter(MD5Filter):
     def __call__(self, md5s):
         if self.is_valid:
-            return md5s.apply(lambda x: x in self.md5_data and self.cond(self.md5_data[x]))
+            return md5s.apply(
+                lambda x: x in self.md5_data and self.cond(self.md5_data[x])
+            )
         else:
-            return md5s.apply(lambda x: (x not in self.md5_data) or not self.cond(self.md5_data[x]))
+            return md5s.apply(
+                lambda x: (x not in self.md5_data) or not self.cond(self.md5_data[x])
+            )
 
     def cond(self, value):
         if self.action == "eq":
@@ -422,21 +484,21 @@ def get_md5_filter(parent, config):
     if not success:
         return False, msg, None
 
-    required_args = ['name', 'path', 'action']
+    required_args = ["name", "path", "action"]
     types = [str, (str, list), str]
-    if config['type'] == 'dict':
-        required_args.extend(['target', 'is_valid'])
+    if config["type"] == "dict":
+        required_args.extend(["target", "is_valid"])
         types.extend([None, bool])
     success, msg = check_keys(parent, config, required_args, types)
     if not success:
         return False, msg, None
 
-    if config['action'] not in MD5Filter.valid_actions[config['type']]:
+    if config["action"] not in MD5Filter.valid_actions[config["type"]]:
         return False, f"Invalid action: {parent}.action: {config['action']}", None
 
-    if config['type'] == 'list':
+    if config["type"] == "list":
         return True, "", ListFilter(config)
-    elif config['type'] == 'dict':
+    elif config["type"] == "dict":
         return True, "", DictFilter(config)
     else:
         raise ValueError(f"Invalid type: {config['type']}")
@@ -456,7 +518,7 @@ class FilterCompose(object):
         for filter_ in self.column_filter_list:
             if isinstance(filter_, tuple):
                 op, filter_list = filter_
-                if op == 'logical_or':
+                if op == "logical_or":
                     sub_mask = None
                     for sub_filter in filter_list:
                         if not sub_filter.applicable(arrow_file):
@@ -468,10 +530,8 @@ class FilterCompose(object):
                             else:
                                 sub_mask = sub_mask | sub_current_mask
                     if sub_mask is not None:
-                        name = '|'.join([f.name for f in filter_list])
-                        stats.update({
-                            name: length - sum(sub_mask)
-                        })
+                        name = "|".join([f.name for f in filter_list])
+                        stats.update({name: length - sum(sub_mask)})
                         if mask is None:
                             mask = sub_mask
                         else:
@@ -483,9 +543,7 @@ class FilterCompose(object):
                     continue
                 current_mask = filter_(arrow_file, table)
                 if current_mask is not None:
-                    stats.update({
-                        filter_.name: length - sum(current_mask)
-                    })
+                    stats.update({filter_.name: length - sum(current_mask)})
                     if mask is None:
                         mask = current_mask
                     else:
@@ -495,15 +553,13 @@ class FilterCompose(object):
         for filter_ in self.md5_filter_list:
             if not filter_.applicable(arrow_file):
                 continue
-            if 'md5' not in table.column_names:
+            if "md5" not in table.column_names:
                 print(f"Warning: Column 'md5' not found in {arrow_file}.")
 
-            md5s = table['md5'].to_pandas()
+            md5s = table["md5"].to_pandas()
             current_mask = filter_(md5s)
             if current_mask is not None:
-                stats.update({
-                    filter_.name: length - sum(current_mask)
-                })
+                stats.update({filter_.name: length - sum(current_mask)})
                 if mask is None:
                     mask = current_mask
                 else:
@@ -516,7 +572,7 @@ class FilterCompose(object):
         data_type_list = []
         for filter_ in self.column_filter_list + self.md5_filter_list:
             if isinstance(filter_, tuple):
-                data_type_list.append(' || '.join([f.data_type for f in filter_[1]]))
+                data_type_list.append(" || ".join([f.data_type for f in filter_[1]]))
             else:
                 data_type_list.append(filter_.data_type)
         return data_type_list
@@ -525,12 +581,12 @@ class FilterCompose(object):
 class MD5Repeater(Operator):
     def __init__(self, config):
         super().__init__(config)
-        self.name = config['name']
-        self.paths = self.parse_path(config['path'])
-        self.dtype = config['type']
-        self.plus = config.get('plus', 0)
-        self.repeat = config.get('repeat', None)
-        self.arrow_file_keyword = config.get('arrow_file_keyword', None)
+        self.name = config["name"]
+        self.paths = self.parse_path(config["path"])
+        self.dtype = config["type"]
+        self.plus = config.get("plus", 0)
+        self.repeat = config.get("repeat", None)
+        self.arrow_file_keyword = config.get("arrow_file_keyword", None)
         if self.arrow_file_keyword is not None:
             if isinstance(self.arrow_file_keyword, str):
                 self.arrow_file_keyword = [self.arrow_file_keyword]
@@ -540,7 +596,9 @@ class MD5Repeater(Operator):
             # Check if md5_data.values() are integers
             for v in self.md5_data.values():
                 if not isinstance(v, int):
-                    raise ValueError(f"Values from {self.paths} are not integers. For example: {v}")
+                    raise ValueError(
+                        f"Values from {self.paths} are not integers. For example: {v}"
+                    )
                 # We only check the first value for performance
                 # We assume all values are the same type
                 break
@@ -556,10 +614,10 @@ class MD5Repeater(Operator):
 
     @property
     def data_type(self):
-        path_repr = ', '.join([str(p) for p in self.paths])
-        if self.dtype == 'list':
+        path_repr = ", ".join([str(p) for p in self.paths])
+        if self.dtype == "list":
             fmt_str = f"[MD5] Repeat {self.repeat} times: {path_repr}"
-        elif self.dtype == 'dict':
+        elif self.dtype == "dict":
             fmt_str = f"[MD5] Repeat multiple times: {path_repr}"
         else:
             raise ValueError(f"Invalid type: {self.dtype}")
@@ -571,10 +629,10 @@ def get_md5_repeater(parent, config):
     if not success:
         return False, msg, None
 
-    required_args = ['name', 'path']
+    required_args = ["name", "path"]
     types = [str, str]
-    if config['type'] == 'list':
-        required_args.extend(['repeat'])
+    if config["type"] == "list":
+        required_args.extend(["repeat"])
         types.extend([int])
     success, msg = check_keys(parent, config, required_args, types)
     if not success:
@@ -586,8 +644,8 @@ def get_md5_repeater(parent, config):
 class KeywordRepeater(Operator):
     def __init__(self, config):
         super().__init__(config)
-        self.keywords = config['keyword']
-        self.repeat = config['repeat']
+        self.keywords = config["keyword"]
+        self.repeat = config["repeat"]
         self.name = f"Repeat {self.repeat} times"
 
     def __call__(self, arrow_file, idx, md5):
@@ -600,6 +658,7 @@ class KeywordRepeater(Operator):
     def data_type(self):
         fmt_str = f"[Keyword] Repeat {self.repeat} times: {self.keywords}"
         return fmt_str
+
 
 def get_keyword_repeater(parent, config):
     required_args = ["repeat", "keyword"]
@@ -621,11 +680,11 @@ class RepeaterCompose(object):
         assert length > 0, "Empty table"
 
         if md5s is None:
-            if 'md5' not in table.column_names:
+            if "md5" not in table.column_names:
                 print(f"Warning: Column 'md5' not found in {arrow_file}.")
                 md5s = None
             else:
-                md5s = table['md5'].to_pandas()
+                md5s = table["md5"].to_pandas()
 
         repeated_indices = []
         for idx in indices:
@@ -640,7 +699,7 @@ class RepeaterCompose(object):
                     max_repeat = repeat
                     max_i = i
             if max_i >= 0:
-                stats[self.repeater_list[max_i].name] += (max_repeat - 1)
+                stats[self.repeater_list[max_i].name] += max_repeat - 1
             repeated_indices.extend([idx] * max_repeat)
 
         return repeated_indices, stats
@@ -658,68 +717,87 @@ class DatasetConfig(object):
         self.work_dir = work_dir
         self.config_file = str(Path(config_file).absolute())
 
-        with open(self.config_file, 'r') as f:
+        with open(self.config_file, "r") as f:
             self.data = yaml.safe_load(f)
 
-        self.names = self.parse_names()             # arrow names
+        self.names = self.parse_names()  # arrow names
         arrow_max_repeat = max([x[1] for x in self.names])
         self.filter = self.parse_filter()
         self.repeater = self.parse_repeater(enable_arrow_repeat=arrow_max_repeat > 1)
 
         # Extra arguments
-        self.remove_md5_dup = self.data.get('remove_md5_dup', False)
+        self.remove_md5_dup = self.data.get("remove_md5_dup", False)
 
     def assert_unknown_args(self):
         unknown_args = set(self.data.keys()) - {
-            'source', 'filter', 'repeater', 'remove_md5_dup'
+            "source",
+            "filter",
+            "repeater",
+            "remove_md5_dup",
         }
         if len(unknown_args) > 0:
-            raise ValueError(f"Unknown arguments in config file ({self.config_file}): {unknown_args}")
+            raise ValueError(
+                f"Unknown arguments in config file ({self.config_file}): {unknown_args}"
+            )
 
     def parse_filter(self):
         column_filter_list = []
         md5_filter_list = []
-        if 'filter' in self.data:
-            filters = self.data['filter']
-            if 'column' in filters:
-                column_filter_configs = filters['column']
-                assert isinstance(column_filter_configs, list), "filter.column should be a list."
+        if "filter" in self.data:
+            filters = self.data["filter"]
+            if "column" in filters:
+                column_filter_configs = filters["column"]
+                assert isinstance(
+                    column_filter_configs, list
+                ), "filter.column should be a list."
                 for i, config in enumerate(column_filter_configs):
-                    if config.get('logical_or', None) is not None:
-                        assert isinstance(config['logical_or'], list), \
-                            f"filter.column[{i}].logical_or should be a list, got {type(config['logical_or'])}"
+                    if config.get("logical_or", None) is not None:
+                        assert isinstance(
+                            config["logical_or"], list
+                        ), f"filter.column[{i}].logical_or should be a list, got {type(config['logical_or'])}"
                         sub_column_filter_list = []
-                        for j, sub_config in enumerate(config['logical_or']):
-                            sub_success, sub_msg, sub_filter_ = get_column_filter(f'filter.column[{i}-logical_or].[{j}]', sub_config)
+                        for j, sub_config in enumerate(config["logical_or"]):
+                            sub_success, sub_msg, sub_filter_ = get_column_filter(
+                                f"filter.column[{i}-logical_or].[{j}]", sub_config
+                            )
                             if not sub_success:
                                 raise ValueError(sub_msg)
                             sub_column_filter_list.append(sub_filter_)
                         success = True
-                        msg = ''
-                        filter_ = ('logical_or', sub_column_filter_list)
+                        msg = ""
+                        filter_ = ("logical_or", sub_column_filter_list)
                     else:
-                        success, msg, filter_ = get_column_filter(f'filter.column[{i}]', config)
+                        success, msg, filter_ = get_column_filter(
+                            f"filter.column[{i}]", config
+                        )
                     if not success:
                         raise ValueError(msg)
                     column_filter_list.append(filter_)
-            if 'md5' in filters:
-                md5_filter_configs = filters['md5']
-                assert isinstance(md5_filter_configs, list), "filter.md5 should be a list."
+            if "md5" in filters:
+                md5_filter_configs = filters["md5"]
+                assert isinstance(
+                    md5_filter_configs, list
+                ), "filter.md5 should be a list."
                 for i, config in enumerate(md5_filter_configs):
-                    if config.get('logical_or', None) is not None:
-                        assert isinstance(config['logical_or'], list), \
-                            f"filter.md5[{i}].logical_or should be a list, got {type(config['logical_or'])}"
+                    if config.get("logical_or", None) is not None:
+                        assert isinstance(
+                            config["logical_or"], list
+                        ), f"filter.md5[{i}].logical_or should be a list, got {type(config['logical_or'])}"
                         sub_md5_filter_list = []
-                        for j, sub_config in enumerate(config['logical_or']):
-                            sub_success, sub_msg, sub_filter_ = get_md5_filter(f'filter.md5[{i}-logical_or].[{j}]', sub_config)
+                        for j, sub_config in enumerate(config["logical_or"]):
+                            sub_success, sub_msg, sub_filter_ = get_md5_filter(
+                                f"filter.md5[{i}-logical_or].[{j}]", sub_config
+                            )
                             if not sub_success:
                                 raise ValueError(sub_msg)
                             sub_md5_filter_list.append(sub_filter_)
                         success = True
-                        msg = ''
-                        filter_ = ('logical_or', sub_md5_filter_list)
+                        msg = ""
+                        filter_ = ("logical_or", sub_md5_filter_list)
                     else:
-                        success, msg, filter_ = get_md5_filter(f'filter.md5[{i}]', config)
+                        success, msg, filter_ = get_md5_filter(
+                            f"filter.md5[{i}]", config
+                        )
                     if not success:
                         raise ValueError(msg)
                     md5_filter_list.append(filter_)
@@ -732,22 +810,30 @@ class DatasetConfig(object):
 
     def parse_repeater(self, enable_arrow_repeat=False):
         repeater_list = []
-        if 'repeater' in self.data:
-            repeaters = self.data['repeater']
-            if 'md5' in repeaters:
-                md5_repeater_configs = repeaters['md5']
-                assert isinstance(md5_repeater_configs, list), "repeater.md5 should be a list."
+        if "repeater" in self.data:
+            repeaters = self.data["repeater"]
+            if "md5" in repeaters:
+                md5_repeater_configs = repeaters["md5"]
+                assert isinstance(
+                    md5_repeater_configs, list
+                ), "repeater.md5 should be a list."
                 for i, config in enumerate(md5_repeater_configs):
-                    success, msg, repeater = get_md5_repeater(f'repeater.md5[{i}]', config)
+                    success, msg, repeater = get_md5_repeater(
+                        f"repeater.md5[{i}]", config
+                    )
                     if not success:
                         raise ValueError(msg)
                     repeater_list.append(repeater)
 
-            if 'arrow_file_keyword' in repeaters:
-                keyword_repeater_configs = repeaters['arrow_file_keyword']
-                assert isinstance(keyword_repeater_configs, list), "repeater.arrow_file_keyword should be a list."
+            if "arrow_file_keyword" in repeaters:
+                keyword_repeater_configs = repeaters["arrow_file_keyword"]
+                assert isinstance(
+                    keyword_repeater_configs, list
+                ), "repeater.arrow_file_keyword should be a list."
                 for i, config in enumerate(keyword_repeater_configs):
-                    success, msg, repeater = get_keyword_repeater(f'repeater.arrow_file_keyword[{i}]', config)
+                    success, msg, repeater = get_keyword_repeater(
+                        f"repeater.arrow_file_keyword[{i}]", config
+                    )
                     if not success:
                         raise ValueError(msg)
                     repeater_list.append(repeater)
@@ -759,11 +845,13 @@ class DatasetConfig(object):
         return composed_repeater
 
     def parse_names(self):
-        if 'source' in self.data:
-            source = self.data['source']
+        if "source" in self.data:
+            source = self.data["source"]
             assert isinstance(source, list), "source should be a list."
         else:
-            raise ValueError("In the YAML file, the ‘source’ field is filled in incorrectly, please check")
+            raise ValueError(
+                "In the YAML file, the ‘source’ field is filled in incorrectly, please check"
+            )
 
         names = get_or_create_arrow_name_list(source)
         return names
@@ -771,7 +859,7 @@ class DatasetConfig(object):
     @property
     def data_type(self):
         data_types = {
-            'Filters': [] if self.filter is None else self.filter.data_type,
-            'Repeaters': [] if self.repeater is None else self.repeater.data_type,
+            "Filters": [] if self.filter is None else self.filter.data_type,
+            "Repeaters": [] if self.repeater is None else self.repeater.data_type,
         }
         return data_types

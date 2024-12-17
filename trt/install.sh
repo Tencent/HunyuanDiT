@@ -32,7 +32,7 @@ if [ ! -x "$(command -v ldconfig)" ]; then
     exit 1
 fi
 
-export TENSORRT_VERSION='9.2.0.5'
+export TENSORRT_VERSION='10.1.0.27'
 TENSORRT_PACKAGE="${MODEL_TRT_DIR}/TensorRT-${TENSORRT_VERSION}.tar.gz"
 
 # Check if the TensorRT package is downloaded.

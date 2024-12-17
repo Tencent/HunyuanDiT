@@ -20,16 +20,16 @@ class ModelMeanType(enum.Enum):
     Which type of output the model predicts.
     """
 
-    PREVIOUS_X = enum.auto()    # the model predicts x_{t-1}
-    START_X = enum.auto()       # the model predicts x_0
-    EPSILON = enum.auto()       # the model predicts epsilon
-    VELOCITY = enum.auto()      # the model predicts v
+    PREVIOUS_X = enum.auto()  # the model predicts x_{t-1}
+    START_X = enum.auto()  # the model predicts x_0
+    EPSILON = enum.auto()  # the model predicts epsilon
+    VELOCITY = enum.auto()  # the model predicts v
 
 
 predict_type_dict = {
-    'epsilon': ModelMeanType.EPSILON,
-    'sample': ModelMeanType.START_X,
-    'v_prediction': ModelMeanType.VELOCITY,
+    "epsilon": ModelMeanType.EPSILON,
+    "sample": ModelMeanType.START_X,
+    "v_prediction": ModelMeanType.VELOCITY,
 }
 
 
@@ -61,7 +61,9 @@ class LossType(enum.Enum):
 def _warmup_beta(beta_start, beta_end, num_diffusion_timesteps, warmup_frac):
     betas = beta_end * np.ones(num_diffusion_timesteps, dtype=np.float64)
     warmup_time = int(num_diffusion_timesteps * warmup_frac)
-    betas[:warmup_time] = np.linspace(beta_start, beta_end, warmup_time, dtype=np.float64)
+    betas[:warmup_time] = np.linspace(
+        beta_start, beta_end, warmup_time, dtype=np.float64
+    )
     return betas
 
 
@@ -73,15 +75,17 @@ def get_beta_schedule(beta_schedule, *, beta_start, beta_end, num_diffusion_time
     if beta_schedule == "quad":
         betas = (
             np.linspace(
-                beta_start ** 0.5,
-                beta_end ** 0.5,
+                beta_start**0.5,
+                beta_end**0.5,
                 num_diffusion_timesteps,
                 dtype=np.float64,
             )
             ** 2
         )
     elif beta_schedule == "linear":
-        betas = np.linspace(beta_start, beta_end, num_diffusion_timesteps, dtype=np.float64)
+        betas = np.linspace(
+            beta_start, beta_end, num_diffusion_timesteps, dtype=np.float64
+        )
     elif beta_schedule == "warmup10":
         betas = _warmup_beta(beta_start, beta_end, num_diffusion_timesteps, 0.1)
     elif beta_schedule == "warmup50":
@@ -98,7 +102,9 @@ def get_beta_schedule(beta_schedule, *, beta_start, beta_end, num_diffusion_time
     return betas
 
 
-def get_named_beta_schedule(schedule_name, num_diffusion_timesteps, beta_start=0.0001, beta_end=0.02):
+def get_named_beta_schedule(
+    schedule_name, num_diffusion_timesteps, beta_start=0.0001, beta_end=0.02
+):
     """
     Get a pre-defined beta schedule for the given name.
     The beta schedule library consists of beta schedules which remain similar
@@ -113,15 +119,15 @@ def get_named_beta_schedule(schedule_name, num_diffusion_timesteps, beta_start=0
         return get_beta_schedule(
             "linear",
             beta_start=scale * beta_start,  # DDPM
-            beta_end=scale * beta_end,      # DDPM
-            num_diffusion_timesteps=num_diffusion_timesteps,    # DDPM
+            beta_end=scale * beta_end,  # DDPM
+            num_diffusion_timesteps=num_diffusion_timesteps,  # DDPM
         )
     elif schedule_name == "scaled_linear":
         return get_beta_schedule(
             "quad",
             beta_start=beta_start,  # StableDiffusion, should be 0.00085
-            beta_end=beta_end,      # StableDiffusion, should be 0.012
-            num_diffusion_timesteps=num_diffusion_timesteps,    # StableDiffusion
+            beta_end=beta_end,  # StableDiffusion, should be 0.012
+            num_diffusion_timesteps=num_diffusion_timesteps,  # StableDiffusion
         )
     elif schedule_name == "squaredcos_cap_v2":
         return betas_for_alpha_bar(
@@ -151,6 +157,7 @@ def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
         betas.append(min(1 - alpha_bar(t2) / alpha_bar(t1), max_beta))
     return np.array(betas)
 
+
 class GaussianDiffusion:
     """
     Utilities for training and sampling diffusion models.
@@ -176,7 +183,7 @@ class GaussianDiffusion:
         model_var_type,
         loss_type,
         rescale_timesteps=False,
-        mse_loss_weight_type='constant',
+        mse_loss_weight_type="constant",
         noise_offset=0.0,
     ):
         self.model_mean_type = model_mean_type
@@ -216,9 +223,11 @@ class GaussianDiffusion:
         )
         # log calculation clipped because the posterior variance is 0 at the
         # beginning of the diffusion chain.
-        self.posterior_log_variance_clipped = np.log(
-            np.append(self.posterior_variance[1], self.posterior_variance[1:])
-        ) if len(self.posterior_variance) > 1 else np.array([])
+        self.posterior_log_variance_clipped = (
+            np.log(np.append(self.posterior_variance[1], self.posterior_variance[1:]))
+            if len(self.posterior_variance) > 1
+            else np.array([])
+        )
 
         self.posterior_mean_coef1 = (
             betas * np.sqrt(self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
@@ -297,7 +306,13 @@ class GaussianDiffusion:
         return posterior_mean, posterior_variance, posterior_log_variance_clipped
 
     def p_mean_variance(
-        self, model, x, t, clip_denoised=True, denoised_fn=None, model_kwargs=None,
+        self,
+        model,
+        x,
+        t,
+        clip_denoised=True,
+        denoised_fn=None,
+        model_kwargs=None,
         model_var_type=None,
     ):
         """
@@ -331,10 +346,10 @@ class GaussianDiffusion:
         B, C = x.shape[:2]
         assert_shape(t, (B,))
         out_dict = model(x, t, **model_kwargs)
-        model_output = out_dict['x']
+        model_output = out_dict["x"]
 
         if len(out_dict) > 1:
-            extra = {k: v for k, v in out_dict.items() if k != 'x'}
+            extra = {k: v for k, v in out_dict.items() if k != "x"}
         else:
             extra = None
 
@@ -386,9 +401,9 @@ class GaussianDiffusion:
             )
             model_mean = model_output
         elif self.model_mean_type in [
-                ModelMeanType.START_X,
-                ModelMeanType.EPSILON,
-                ModelMeanType.VELOCITY
+            ModelMeanType.START_X,
+            ModelMeanType.EPSILON,
+            ModelMeanType.VELOCITY,
         ]:
             if self.model_mean_type == ModelMeanType.START_X:
                 pred_xstart = process_xstart(model_output)
@@ -453,7 +468,7 @@ class GaussianDiffusion:
         )
 
     def _vb_terms_bpd(
-            self, model, x_start, x_t, t, clip_denoised=True, model_kwargs=None
+        self, model, x_start, x_t, t, clip_denoised=True, model_kwargs=None
     ):
         """
         Get a term for the variational lower-bound.
@@ -485,9 +500,15 @@ class GaussianDiffusion:
         # At the first timestep return the decoder NLL,
         # otherwise return KL(q(x_{t-1}|x_t,x_0) || p(x_{t-1}|x_t))
         output = th.where((t == 0), decoder_nll, kl)
-        return {"output": output, "pred_xstart": out["pred_xstart"], "extra": out["extra"]}
+        return {
+            "output": output,
+            "pred_xstart": out["pred_xstart"],
+            "extra": out["extra"],
+        }
 
-    def training_losses(self, model, x_start, model_kwargs=None, controlnet=None, noise=None):
+    def training_losses(
+        self, model, x_start, model_kwargs=None, controlnet=None, noise=None
+    ):
         """
         Compute training losses for a single timestep.
 
@@ -502,28 +523,34 @@ class GaussianDiffusion:
         if model_kwargs is None:
             model_kwargs = {}
         # Time steps
-        t = th.randint(0, self.num_timesteps, (x_start.shape[0],), device=x_start.device)
+        t = th.randint(
+            0, self.num_timesteps, (x_start.shape[0],), device=x_start.device
+        )
         # Noise
         if noise is None:
             noise = th.randn_like(x_start)
         if self.noise_offset > 0:
             # Add channel wise noise offset
             # https://www.crosslabs.org/blog/diffusion-with-offset-noise
-            noise = noise + self.noise_offset * th.randn(*x_start.shape[:2], 1, 1, device=x_start.device)
+            noise = noise + self.noise_offset * th.randn(
+                *x_start.shape[:2], 1, 1, device=x_start.device
+            )
         x_t = self.q_sample(x_start, t, noise=noise)
 
         terms = {}
 
-        if self.mse_loss_weight_type == 'constant':
+        if self.mse_loss_weight_type == "constant":
             mse_loss_weight = th.ones_like(t)
         elif self.mse_loss_weight_type.startswith("min_snr_"):
             alpha = _extract_into_tensor(self.sqrt_alphas_cumprod, t, t.shape)
             sigma = _extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, t.shape)
             snr = (alpha / sigma) ** 2
 
-            k = float(self.mse_loss_weight_type.split('min_snr_')[-1])
+            k = float(self.mse_loss_weight_type.split("min_snr_")[-1])
             # min{snr, k}
-            mse_loss_weight = th.stack([snr, k * th.ones_like(t)], dim=1).min(dim=1)[0] / snr
+            mse_loss_weight = (
+                th.stack([snr, k * th.ones_like(t)], dim=1).min(dim=1)[0] / snr
+            )
         else:
             raise ValueError(self.mse_loss_weight_type)
 
@@ -543,11 +570,11 @@ class GaussianDiffusion:
         elif self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE:
             if controlnet != None:
                 controls = controlnet(x_t, t, **model_kwargs)
-                model_kwargs.pop('condition')
+                model_kwargs.pop("condition")
                 model_kwargs.update(controls)
             out_dict = model(x_t, t, **model_kwargs)
-            model_output = out_dict['x']
-            extra = {k: v for k, v in out_dict.items() if k != 'x'}
+            model_output = out_dict["x"]
+            extra = {k: v for k, v in out_dict.items() if k != "x"}
 
             if self.model_var_type in [
                 ModelVarType.LEARNED,
@@ -622,9 +649,7 @@ class GaussianDiffusion:
         alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x.shape)
 
         eps = self._predict_eps_from_xstart(x, t, p_mean_var["pred_xstart"])
-        eps = eps - (1 - alpha_bar).sqrt() * cond_fn(
-            x, t, **model_kwargs
-        )
+        eps = eps - (1 - alpha_bar).sqrt() * cond_fn(x, t, **model_kwargs)
 
         out = p_mean_var.copy()
         out["pred_xstart"] = self._predict_xstart_from_eps(x, t, eps)
@@ -837,7 +862,7 @@ class GaussianDiffusion:
         noise = th.randn_like(x)
         mean_pred = (
             out["pred_xstart"] * th.sqrt(alpha_bar_prev)
-            + th.sqrt(1 - alpha_bar_prev - sigma ** 2) * eps
+            + th.sqrt(1 - alpha_bar_prev - sigma**2) * eps
         )
         nonzero_mask = (
             (t != 0).float().view(-1, *([1] * (len(x.shape) - 1)))
@@ -1049,14 +1074,14 @@ class GaussianDiffusion:
         }
 
     def get_eps(
-            self,
-            model,
-            x,
-            t,
-            model_kwargs,
-            cond_fn=None,
+        self,
+        model,
+        x,
+        t,
+        model_kwargs,
+        cond_fn=None,
     ):
-        model_output = model(x, t, **model_kwargs)['x']
+        model_output = model(x, t, **model_kwargs)["x"]
         if isinstance(model_output, tuple):
             model_output, _ = model_output
         eps = model_output[:, :4]
@@ -1066,36 +1091,36 @@ class GaussianDiffusion:
         return eps
 
     def eps_to_pred_xstart(
-            self,
-            x,
-            eps,
-            t,
+        self,
+        x,
+        eps,
+        t,
     ):
         alpha_bar = _extract_into_tensor_lerp(self.alphas_cumprod, t, x.shape)
         return (x - eps * th.sqrt(1 - alpha_bar)) / th.sqrt(alpha_bar)
 
     def pndm_transfer(
-            self,
-            x,
-            eps,
-            t_1,
-            t_2,
+        self,
+        x,
+        eps,
+        t_1,
+        t_2,
     ):
         pred_xstart = self.eps_to_pred_xstart(x, eps, t_1)
         alpha_bar_prev = _extract_into_tensor_lerp(self.alphas_cumprod, t_2, x.shape)
         return pred_xstart * th.sqrt(alpha_bar_prev) + th.sqrt(1 - alpha_bar_prev) * eps
 
     def prk_sample_loop(
-            self,
-            model,
-            shape,
-            noise=None,
-            clip_denoised=True,
-            denoised_fn=None,
-            cond_fn=None,
-            model_kwargs=None,
-            device=None,
-            progress=False,
+        self,
+        model,
+        shape,
+        noise=None,
+        clip_denoised=True,
+        denoised_fn=None,
+        cond_fn=None,
+        model_kwargs=None,
+        device=None,
+        progress=False,
     ):
         """
         Generate samples from the model using PRK.
@@ -1104,30 +1129,30 @@ class GaussianDiffusion:
         """
         final = None
         for sample in self.prk_sample_loop_progressive(
-                model,
-                shape,
-                noise=noise,
-                clip_denoised=clip_denoised,
-                denoised_fn=denoised_fn,
-                cond_fn=cond_fn,
-                model_kwargs=model_kwargs,
-                device=device,
-                progress=progress,
+            model,
+            shape,
+            noise=noise,
+            clip_denoised=clip_denoised,
+            denoised_fn=denoised_fn,
+            cond_fn=cond_fn,
+            model_kwargs=model_kwargs,
+            device=device,
+            progress=progress,
         ):
             final = sample
         return final["sample"]
 
     def prk_sample_loop_progressive(
-            self,
-            model,
-            shape,
-            noise=None,
-            clip_denoised=True,
-            denoised_fn=None,
-            cond_fn=None,
-            model_kwargs=None,
-            device=None,
-            progress=False,
+        self,
+        model,
+        shape,
+        noise=None,
+        clip_denoised=True,
+        denoised_fn=None,
+        cond_fn=None,
+        model_kwargs=None,
+        device=None,
+        progress=False,
     ):
         """
         Use PRK to sample from the model and yield intermediate samples from
@@ -1166,14 +1191,14 @@ class GaussianDiffusion:
                 img = out["sample"]
 
     def prk_sample(
-            self,
-            model,
-            x,
-            t,
-            clip_denoised=True,
-            denoised_fn=None,
-            cond_fn=None,
-            model_kwargs=None,
+        self,
+        model,
+        x,
+        t,
+        clip_denoised=True,
+        denoised_fn=None,
+        cond_fn=None,
+        model_kwargs=None,
     ):
         """
         Sample x_{t-1} from the model using fourth-order Pseudo Runge-Kutta
@@ -1223,20 +1248,21 @@ class GaussianDiffusion:
 
         Same usage as p_sample_loop().
         """
-        assert self.model_mean_type == ModelMeanType.EPSILON, \
-            'plms_sample only support model_mean_type == ModelMeanType.EPSILON'
+        assert (
+            self.model_mean_type == ModelMeanType.EPSILON
+        ), "plms_sample only support model_mean_type == ModelMeanType.EPSILON"
         final = None
         for sample in self.plms_sample_loop_progressive(
-                model,
-                shape,
-                noise=noise,
-                clip_denoised=clip_denoised,
-                denoised_fn=denoised_fn,
-                cond_fn=cond_fn,
-                model_kwargs=model_kwargs,
-                device=device,
-                progress=progress,
-                progress_leave=progress_leave,
+            model,
+            shape,
+            noise=noise,
+            clip_denoised=clip_denoised,
+            denoised_fn=denoised_fn,
+            cond_fn=cond_fn,
+            model_kwargs=model_kwargs,
+            device=device,
+            progress=progress,
+            progress_leave=progress_leave,
         ):
             final = sample
         return final["sample"]
@@ -1332,7 +1358,9 @@ class GaussianDiffusion:
             return x
 
         eps = self.get_eps(model, x, t, model_kwargs, cond_fn)
-        eps_prime = (55 * eps - 59 * old_eps[-1] + 37 * old_eps[-2] - 9 * old_eps[-3]) / 24
+        eps_prime = (
+            55 * eps - 59 * old_eps[-1] + 37 * old_eps[-2] - 9 * old_eps[-3]
+        ) / 24
 
         sample = self.pndm_transfer(x, eps_prime, t, t - 1)
         pred_xstart = self.eps_to_pred_xstart(x, eps, t)

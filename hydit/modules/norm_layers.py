@@ -53,11 +53,14 @@ class RMSNorm(nn.Module):
 
 class GroupNorm32(nn.GroupNorm):
     def __init__(self, num_groups, num_channels, eps=1e-5, dtype=None):
-        super().__init__(num_groups=num_groups, num_channels=num_channels, eps=eps, dtype=dtype)
+        super().__init__(
+            num_groups=num_groups, num_channels=num_channels, eps=eps, dtype=dtype
+        )
 
     def forward(self, x):
         y = super().forward(x).to(x.dtype)
         return y
+
 
 def normalization(channels, dtype=None):
     """

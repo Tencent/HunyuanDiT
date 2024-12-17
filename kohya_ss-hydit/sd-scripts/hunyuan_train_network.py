@@ -48,7 +48,7 @@ class HunYuanNetworkTrainer(train_network.NetworkTrainer):
         train_dataset_group.verify_bucket_reso_steps(16)
 
     def load_target_model(self, args, weight_dtype, accelerator):
-        use_extra_cond = getattr(args, 'use_extra_cond', False)
+        use_extra_cond = getattr(args, "use_extra_cond", False)
         (
             load_stable_diffusion_format,
             text_encoder1,
@@ -82,12 +82,12 @@ class HunYuanNetworkTrainer(train_network.NetworkTrainer):
 
     def load_noise_scheduler(self, args):
         return DDPMScheduler(
-            beta_start=0.00085, 
+            beta_start=0.00085,
             beta_end=args.beta_end,
-            beta_schedule="scaled_linear", 
-            num_train_timesteps=1000, 
+            beta_schedule="scaled_linear",
+            num_train_timesteps=1000,
             clip_sample=False,
-            steps_offset=1
+            steps_offset=1,
         )
 
     def is_text_encoder_outputs_cached(self, args):

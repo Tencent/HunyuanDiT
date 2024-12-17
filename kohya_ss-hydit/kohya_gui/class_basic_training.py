@@ -5,6 +5,7 @@ from .custom_logging import setup_logging
 # Set up logging
 log = setup_logging()
 
+
 class BasicTraining:
     """
     This class configures and initializes the basic training settings for a machine learning model,
@@ -166,9 +167,7 @@ class BasicTraining:
                 ],
                 value=self.config.get("basic.lr_scheduler", self.lr_scheduler_value),
             )
-            
-            
-            
+
             # Initialize the optimizer dropdown
             self.optimizer = gr.Dropdown(
                 label="Optimizer",
@@ -285,21 +284,21 @@ class BasicTraining:
                 maximum=100,
                 step=1,
             )
-            
+
             def lr_scheduler_changed(scheduler, value):
                 if scheduler == "constant":
                     self.old_lr_warmup = value
                     value = 0
-                    interactive=False
-                    info="Can't use LR warmup with LR Scheduler constant... setting to 0 and disabling field..."
+                    interactive = False
+                    info = "Can't use LR warmup with LR Scheduler constant... setting to 0 and disabling field..."
                 else:
                     if self.old_lr_warmup != 0:
                         value = self.old_lr_warmup
                         self.old_lr_warmup = 0
-                    interactive=True
-                    info=""
+                    interactive = True
+                    info = ""
                 return gr.Slider(value=value, interactive=interactive, info=info)
-            
+
             self.lr_scheduler.change(
                 lr_scheduler_changed,
                 inputs=[self.lr_scheduler, self.lr_warmup],
@@ -316,7 +315,7 @@ class BasicTraining:
                 label="LR # cycles",
                 minimum=1,
                 # precision=0, # round to nearest integer
-                step=1, # Increment value by 1
+                step=1,  # Increment value by 1
                 info="Number of restarts for cosine scheduler with restarts",
                 value=self.config.get("basic.lr_scheduler_num_cycles", 1),
             )

@@ -1,19 +1,22 @@
+export CUDA_VISIBLE_DEVICES=0
 model='DiT-g/2'                                                   # model type
-task_flag="lora_porcelain_ema_rank64"                             # task flag
 resume_module_root=./ckpts/t2i/model/pytorch_model_distill.pt     # resume checkpoint
 index_file=dataset/porcelain/jsons/porcelain.json                 # the selected data indices
 results_dir=./log_EXP                                             # save root for results
-batch_size=1                                                      # training batch size
+batch_size=2                                                      # training batch size
 image_size=1024                                                   # training image resolution
-grad_accu_steps=2                                                 # gradient accumulation steps
+grad_accu_steps=1                                                 # gradient accumulation steps
 warmup_num_steps=0                                                # warm-up steps
 lr=0.0001                                                         # learning rate
 ckpt_every=100                                                    # create a ckpt every a few steps.
 ckpt_latest_every=2000                                            # create a ckpt named `latest.pt` every a few steps.
-rank=64                                                           # rank of lora
+rank=128                                                           # rank of lora
 max_training_steps=2000                                           # Maximum training iteration steps
+task_flag="lora_porcelain_ema_rank${rank}"                             # task flag
+echo $task_flag
 
 PYTHONPATH=./ deepspeed hydit/train_deepspeed.py \
+    --no-flash-attn \
     --task-flag ${task_flag} \
     --model ${model} \
     --training-parts lora \
@@ -32,7 +35,6 @@ PYTHONPATH=./ deepspeed hydit/train_deepspeed.py \
     --global-seed 999 \
     --grad-accu-steps ${grad_accu_steps} \
     --warmup-num-steps ${warmup_num_steps} \
-    --use-flash-attn \
     --use-fp16 \
     --ema-dtype fp32 \
     --results-dir ${results_dir} \
@@ -40,10 +42,11 @@ PYTHONPATH=./ deepspeed hydit/train_deepspeed.py \
     --max-training-steps ${max_training_steps}\
     --ckpt-latest-every ${ckpt_latest_every} \
     --log-every 10 \
-    --deepspeed \
-    --deepspeed-optimizer \
     --use-zero-stage 2 \
     --qk-norm \
     --rope-img base512 \
     --rope-real \
+    --gradient-checkpointing \
+    --deepspeed-optimizer \
+    --deepspeed \
     "$@"

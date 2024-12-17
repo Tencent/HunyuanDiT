@@ -112,7 +112,9 @@ class SourceModel:
                         self.pretrained_model_name_or_path = gr.Dropdown(
                             label="Pretrained model name or path",
                             choices=default_models + model_checkpoints,
-                            value=self.config.get("model.models_dir", "runwayml/stable-diffusion-v1-5"),
+                            value=self.config.get(
+                                "model.models_dir", "runwayml/stable-diffusion-v1-5"
+                            ),
                             allow_custom_value=True,
                             visible=True,
                             min_width=100,
@@ -132,7 +134,11 @@ class SourceModel:
                         )
                         self.pretrained_model_name_or_path_file.click(
                             get_file_path,
-                            inputs=[self.pretrained_model_name_or_path, model_ext, model_ext_name],
+                            inputs=[
+                                self.pretrained_model_name_or_path,
+                                model_ext,
+                                model_ext_name,
+                            ],
                             outputs=self.pretrained_model_name_or_path,
                             show_progress=False,
                         )
@@ -307,7 +313,7 @@ class SourceModel:
                         self.v_parameterization,
                         self.sdxl_checkbox,
                         self.hunyuan11_checkbox,
-                        self.hunyuan12_checkbox
+                        self.hunyuan12_checkbox,
                     ],
                     show_progress=False,
                 )
