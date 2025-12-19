@@ -3,6 +3,6 @@ channels:
   - pytorch
   - nvidia
 dependencies:
-  - python=3.8.12
-  - pytorch=1.13.1
+  - python=3.10.11
+  - pytorch=2.1.2+cu121
   - pip
