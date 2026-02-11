@@ -192,8 +192,8 @@ class FlashSelfMHAModified(nn.Module):
         qkv = self.Wqkv(x)
         qkv = qkv.view(b, s, 3, self.num_heads, self.head_dim)  # [b, s, 3, h, d]
         q, k, v = qkv.unbind(dim=2)  # [b, s, h, d]
-        q = self.q_norm(q).half()  # [b, s, h, d]
-        k = self.k_norm(k).half()
+        q = self.q_norm(q).to(x.dtype)  # [b, s, h, d]
+        k = self.k_norm(k).to(x.dtype)
 
         # Apply RoPE if needed
         if freqs_cis_img is not None:
@@ -292,8 +292,8 @@ class FlashCrossMHAModified(nn.Module):
             b, s2, 2, self.num_heads, self.head_dim
         )  # [b, s2, 2, h, d]
         k, v = kv.unbind(dim=2)  # [b, s2, h, d]
-        q = self.q_norm(q).half()  # [b, s1, h, d]
-        k = self.k_norm(k).half()  # [b, s2, h, d]
+        q = self.q_norm(q).to(x.dtype)  # [b, s1, h, d]
+        k = self.k_norm(k).to(x.dtype)  # [b, s2, h, d]
 
         # Apply RoPE if needed
         if freqs_cis_img is not None:
@@ -311,7 +311,7 @@ class FlashCrossMHAModified(nn.Module):
                 b, s3, 2, self.num_heads, self.head_dim
             )
             k_2, v_2 = kv_2.unbind(dim=2)  # [b, s, h, d]
-            k_2 = self.k_norm_ip_adapter(k_2).half()
+            k_2 = self.k_norm_ip_adapter(k_2).to(x.dtype)
             kv_2 = torch.stack([k_2, v_2], dim=2)
             context_2 = self.inner_attn(q, kv_2)
             context_2 = context_2.view(b, s1, -1)
@@ -446,7 +446,7 @@ class CrossAttention(nn.Module):
 
             attn_2 = q @ k_2
 
-            attn_2 = attn_2.softmax(dim=-1).half()
+            attn_2 = attn_2.softmax(dim=-1).to(x.dtype)
             x_2 = attn_2 @ v_2.transpose(-2, -3)
 
             context_2 = x_2.transpose(1, 2)
